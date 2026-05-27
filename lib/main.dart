@@ -53,6 +53,7 @@ Future<void> _restoreWindowGeometry() async {
     minimumSize: const Size(minW, minH),
     center: !hasSavedGeometry,
     skipTaskbar: false,
+    fullScreen: true,
   );
 
   await windowManager.waitUntilReadyToShow(options, () async {
