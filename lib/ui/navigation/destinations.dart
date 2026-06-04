@@ -163,15 +163,22 @@ class Destinations {
       '/music-favorites/$parentId';
   static String genre(
     String genreName, {
-    required String genreId,
+    String? genreId,
     String? parentId,
     String? includeType,
   }) {
     final base = '/genre/${Uri.encodeComponent(genreName)}';
-    final params = <String>['genreId=$genreId'];
-    if (parentId != null) params.add('parentId=$parentId');
-    if (includeType != null) params.add('includeType=$includeType');
-    return '$base?${params.join('&')}';
+    final params = <String>[];
+    if (genreId != null) {
+      params.add('genreId=${Uri.encodeQueryComponent(genreId)}');
+    }
+    if (parentId != null) {
+      params.add('parentId=${Uri.encodeQueryComponent(parentId)}');
+    }
+    if (includeType != null) {
+      params.add('includeType=${Uri.encodeQueryComponent(includeType)}');
+    }
+    return params.isEmpty ? base : '$base?${params.join('&')}';
   }
 
   static String folder(String folderId) => '/folder/$folderId';

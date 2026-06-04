@@ -137,6 +137,19 @@ bool _shouldRedirectVideoToExternalPlayer(String path) {
   return ExternalPlayerPolicy.isEligibleItem(manager.queueService.currentItem);
 }
 
+@visibleForTesting
+String decodeRoutePathParameter(String value) {
+  if (!value.contains('%')) return value;
+
+  try {
+    return Uri.decodeComponent(value);
+  } on ArgumentError {
+    return value;
+  } on FormatException {
+    return value;
+  }
+}
+
 CustomTransitionPage<T> _opaqueFullScreenPage<T>({
   required GoRouterState state,
   required Widget child,
@@ -318,14 +331,16 @@ final appRouter = GoRouter(
     GoRoute(
       path: Destinations.genreBrowse,
       builder: (context, state) {
-        final genreName = state.pathParameters['genreName']!;
-        final genreId = state.uri.queryParameters['genreId']!;
+        final genreName = decodeRoutePathParameter(
+          state.pathParameters['genreName']!,
+        );
+        final genreId = state.uri.queryParameters['genreId'];
         final parentId = state.uri.queryParameters['parentId'];
         final includeType = state.uri.queryParameters['includeType'];
         return LibraryBrowseScreen(
           libraryId: parentId ?? '',
           genreId: genreId,
-          genreName: Uri.decodeComponent(genreName),
+          genreName: genreName,
           includeItemTypes: includeType != null ? [includeType] : null,
         );
       },

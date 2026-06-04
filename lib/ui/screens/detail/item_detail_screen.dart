@@ -2991,7 +2991,7 @@ class _MetadataRow extends StatelessWidget {
     }
 
     if (item.genres.isNotEmpty) {
-      parts.add(_text(theme, item.genres.take(3).join(' \u2022 ')));
+      parts.add(_genreLinks(context, theme, item.genres.take(3).toList()));
     }
 
     if (parts.isEmpty) return const SizedBox.shrink();
@@ -3070,6 +3070,76 @@ class _MetadataRow extends StatelessWidget {
         shadows: _textShadows,
       ),
     );
+  }
+
+  Widget _genreLinks(
+    BuildContext context,
+    ThemeData theme,
+    List<String> genres,
+  ) {
+    final isNeon = ThemeRegistry.active.id == ThemeRegistry.neonPulseId;
+    final children = <Widget>[];
+    for (var i = 0; i < genres.length; i++) {
+      final genre = genres[i].trim();
+      if (genre.isEmpty) continue;
+      if (children.isNotEmpty) {
+        children.add(
+          Text(
+            ' \u2022 ',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isNeon
+                  ? AppColorScheme.onSurface.withValues(alpha: 0.6)
+                  : Colors.white.withValues(alpha: 0.5),
+              shadows: _textShadows,
+            ),
+          ),
+        );
+      }
+      children.add(
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _openGenreBrowse(context, genre),
+            child: Text(
+              genre,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isNeon
+                    ? AppColorScheme.accent
+                    : Colors.white.withValues(alpha: 0.95),
+                fontWeight: FontWeight.w700,
+                shadows: _textShadows,
+                decoration: TextDecoration.underline,
+                decorationColor: isNeon
+                    ? AppColorScheme.accent.withValues(alpha: 0.7)
+                    : Colors.white.withValues(alpha: 0.45),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (children.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 0,
+      runSpacing: 4,
+      children: children,
+    );
+  }
+
+  void _openGenreBrowse(BuildContext context, String genre) {
+    final trimmed = genre.trim();
+    if (trimmed.isEmpty) return;
+
+    final includeType = switch (item.type) {
+      'Movie' => 'Movie',
+      'Series' => 'Series',
+      _ => null,
+    };
+
+    context.push(Destinations.genre(trimmed, includeType: includeType));
   }
 
   Widget _badge(ThemeData theme, String label) {

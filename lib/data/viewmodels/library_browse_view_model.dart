@@ -72,7 +72,13 @@ class LibraryBrowseViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> _libraries = const [];
   List<Map<String, dynamic>> get libraries => _libraries;
 
-  bool get isGenreBrowse => genreId != null;
+  String? get _genreNameFilter {
+    final name = overrideName?.trim();
+    if (name == null || name.isEmpty) return null;
+    return name;
+  }
+
+  bool get isGenreBrowse => genreId != null || _genreNameFilter != null;
 
   late ImageType _imageType;
   ImageType get imageType => _imageType;
@@ -165,14 +171,17 @@ class LibraryBrowseViewModel extends ChangeNotifier {
     _posterSize = _prefs.get(UserPreferences.posterSize);
   }
 
-  String get _prefKey => genreId ?? libraryId;
+  String get _prefKey => genreId ?? (_genreNameFilter ?? libraryId);
 
   String get _imagePrefKey {
-    if (genreId != null && libraryId.isNotEmpty) {
+    if (isGenreBrowse && libraryId.isNotEmpty) {
       return libraryId;
     }
     return _prefKey;
   }
+
+  bool get _shouldSyncImageTypeToServer =>
+      _imagePrefKey.isNotEmpty && (!isGenreBrowse || libraryId.isNotEmpty);
 
   Future<void> load() async {
     _state = LibraryBrowseState.loading;
@@ -184,7 +193,7 @@ class LibraryBrowseViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (genreId != null) {
+      if (isGenreBrowse) {
         _libraryName = overrideName ?? '';
         if (!_initialLibraryFilterSet) {
           _libraryFilter = libraryId.isEmpty ? null : libraryId;
@@ -295,13 +304,13 @@ class LibraryBrowseViewModel extends ChangeNotifier {
       sortBy = 'IsFolder,SortName';
     }
 
-    if (genreId != null &&
+    if (isGenreBrowse &&
         _collectionType == 'music' &&
         includeItemTypes == null) {
       includeTypes = ['MusicAlbum'];
     }
 
-    if (genreId != null && includeItemTypes == null) {
+    if (isGenreBrowse && includeItemTypes == null) {
       final currentExclude = excludeTypes ?? const <String>[];
       if (!currentExclude.contains('Episode')) {
         excludeTypes = [...currentExclude, 'Episode'];
@@ -358,6 +367,9 @@ class LibraryBrowseViewModel extends ChangeNotifier {
       response = await _fetchItemsWithFallback(
         parentId: _effectiveParentId,
         genreIds: genreId != null ? [genreId!] : null,
+        genres: genreId == null && _genreNameFilter != null
+            ? [_genreNameFilter!]
+            : null,
         includeItemTypes: includeTypes,
         excludeItemTypes: excludeTypes,
         collapseBoxSetItems: collapseBoxSets,
@@ -412,6 +424,7 @@ class LibraryBrowseViewModel extends ChangeNotifier {
   Future<Map<String, dynamic>> _fetchItemsWithFallback({
     String? parentId,
     List<String>? genreIds,
+    List<String>? genres,
     List<String>? includeItemTypes,
     List<String>? excludeItemTypes,
     bool? collapseBoxSetItems,
@@ -431,6 +444,7 @@ class LibraryBrowseViewModel extends ChangeNotifier {
       return await _client.itemsApi.getItems(
         parentId: parentId,
         genreIds: genreIds,
+        genres: genres,
         includeItemTypes: includeItemTypes,
         excludeItemTypes: excludeItemTypes,
         collapseBoxSetItems: collapseBoxSetItems,
@@ -461,6 +475,7 @@ class LibraryBrowseViewModel extends ChangeNotifier {
       return _client.itemsApi.getItems(
         parentId: parentId,
         genreIds: genreIds,
+        genres: genres,
         includeItemTypes: includeItemTypes,
         excludeItemTypes: excludeItemTypes,
         collapseBoxSetItems: collapseBoxSetItems,
@@ -481,7 +496,7 @@ class LibraryBrowseViewModel extends ChangeNotifier {
   }
 
   String? get _effectiveParentId {
-    if (genreId != null) return _libraryFilter;
+    if (isGenreBrowse) return _libraryFilter;
     return libraryId.isEmpty ? null : libraryId;
   }
 
@@ -568,7 +583,7 @@ class LibraryBrowseViewModel extends ChangeNotifier {
   }
 
   Future<void> _syncImageTypeFromServer() async {
-    if (_imagePrefKey.isEmpty) return;
+    if (!_shouldSyncImageTypeToServer) return;
     try {
       final dp = await _client.displayPreferencesApi.getDisplayPreferences(
         _imagePrefKey,
@@ -591,7 +606,7 @@ class LibraryBrowseViewModel extends ChangeNotifier {
   }
 
   Future<void> _syncImageTypeToServer(ImageType value) async {
-    if (_imagePrefKey.isEmpty) return;
+    if (!_shouldSyncImageTypeToServer) return;
     try {
       final dp = await _client.displayPreferencesApi.getDisplayPreferences(
         _imagePrefKey,
