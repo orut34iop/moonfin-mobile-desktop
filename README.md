@@ -107,7 +107,7 @@ Books and audiobooks download in their **original format** - no transcoding.
 ### Advanced Library Filtering
 - Advanced filtering entry points are available from the top toolbar and desktop sidebar
 - Filter the active server's movies and TV series by type, genre, production location, and year
-- Filter options are built from the current media catalog, cached locally, and restored per server
+- Filter options are built from the current media catalog, cached locally, refreshed manually or when stale, and updated incrementally from WebSocket library events
 - Filter rows support inline expansion for long option lists, multi-select chips, and immediate results
 - Results show the matched item count and support name/year sorting in either direction
 

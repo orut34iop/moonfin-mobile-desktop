@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jellyfin_preference/jellyfin_preference.dart';
@@ -7,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:moonfin/data/database/offline_database.dart';
 import 'package:moonfin/data/models/aggregated_item.dart';
 import 'package:moonfin/data/repositories/advanced_filter_catalog_repository.dart';
+import 'package:moonfin/data/services/advanced_filter_catalog_sync_service.dart';
 import 'package:moonfin/data/viewmodels/advanced_filter_view_model.dart';
 import 'package:moonfin/preference/user_preferences.dart';
 
@@ -376,6 +379,150 @@ void main() {
       ]);
     },
   );
+
+  test('manual refresh rebuilds the local catalog cache', () async {
+    final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
+    final api = _FakeItemsApi(items: _items);
+    final vm = AdvancedFilterViewModel(
+      client: _FakeMediaServerClient(itemsApi: api, baseUrl: serverUrl),
+      prefs: prefs,
+      catalogRepository: catalogRepository,
+    );
+
+    await vm.load();
+    await _waitForCatalogCache(catalogRepository, serverUrl, '');
+
+    expect(api.getItemsCalls, 1);
+
+    api.items = _secondUserItems;
+    await vm.refreshCatalog();
+
+    final snapshot = await catalogRepository.loadSnapshot(
+      serverId: serverUrl,
+      userId: '',
+    );
+    expect(api.getItemsCalls, 2);
+    expect(vm.results.map((item) => item.name), const ['Omega']);
+    expect(snapshot?.items.map((item) => item.name), const ['Omega']);
+  });
+
+  test(
+    'stale catalog loads immediately and refreshes in the background',
+    () async {
+      final prefs = await createPreferences();
+      final catalogRepository = createCatalogRepository();
+      await catalogRepository.replaceScope(
+        serverId: serverUrl,
+        userId: 'stale-user',
+        syncedAt: DateTime.now().toUtc().subtract(const Duration(hours: 2)),
+        items: _items
+            .map(
+              (raw) => AggregatedItem(
+                id: raw['Id'] as String,
+                serverId: serverUrl,
+                rawData: raw,
+              ),
+            )
+            .toList(),
+      );
+
+      final api = _FakeItemsApi(
+        items: _secondUserItems,
+        delay: const Duration(milliseconds: 20),
+      );
+      final vm = AdvancedFilterViewModel(
+        client: _FakeMediaServerClient(
+          itemsApi: api,
+          baseUrl: serverUrl,
+          userId: 'stale-user',
+        ),
+        prefs: prefs,
+        catalogRepository: catalogRepository,
+        catalogMaxAge: Duration.zero,
+      );
+
+      await vm.load();
+
+      expect(vm.state, AdvancedFilterLoadState.ready);
+      expect(vm.results.map((item) => item.name), const [
+        'Alpha',
+        'Beta',
+        'Delta',
+        'Gamma',
+      ]);
+
+      await _waitForCatalogNames(catalogRepository, serverUrl, 'stale-user', [
+        'Omega',
+      ]);
+      await _waitForViewModelNames(vm, ['Omega']);
+
+      expect(api.getItemsCalls, 1);
+      expect(vm.results.map((item) => item.name), const ['Omega']);
+    },
+  );
+
+  test(
+    'websocket library changes incrementally update cache and open view model',
+    () async {
+      final prefs = await createPreferences();
+      final catalogRepository = createCatalogRepository();
+      await catalogRepository.replaceScope(
+        serverId: serverUrl,
+        userId: 'ws-user',
+        items: _items
+            .map(
+              (raw) => AggregatedItem(
+                id: raw['Id'] as String,
+                serverId: serverUrl,
+                rawData: raw,
+              ),
+            )
+            .toList(),
+      );
+
+      final controller = StreamController<ServerWebSocketMessage>.broadcast();
+      addTearDown(controller.close);
+      final api = _FakeItemsApi(items: _updatedItems);
+      final client = _FakeMediaServerClient(
+        itemsApi: api,
+        baseUrl: serverUrl,
+        userId: 'ws-user',
+      );
+      final syncService = AdvancedFilterCatalogSyncService(
+        client: client,
+        repository: catalogRepository,
+        events: controller.stream,
+      )..start();
+      addTearDown(syncService.dispose);
+      final vm = AdvancedFilterViewModel(
+        client: client,
+        prefs: prefs,
+        catalogRepository: catalogRepository,
+        catalogSyncService: syncService,
+      );
+
+      await vm.load();
+
+      controller.add(
+        const LibraryChangedMessage(itemsUpdated: ['1'], itemsRemoved: ['2']),
+      );
+
+      await _waitForCatalogNames(catalogRepository, serverUrl, 'ws-user', [
+        'Alpha Prime',
+        'Delta',
+        'Gamma',
+      ]);
+      await _waitForViewModelNames(vm, ['Alpha Prime', 'Delta', 'Gamma']);
+
+      expect(api.getItemsCalls, 1);
+      expect(vm.results.map((item) => item.name), const [
+        'Alpha Prime',
+        'Delta',
+        'Gamma',
+      ]);
+    },
+  );
 }
 
 Future<void> _waitForCatalogCache(
@@ -394,6 +541,48 @@ Future<void> _waitForCatalogCache(
     await Future<void>.delayed(const Duration(milliseconds: 10));
   }
   fail('Expected advanced filter cache for $serverId / $userId');
+}
+
+Future<void> _waitForCatalogNames(
+  AdvancedFilterCatalogRepository catalogRepository,
+  String serverId,
+  String userId,
+  List<String> expectedNames,
+) async {
+  for (var i = 0; i < 30; i++) {
+    final snapshot = await catalogRepository.loadSnapshot(
+      serverId: serverId,
+      userId: userId,
+    );
+    final names = snapshot?.items.map((item) => item.name).toList();
+    if (_listEquals(names, expectedNames)) {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+  }
+  fail('Expected advanced filter catalog names $expectedNames');
+}
+
+Future<void> _waitForViewModelNames(
+  AdvancedFilterViewModel vm,
+  List<String> expectedNames,
+) async {
+  for (var i = 0; i < 30; i++) {
+    final names = vm.results.map((item) => item.name).toList();
+    if (_listEquals(names, expectedNames)) {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+  }
+  fail('Expected advanced filter view model names $expectedNames');
+}
+
+bool _listEquals(List<String>? left, List<String> right) {
+  if (left == null || left.length != right.length) return false;
+  for (var i = 0; i < left.length; i++) {
+    if (left[i] != right[i]) return false;
+  }
+  return true;
 }
 
 const _items = [
@@ -447,6 +636,18 @@ const _secondUserItems = [
   },
 ];
 
+const _updatedItems = [
+  {
+    'Id': '1',
+    'Name': 'Alpha Prime',
+    'Type': 'Movie',
+    'ProductionYear': 2026,
+    'Genres': ['Science Fiction'],
+    'ProductionLocations': ['United States'],
+    'UserData': <String, dynamic>{},
+  },
+];
+
 class _FakeMediaServerClient implements MediaServerClient {
   _FakeMediaServerClient({
     required this.itemsApi,
@@ -485,9 +686,10 @@ class _FakeMediaServerClient implements MediaServerClient {
 }
 
 class _FakeItemsApi implements ItemsApi {
-  _FakeItemsApi({required this.items});
+  _FakeItemsApi({required this.items, this.delay = Duration.zero});
 
-  final List<Map<String, dynamic>> items;
+  List<Map<String, dynamic>> items;
+  final Duration delay;
   int getItemsCalls = 0;
 
   @override
@@ -522,13 +724,29 @@ class _FakeItemsApi implements ItemsApi {
     bool? hasParentalRating,
   }) async {
     getItemsCalls += 1;
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+    var source = items;
+    if (ids != null && ids.isNotEmpty) {
+      final idSet = ids.toSet();
+      source = source
+          .where((item) => idSet.contains(item['Id']))
+          .toList(growable: false);
+    }
+    if (includeItemTypes != null && includeItemTypes.isNotEmpty) {
+      final typeSet = includeItemTypes.toSet();
+      source = source
+          .where((item) => typeSet.contains(item['Type']))
+          .toList(growable: false);
+    }
     final start = startIndex ?? 0;
     final end = limit == null
-        ? items.length
-        : (start + limit).clamp(0, items.length);
+        ? source.length
+        : (start + limit).clamp(0, source.length).toInt();
     return {
-      'Items': items.sublist(start, end),
-      'TotalRecordCount': items.length,
+      'Items': source.sublist(start, end),
+      'TotalRecordCount': source.length,
     };
   }
 

@@ -7,34 +7,52 @@ import 'package:server_core/server_core.dart' hide ImageType;
 import '../../preference/user_preferences.dart';
 import '../models/aggregated_item.dart';
 import '../repositories/advanced_filter_catalog_repository.dart';
+import '../services/advanced_filter_catalog_constants.dart';
+import '../services/advanced_filter_catalog_sync_service.dart';
 
 enum AdvancedFilterLoadState { loading, ready, error }
 
 enum AdvancedFilterSortField { name, year }
 
 class AdvancedFilterViewModel extends ChangeNotifier {
-  static const movieType = 'Movie';
-  static const seriesType = 'Series';
+  static const movieType = AdvancedFilterCatalogConstants.movieType;
+  static const seriesType = AdvancedFilterCatalogConstants.seriesType;
   static const _cacheVersion = 1;
-  static const _pageSize = 1000;
-  static const _itemFields =
-      'Type,UserData,PrimaryImageAspectRatio,SortName,CommunityRating,'
-      'OfficialRating,RunTimeTicks,ProductionYear,PremiereDate,Genres,'
-      'ProductionLocations,ImageTags,BackdropImageTags,ParentBackdropItemId,'
-      'ParentBackdropImageTags,ParentThumbItemId,ParentThumbImageTag,SeriesId,'
-      'SeriesPrimaryImageTag,PrimaryImageTag,PrimaryImageItemId';
 
   final MediaServerClient _client;
   final UserPreferences _prefs;
   final AdvancedFilterCatalogRepository _catalogRepository;
+  final AdvancedFilterCatalogSyncService _catalogSyncService;
+  final Duration _catalogMaxAge;
+  final bool _ownsCatalogSyncService;
+  StreamSubscription<void>? _catalogChangeSub;
+  bool _disposed = false;
 
   AdvancedFilterViewModel({
     required MediaServerClient client,
     required UserPreferences prefs,
     required AdvancedFilterCatalogRepository catalogRepository,
+    AdvancedFilterCatalogSyncService? catalogSyncService,
+    Duration catalogMaxAge =
+        AdvancedFilterCatalogSyncService.defaultCacheMaxAge,
   }) : _client = client,
        _prefs = prefs,
-       _catalogRepository = catalogRepository;
+       _catalogRepository = catalogRepository,
+       _catalogSyncService =
+           catalogSyncService ??
+           AdvancedFilterCatalogSyncService(
+             client: client,
+             repository: catalogRepository,
+             events: const Stream<ServerWebSocketMessage>.empty(),
+           ),
+       _ownsCatalogSyncService = catalogSyncService == null,
+       _catalogMaxAge = catalogMaxAge {
+    if (!_ownsCatalogSyncService) {
+      _catalogChangeSub = _catalogSyncService.catalogChanged.listen((_) {
+        unawaited(_reloadCatalogFromCacheAfterExternalChange());
+      });
+    }
+  }
 
   AdvancedFilterLoadState _state = AdvancedFilterLoadState.loading;
   AdvancedFilterLoadState get state => _state;
@@ -53,6 +71,12 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     if (total == null || total <= 0) return null;
     return (_loadedItemCount / total).clamp(0.0, 1.0);
   }
+
+  bool _isRefreshingCatalog = false;
+  bool get isRefreshingCatalog => _isRefreshingCatalog;
+
+  DateTime? _catalogSyncedAt;
+  DateTime? get catalogSyncedAt => _catalogSyncedAt;
 
   bool _hasApplied = false;
   bool get hasApplied => _hasApplied;
@@ -112,24 +136,31 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     try {
       _restoreSelections();
 
-      final cachedItems = await _loadCachedCatalogItems();
-      if (cachedItems != null) {
-        _useCatalogItems(cachedItems);
+      final cachedSnapshot = await _loadCachedCatalogSnapshot();
+      if (cachedSnapshot != null) {
+        _catalogSyncedAt = cachedSnapshot.syncedAt;
+        _useCatalogItems(cachedSnapshot.items);
         _state = AdvancedFilterLoadState.ready;
         notifyListeners();
+        if (_catalogRepository.isExpired(
+          cachedSnapshot,
+          maxAge: _catalogMaxAge,
+        )) {
+          unawaited(_refreshCatalogFromServer(background: true));
+        }
         return;
       }
 
-      final items = await _loadCatalogItems();
-      _useCatalogItems(items);
-      _state = AdvancedFilterLoadState.ready;
-      unawaited(_saveCatalogCache(items));
+      await _refreshCatalogFromServer(background: false);
     } catch (error) {
       _errorMessage = error.toString();
       _state = AdvancedFilterLoadState.error;
+      notifyListeners();
     }
+  }
 
-    notifyListeners();
+  Future<void> refreshCatalog() async {
+    await _refreshCatalogFromServer(background: _catalogItems.isNotEmpty);
   }
 
   Future<void> toggleType(String value) =>
@@ -269,52 +300,41 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     ]);
   }
 
-  Future<List<AggregatedItem>> _loadCatalogItems() async {
-    final items = <AggregatedItem>[];
-    var startIndex = 0;
-    int? total;
+  Future<void> _refreshCatalogFromServer({required bool background}) async {
+    if (_disposed || _isRefreshingCatalog) return;
 
-    while (true) {
-      final response = await _client.itemsApi.getItems(
-        includeItemTypes: const [movieType, seriesType],
-        recursive: true,
-        fields: _itemFields,
-        sortBy: 'SortName',
-        sortOrder: 'Ascending',
-        startIndex: startIndex,
-        limit: _pageSize,
-        enableTotalRecordCount: true,
-        enableImageTypes: 'Primary,Backdrop,Thumb',
-      );
-
-      total ??= response['TotalRecordCount'] as int?;
-      _totalItemCount = total;
-      final pageItems = response['Items'] as List? ?? const [];
-      if (pageItems.isEmpty) break;
-
-      for (final item in pageItems) {
-        if (item is! Map) continue;
-        final data = Map<String, dynamic>.from(item);
-        final id = data['Id'] as String?;
-        if (id == null || id.isEmpty) continue;
-        items.add(
-          AggregatedItem(
-            id: id,
-            serverId: data['ServerId'] as String? ?? _client.baseUrl,
-            rawData: data,
-          ),
-        );
-      }
-
-      startIndex += pageItems.length;
-      _loadedItemCount = startIndex;
-      notifyListeners();
-      if (pageItems.length < _pageSize) break;
-      if (total != null && startIndex >= total) break;
+    _isRefreshingCatalog = true;
+    _loadedItemCount = 0;
+    _totalItemCount = null;
+    if (!background) {
+      _state = AdvancedFilterLoadState.loading;
     }
+    notifyListeners();
 
-    items.sort((a, b) => _compareText(a.name, b.name));
-    return items;
+    try {
+      final items = await _catalogSyncService.refreshCatalog(
+        onProgress: _setLoadProgress,
+      );
+      _catalogSyncedAt = DateTime.now().toUtc();
+      _useCatalogItems(items);
+      _state = AdvancedFilterLoadState.ready;
+      _errorMessage = null;
+    } catch (error) {
+      _errorMessage = error.toString();
+      if (!background || _catalogItems.isEmpty) {
+        _state = AdvancedFilterLoadState.error;
+      }
+    } finally {
+      _isRefreshingCatalog = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
+
+  void _setLoadProgress(int loaded, int? total) {
+    if (_disposed) return;
+    _loadedItemCount = loaded;
+    _totalItemCount = total;
+    notifyListeners();
   }
 
   void _useCatalogItems(List<AggregatedItem> items) {
@@ -335,18 +355,23 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     await _persistSelections(applied: true);
   }
 
-  Future<List<AggregatedItem>?> _loadCachedCatalogItems() async {
+  Future<AdvancedFilterCatalogSnapshot?> _loadCachedCatalogSnapshot() async {
     final snapshot = await _catalogRepository.loadSnapshot(
       serverId: _client.baseUrl,
       userId: _catalogUserId,
     );
-    if (snapshot != null) return snapshot.items;
+    if (snapshot != null) return snapshot;
 
     final legacyItems = _loadLegacyCachedCatalogItems();
     if (legacyItems != null) {
       unawaited(_saveCatalogCache(legacyItems));
+      return AdvancedFilterCatalogSnapshot(
+        items: legacyItems,
+        syncedAt: null,
+        itemCount: legacyItems.length,
+      );
     }
-    return legacyItems;
+    return null;
   }
 
   List<AggregatedItem>? _loadLegacyCachedCatalogItems() {
@@ -393,6 +418,20 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     } catch (_) {
       // A cache write failure should not block filtering or navigation.
     }
+  }
+
+  Future<void> _reloadCatalogFromCacheAfterExternalChange() async {
+    if (_disposed || _state != AdvancedFilterLoadState.ready) return;
+
+    final snapshot = await _catalogRepository.loadSnapshot(
+      serverId: _client.baseUrl,
+      userId: _catalogUserId,
+    );
+    if (_disposed || snapshot == null) return;
+
+    _catalogSyncedAt = snapshot.syncedAt;
+    _useCatalogItems(snapshot.items);
+    notifyListeners();
   }
 
   List<AggregatedItem> _filterItems() {
@@ -518,5 +557,16 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     final lower = a.toLowerCase().compareTo(b.toLowerCase());
     if (lower != 0) return lower;
     return a.compareTo(b);
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _catalogChangeSub?.cancel();
+    _catalogChangeSub = null;
+    if (_ownsCatalogSyncService) {
+      _catalogSyncService.dispose();
+    }
+    super.dispose();
   }
 }

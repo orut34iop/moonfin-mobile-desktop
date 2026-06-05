@@ -7,6 +7,7 @@ import 'package:server_core/server_core.dart';
 
 import '../../../data/models/aggregated_item.dart';
 import '../../../data/repositories/advanced_filter_catalog_repository.dart';
+import '../../../data/services/advanced_filter_catalog_sync_service.dart';
 import '../../../data/viewmodels/advanced_filter_view_model.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../preference/user_preferences.dart';
@@ -37,6 +38,7 @@ class _AdvancedFilterScreenState extends State<AdvancedFilterScreen> {
       client: getIt<MediaServerClient>(),
       prefs: _prefs,
       catalogRepository: getIt<AdvancedFilterCatalogRepository>(),
+      catalogSyncService: getIt<AdvancedFilterCatalogSyncService>(),
     )..addListener(_onVmChanged);
     _vm.load();
   }
@@ -82,6 +84,7 @@ class _AdvancedFilterScreenState extends State<AdvancedFilterScreen> {
                     expandedRows: _expandedRows,
                     onToggleExpandedRow: _toggleExpandedRow,
                     onClearAll: _vm.clearAll,
+                    onRefreshCatalog: _vm.refreshCatalog,
                   ),
                 ),
                 ..._buildBodySlivers(),
@@ -159,12 +162,14 @@ class _FilterPanel extends StatelessWidget {
   final Set<_FilterRowKey> expandedRows;
   final ValueChanged<_FilterRowKey> onToggleExpandedRow;
   final Future<void> Function() onClearAll;
+  final Future<void> Function() onRefreshCatalog;
 
   const _FilterPanel({
     required this.vm,
     required this.expandedRows,
     required this.onToggleExpandedRow,
     required this.onClearAll,
+    required this.onRefreshCatalog,
   });
 
   @override
@@ -180,6 +185,10 @@ class _FilterPanel extends StatelessWidget {
       style: TextButton.styleFrom(foregroundColor: const Color(0xFFFF5368)),
       icon: const Icon(Icons.clear_all_rounded),
       label: Text(l10n.clearFilters),
+    );
+    final refreshButton = _RefreshCatalogButton(
+      vm: vm,
+      onRefreshCatalog: onRefreshCatalog,
     );
 
     return Material(
@@ -218,12 +227,22 @@ class _FilterPanel extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (!isCompact && vm.hasActiveFilters) ...[clearButton],
+                  if (!isCompact) ...[
+                    refreshButton,
+                    if (vm.hasActiveFilters) clearButton,
+                  ],
                 ],
               ),
-              if (isCompact && vm.hasActiveFilters) ...[
+              if (isCompact) ...[
                 const SizedBox(height: 14),
-                Align(alignment: Alignment.centerLeft, child: clearButton),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    refreshButton,
+                    if (vm.hasActiveFilters) clearButton,
+                  ],
+                ),
               ],
               const SizedBox(height: 18),
               _FilterRow(
@@ -293,6 +312,39 @@ class _FilterPanel extends StatelessWidget {
 }
 
 enum _FilterOptionLabel { movie, series }
+
+class _RefreshCatalogButton extends StatelessWidget {
+  final AdvancedFilterViewModel vm;
+  final Future<void> Function() onRefreshCatalog;
+
+  const _RefreshCatalogButton({
+    required this.vm,
+    required this.onRefreshCatalog,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final enabled =
+        vm.state == AdvancedFilterLoadState.ready && !vm.isRefreshingCatalog;
+
+    return TextButton.icon(
+      onPressed: enabled ? () => unawaited(onRefreshCatalog()) : null,
+      style: TextButton.styleFrom(foregroundColor: const Color(0xFFFF5368)),
+      icon: SizedBox(
+        width: 20,
+        height: 20,
+        child: vm.isRefreshingCatalog
+            ? const CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation(Color(0xFFFF5368)),
+              )
+            : const Icon(Icons.refresh_rounded),
+      ),
+      label: Text(l10n.refresh),
+    );
+  }
+}
 
 class _FilterOption {
   final String value;

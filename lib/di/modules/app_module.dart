@@ -8,6 +8,7 @@ import '../../auth/repositories/session_repository.dart';
 import '../../auth/store/authentication_store.dart';
 import '../../auth/store/credential_store.dart';
 import '../../data/repositories/mdblist_repository.dart';
+import '../../data/repositories/advanced_filter_catalog_repository.dart';
 import '../../data/repositories/multi_server_repository.dart';
 import '../../data/repositories/media_bar_repository.dart';
 import '../../data/repositories/offline_repository.dart';
@@ -19,6 +20,7 @@ import '../../data/repositories/search_repository.dart';
 import '../../data/repositories/item_mutation_repository.dart';
 import '../../data/services/background_service.dart';
 import '../../data/services/app_update_service.dart';
+import '../../data/services/advanced_filter_catalog_sync_service.dart';
 import '../../data/services/cast/airplay_provider.dart';
 import '../../data/services/cast/airplay_command_bridge.dart';
 import '../../data/services/cast/cast_service.dart';
@@ -68,6 +70,7 @@ void resetUserScopedSingletons() {
   unregister<ItemMutationRepository>();
   unregister<SearchRepository>();
   unregister<UserViewsRepository>();
+  unregister<AdvancedFilterCatalogSyncService>();
 
   _registerUserScopedSingletons();
 }
@@ -165,6 +168,14 @@ void _registerUserScopedSingletons() {
   _getIt.registerLazySingleton(() => ItemMutationRepository(_getIt()));
   _getIt.registerLazySingleton(
     () => RowDataSource(_getIt<MediaServerClient>()),
+  );
+  _getIt.registerLazySingleton(
+    () => AdvancedFilterCatalogSyncService(
+      client: _getIt<MediaServerClient>(),
+      repository: _getIt<AdvancedFilterCatalogRepository>(),
+      events: _getIt<SocketHandler>().events,
+    )..start(),
+    dispose: (service) => service.dispose(),
   );
   _getIt.registerLazySingleton(
     () => MdbListRepository(_getIt<MediaServerClient>()),

@@ -7,6 +7,7 @@ import 'package:server_core/server_core.dart';
 
 import '../../data/models/aggregated_item.dart';
 import '../../data/services/download_notification_service.dart';
+import '../../data/services/advanced_filter_catalog_sync_service.dart';
 import '../../data/services/media_server_client_factory.dart';
 import '../../data/services/plugin_sync_service.dart';
 import '../../data/services/socket_handler.dart';
@@ -146,6 +147,7 @@ class SessionRepository {
     resetUserScopedSingletons();
     setActiveStreamResolver(client);
     _socketHandler.connectTo(client);
+    GetIt.instance<AdvancedFilterCatalogSyncService>().start();
     _bindRemoteCommandHandling();
 
     _activeServerId = serverId;
