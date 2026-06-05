@@ -162,6 +162,29 @@ class Destinations {
   static String itemListOf(String itemId) => '/item/$itemId/list';
   static String musicFavoritesOf(String parentId) =>
       '/music-favorites/$parentId';
+  static String advancedFilterWith({
+    List<String> genres = const [],
+    int? year,
+  }) {
+    final queryParameters = <String, List<String>>{};
+    final normalizedGenres = genres
+        .map((genre) => genre.trim())
+        .where((genre) => genre.isNotEmpty)
+        .toSet()
+        .toList();
+    if (normalizedGenres.isNotEmpty) {
+      queryParameters['genre'] = normalizedGenres;
+    }
+    if (year != null && year > 0) {
+      queryParameters['year'] = [year.toString()];
+    }
+    if (queryParameters.isEmpty) return advancedFilter;
+    return Uri(
+      path: advancedFilter,
+      queryParameters: queryParameters,
+    ).toString();
+  }
+
   static String genre(
     String genreName, {
     String? genreId,

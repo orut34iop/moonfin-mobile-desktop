@@ -114,6 +114,7 @@ Books and audiobooks download in their **original format** - no transcoding.
 - Filter row options are recalculated from the current result set so impossible follow-up choices are hidden
 - Results show the matched item count and support name/year sorting in either direction
 - Item detail title metadata displays the complete genre list for direct comparison with filter selections
+- Clicking a title genre on an item detail page opens Advanced Filter with that item's genres and year preselected
 - Advanced filter performance diagnostics are appended to `Documents/Moonfin/logs/advanced_filter_perf.log`
 
 ### Featured Media Bar

@@ -255,7 +255,10 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: Destinations.advancedFilter,
-      builder: (context, state) => const AdvancedFilterScreen(),
+      builder: (context, state) => AdvancedFilterScreen(
+        initialGenres: state.uri.queryParametersAll['genre'] ?? const [],
+        initialYears: state.uri.queryParametersAll['year'] ?? const [],
+      ),
     ),
 
     // Browsing

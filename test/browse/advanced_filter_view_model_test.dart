@@ -92,6 +92,54 @@ void main() {
     ]);
   });
 
+  test('route initial selections replace persisted filters', () async {
+    final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
+    await prefs.set(UserPreferences.advancedFilterTypes(serverUrl), const [
+      'Series',
+    ]);
+    await prefs.set(UserPreferences.advancedFilterRegions(serverUrl), const [
+      'United States',
+    ]);
+    await prefs.set(UserPreferences.advancedFilterGenres(serverUrl), const [
+      'Drama',
+    ]);
+
+    final vm = AdvancedFilterViewModel(
+      client: _FakeMediaServerClient(
+        itemsApi: _FakeItemsApi(items: _items),
+        baseUrl: serverUrl,
+      ),
+      prefs: prefs,
+      catalogRepository: catalogRepository,
+    );
+
+    await vm.load(
+      initialSelection: const AdvancedFilterInitialSelection(
+        genres: ['Science Fiction', 'Adventure'],
+        years: ['2024'],
+      ),
+    );
+
+    expect(vm.selectedTypes, isEmpty);
+    expect(vm.selectedRegions, isEmpty);
+    expect(vm.selectedGenres, const {'Science Fiction', 'Adventure'});
+    expect(vm.selectedYears, const {'2024'});
+    expect(vm.results.map((item) => item.name), const ['Delta']);
+    expect(prefs.get(UserPreferences.advancedFilterTypes(serverUrl)), isEmpty);
+    expect(prefs.get(UserPreferences.advancedFilterGenres(serverUrl)), const [
+      'Adventure',
+      'Science Fiction',
+    ]);
+    expect(
+      prefs.get(UserPreferences.advancedFilterRegions(serverUrl)),
+      isEmpty,
+    );
+    expect(prefs.get(UserPreferences.advancedFilterYears(serverUrl)), const [
+      '2024',
+    ]);
+  });
+
   test(
     'filters immediately with multi-value rows requiring all selections',
     () async {

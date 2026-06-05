@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:moonfin/data/models/aggregated_item.dart';
+import 'package:moonfin/ui/navigation/destinations.dart';
 import 'package:moonfin/ui/screens/detail/item_detail_screen.dart';
 
 void main() {
@@ -24,5 +25,17 @@ void main() {
     );
 
     expect(detailTitleGenres(item), genres);
+  });
+
+  test('advanced filter route carries detail genres and year', () {
+    final location = Destinations.advancedFilterWith(
+      genres: const ['Drama', 'Science Fiction'],
+      year: 2024,
+    );
+    final uri = Uri.parse(location);
+
+    expect(uri.path, Destinations.advancedFilter);
+    expect(uri.queryParametersAll['genre'], const ['Drama', 'Science Fiction']);
+    expect(uri.queryParametersAll['year'], const ['2024']);
   });
 }

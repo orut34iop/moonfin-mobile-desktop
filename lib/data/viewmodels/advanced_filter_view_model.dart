@@ -16,6 +16,40 @@ enum AdvancedFilterLoadState { loading, ready, error }
 
 enum AdvancedFilterSortField { name, year }
 
+@immutable
+class AdvancedFilterInitialSelection {
+  final List<String> genres;
+  final List<String> years;
+
+  const AdvancedFilterInitialSelection({
+    this.genres = const [],
+    this.years = const [],
+  });
+
+  Set<String> get normalizedGenres => _normalizeTextValues(genres);
+
+  Set<String> get normalizedYears {
+    final values = <String>{};
+    for (final rawYear in years) {
+      final year = int.tryParse(rawYear.trim());
+      if (year != null && year > 0) {
+        values.add(year.toString());
+      }
+    }
+    return values;
+  }
+
+  bool get hasSelections =>
+      normalizedGenres.isNotEmpty || normalizedYears.isNotEmpty;
+
+  static Set<String> _normalizeTextValues(Iterable<String> values) {
+    return values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet();
+  }
+}
+
 class AdvancedFilterViewModel extends ChangeNotifier {
   static const movieType = AdvancedFilterCatalogConstants.movieType;
   static const seriesType = AdvancedFilterCatalogConstants.seriesType;
@@ -175,7 +209,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         'selectedYears=${_selectedYears.length}';
   }
 
-  Future<void> load() async {
+  Future<void> load({AdvancedFilterInitialSelection? initialSelection}) async {
     final traceId = _startPerfTrace('load');
     unawaited(
       AdvancedFilterPerfLogger.getLogPath().then(
@@ -195,6 +229,16 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       _logPerf(
         traceId,
         'load:restoreSelections ms=${restoreWatch.elapsedMilliseconds} '
+        '${_selectionSummary()}',
+      );
+      final initialSelectionWatch = Stopwatch()..start();
+      final appliedInitialSelection = _applyInitialSelection(initialSelection);
+      initialSelectionWatch.stop();
+      _logPerf(
+        traceId,
+        'load:applyInitialSelection '
+        'applied=$appliedInitialSelection '
+        'ms=${initialSelectionWatch.elapsedMilliseconds} '
         '${_selectionSummary()}',
       );
 
@@ -228,10 +272,22 @@ class AdvancedFilterViewModel extends ChangeNotifier {
           unawaited(_refreshCatalogFromServer(background: true));
         }
         _logPerf(traceId, 'load:readyFromCache ${_stateSummary()}');
+        if (appliedInitialSelection) {
+          await _persistInitialSelections(
+            traceId: traceId,
+            reason: 'load-cache-initialSelection',
+          );
+        }
         return;
       }
 
       await _refreshCatalogFromServer(background: false);
+      if (appliedInitialSelection && _state == AdvancedFilterLoadState.ready) {
+        await _persistInitialSelections(
+          traceId: traceId,
+          reason: 'load-refresh-initialSelection',
+        );
+      }
     } catch (error) {
       _logPerf(traceId, 'load:error $error');
       _errorMessage = error.toString();
@@ -394,6 +450,19 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     );
   }
 
+  bool _applyInitialSelection(AdvancedFilterInitialSelection? selection) {
+    if (selection == null || !selection.hasSelections) return false;
+
+    final years = selection.normalizedYears.toList()
+      ..sort((a, b) => b.compareTo(a));
+    _selectedTypes = <String>{};
+    _selectedGenres = selection.normalizedGenres;
+    _selectedRegions = <String>{};
+    _selectedYears = years.take(1).toSet();
+    _hasApplied = true;
+    return true;
+  }
+
   Future<void> _persistSelections({required bool applied}) async {
     final orderedTypes = _selectedTypes.toList()..sort(_typeSort);
     final orderedGenres = _selectedGenres.toList()..sort(_compareText);
@@ -423,6 +492,20 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         applied,
       ),
     ]);
+  }
+
+  Future<void> _persistInitialSelections({
+    required int traceId,
+    required String reason,
+  }) async {
+    final persistWatch = Stopwatch()..start();
+    await _persistSelections(applied: true);
+    persistWatch.stop();
+    _logPerf(
+      traceId,
+      '$reason:persistSelectionsDone '
+      'ms=${persistWatch.elapsedMilliseconds} ${_selectionSummary()}',
+    );
   }
 
   Future<void> _schedulePersistSelections({

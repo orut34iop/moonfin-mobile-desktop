@@ -3109,7 +3109,7 @@ class _MetadataRow extends StatelessWidget {
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () => _openGenreBrowse(context, genre),
+            onTap: () => _openAdvancedFilter(context),
             child: Text(
               genre,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -3138,17 +3138,16 @@ class _MetadataRow extends StatelessWidget {
     );
   }
 
-  void _openGenreBrowse(BuildContext context, String genre) {
-    final trimmed = genre.trim();
-    if (trimmed.isEmpty) return;
+  void _openAdvancedFilter(BuildContext context) {
+    final genres = detailTitleGenres(item);
+    if (genres.isEmpty && item.productionYear == null) return;
 
-    final includeType = switch (item.type) {
-      'Movie' => 'Movie',
-      'Series' => 'Series',
-      _ => null,
-    };
-
-    context.push(Destinations.genre(trimmed, includeType: includeType));
+    context.push(
+      Destinations.advancedFilterWith(
+        genres: genres,
+        year: item.productionYear,
+      ),
+    );
   }
 
   Widget _badge(ThemeData theme, String label) {

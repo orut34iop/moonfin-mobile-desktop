@@ -19,7 +19,14 @@ import '../../widgets/navigation_layout.dart';
 import '../../widgets/focus/request_initial_focus.dart';
 
 class AdvancedFilterScreen extends StatefulWidget {
-  const AdvancedFilterScreen({super.key});
+  final List<String> initialGenres;
+  final List<String> initialYears;
+
+  const AdvancedFilterScreen({
+    super.key,
+    this.initialGenres = const [],
+    this.initialYears = const [],
+  });
 
   @override
   State<AdvancedFilterScreen> createState() => _AdvancedFilterScreenState();
@@ -41,7 +48,12 @@ class _AdvancedFilterScreenState extends State<AdvancedFilterScreen> {
       catalogRepository: getIt<AdvancedFilterCatalogRepository>(),
       catalogSyncService: getIt<AdvancedFilterCatalogSyncService>(),
     )..addListener(_onVmChanged);
-    _vm.load();
+    _vm.load(
+      initialSelection: AdvancedFilterInitialSelection(
+        genres: widget.initialGenres,
+        years: widget.initialYears,
+      ),
+    );
   }
 
   @override
