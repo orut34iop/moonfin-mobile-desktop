@@ -248,6 +248,82 @@ void main() {
     expect(secondVm.genres, const ['Drama', 'Science Fiction']);
     expect(secondVm.regions, const ['France', 'United States']);
   });
+
+  test('isolates catalog cache and selections per server user', () async {
+    final prefs = await createPreferences();
+    final firstUserApi = _FakeItemsApi(items: _items);
+    final firstUserVm = AdvancedFilterViewModel(
+      client: _FakeMediaServerClient(
+        itemsApi: firstUserApi,
+        baseUrl: serverUrl,
+        userId: 'user-a',
+      ),
+      prefs: prefs,
+    );
+
+    await firstUserVm.load();
+    await _waitForCatalogCache(prefs, '$serverUrl::user-a');
+    await firstUserVm.toggleGenre('Drama');
+
+    expect(firstUserApi.getItemsCalls, 1);
+    expect(
+      prefs.get(UserPreferences.advancedFilterGenres('$serverUrl::user-a')),
+      const ['Drama'],
+    );
+    expect(
+      prefs.get(UserPreferences.advancedFilterGenres('$serverUrl::user-b')),
+      isEmpty,
+    );
+
+    final secondUserApi = _FakeItemsApi(items: _secondUserItems);
+    final secondUserVm = AdvancedFilterViewModel(
+      client: _FakeMediaServerClient(
+        itemsApi: secondUserApi,
+        baseUrl: serverUrl,
+        userId: 'user-b',
+      ),
+      prefs: prefs,
+    );
+
+    await secondUserVm.load();
+
+    expect(secondUserApi.getItemsCalls, 1);
+    expect(secondUserVm.selectedGenres, isEmpty);
+    expect(secondUserVm.genres, const ['Comedy']);
+    expect(secondUserVm.regions, const ['Japan']);
+    expect(secondUserVm.years, const ['2025']);
+    expect(secondUserVm.results.map((item) => item.name), const ['Omega']);
+
+    final firstUserReloadApi = _FakeItemsApi(items: const []);
+    final firstUserReloadVm = AdvancedFilterViewModel(
+      client: _FakeMediaServerClient(
+        itemsApi: firstUserReloadApi,
+        baseUrl: serverUrl,
+        userId: 'user-a',
+      ),
+      prefs: prefs,
+    );
+
+    await firstUserReloadVm.load();
+
+    expect(firstUserReloadApi.getItemsCalls, 0);
+    expect(firstUserReloadVm.selectedGenres, const {'Drama'});
+    expect(firstUserReloadVm.genres, const ['Drama', 'Science Fiction']);
+    expect(firstUserReloadVm.results.map((item) => item.name), const ['Gamma']);
+  });
+}
+
+Future<void> _waitForCatalogCache(
+  UserPreferences prefs,
+  String scopeKey,
+) async {
+  for (var i = 0; i < 10; i++) {
+    if (prefs.get(UserPreferences.advancedFilterCache(scopeKey)).isNotEmpty) {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
+  fail('Expected advanced filter cache for $scopeKey');
 }
 
 const _items = [
@@ -289,14 +365,33 @@ const _items = [
   },
 ];
 
+const _secondUserItems = [
+  {
+    'Id': '5',
+    'Name': 'Omega',
+    'Type': 'Movie',
+    'ProductionYear': 2025,
+    'Genres': ['Comedy'],
+    'ProductionLocations': ['Japan'],
+    'UserData': <String, dynamic>{},
+  },
+];
+
 class _FakeMediaServerClient implements MediaServerClient {
-  _FakeMediaServerClient({required this.itemsApi, required this.baseUrl});
+  _FakeMediaServerClient({
+    required this.itemsApi,
+    required this.baseUrl,
+    this.userId,
+  });
 
   @override
   final ItemsApi itemsApi;
 
   @override
   String baseUrl;
+
+  @override
+  String? userId;
 
   @override
   ServerType get serverType => ServerType.emby;

@@ -90,7 +90,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       _selectedRegions.isNotEmpty ||
       _selectedYears.isNotEmpty;
 
-  String get _serverKey => _client.baseUrl;
+  String get _preferenceScopeKey {
+    final userId = _client.userId?.trim();
+    if (userId == null || userId.isEmpty) return _client.baseUrl;
+    return '${_client.baseUrl}::$userId';
+  }
 
   Future<void> load() async {
     _state = AdvancedFilterLoadState.loading;
@@ -192,25 +196,27 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   void _restoreSelections() {
     _selectedTypes = _prefs
-        .get(UserPreferences.advancedFilterTypes(_serverKey))
+        .get(UserPreferences.advancedFilterTypes(_preferenceScopeKey))
         .where(_validType)
         .toSet();
     _selectedGenres = _prefs
-        .get(UserPreferences.advancedFilterGenres(_serverKey))
+        .get(UserPreferences.advancedFilterGenres(_preferenceScopeKey))
         .toSet();
     _selectedRegions = _prefs
-        .get(UserPreferences.advancedFilterRegions(_serverKey))
+        .get(UserPreferences.advancedFilterRegions(_preferenceScopeKey))
         .toSet();
     _selectedYears = _prefs
-        .get(UserPreferences.advancedFilterYears(_serverKey))
+        .get(UserPreferences.advancedFilterYears(_preferenceScopeKey))
         .toSet();
     _sortField = _normalizeSortField(
-      _prefs.get(UserPreferences.advancedFilterSortField(_serverKey)),
+      _prefs.get(UserPreferences.advancedFilterSortField(_preferenceScopeKey)),
     );
     _sortAscending = _prefs.get(
-      UserPreferences.advancedFilterSortAscending(_serverKey),
+      UserPreferences.advancedFilterSortAscending(_preferenceScopeKey),
     );
-    _hasApplied = _prefs.get(UserPreferences.advancedFilterApplied(_serverKey));
+    _hasApplied = _prefs.get(
+      UserPreferences.advancedFilterApplied(_preferenceScopeKey),
+    );
   }
 
   Future<void> _persistSelections({required bool applied}) async {
@@ -221,28 +227,37 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       ..sort((a, b) => b.compareTo(a));
 
     await Future.wait([
-      _prefs.set(UserPreferences.advancedFilterTypes(_serverKey), orderedTypes),
       _prefs.set(
-        UserPreferences.advancedFilterGenres(_serverKey),
+        UserPreferences.advancedFilterTypes(_preferenceScopeKey),
+        orderedTypes,
+      ),
+      _prefs.set(
+        UserPreferences.advancedFilterGenres(_preferenceScopeKey),
         orderedGenres,
       ),
       _prefs.set(
-        UserPreferences.advancedFilterRegions(_serverKey),
+        UserPreferences.advancedFilterRegions(_preferenceScopeKey),
         orderedRegions,
       ),
-      _prefs.set(UserPreferences.advancedFilterYears(_serverKey), orderedYears),
-      _prefs.set(UserPreferences.advancedFilterApplied(_serverKey), applied),
+      _prefs.set(
+        UserPreferences.advancedFilterYears(_preferenceScopeKey),
+        orderedYears,
+      ),
+      _prefs.set(
+        UserPreferences.advancedFilterApplied(_preferenceScopeKey),
+        applied,
+      ),
     ]);
   }
 
   Future<void> _persistSort() async {
     await Future.wait([
       _prefs.set(
-        UserPreferences.advancedFilterSortField(_serverKey),
+        UserPreferences.advancedFilterSortField(_preferenceScopeKey),
         _sortField.name,
       ),
       _prefs.set(
-        UserPreferences.advancedFilterSortAscending(_serverKey),
+        UserPreferences.advancedFilterSortAscending(_preferenceScopeKey),
         _sortAscending,
       ),
     ]);
@@ -315,7 +330,9 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   }
 
   List<AggregatedItem>? _loadCachedCatalogItems() {
-    final raw = _prefs.get(UserPreferences.advancedFilterCache(_serverKey));
+    final raw = _prefs.get(
+      UserPreferences.advancedFilterCache(_preferenceScopeKey),
+    );
     if (raw.isEmpty) return null;
 
     try {
@@ -354,7 +371,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         'items': items.map((item) => item.rawData).toList(growable: false),
       };
       await _prefs.set(
-        UserPreferences.advancedFilterCache(_serverKey),
+        UserPreferences.advancedFilterCache(_preferenceScopeKey),
         jsonEncode(payload),
       );
     } catch (_) {
