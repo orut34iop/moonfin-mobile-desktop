@@ -38,7 +38,9 @@ class PreferenceStore {
       case List<String> _:
         return (_requirePrefs.getStringList(key) ?? defaultValue) as T;
       default:
-        throw ArgumentError('Unsupported preference type: ${defaultValue.runtimeType}');
+        throw ArgumentError(
+          'Unsupported preference type: ${defaultValue.runtimeType}',
+        );
     }
   }
 
@@ -62,14 +64,17 @@ class PreferenceStore {
       case List<String> v:
         await _requirePrefs.setStringList(key, v);
       default:
-        throw ArgumentError('Unsupported preference type: ${value.runtimeType}');
+        throw ArgumentError(
+          'Unsupported preference type: ${value.runtimeType}',
+        );
     }
   }
 
   Future<void> delete<T>(Preference<T> preference) =>
       _requirePrefs.remove(preference.key);
 
-  Future<void> reset<T>(Preference<T> preference) => set(preference, preference.defaultValue);
+  Future<void> reset<T>(Preference<T> preference) =>
+      set(preference, preference.defaultValue);
 
   dynamic _getEnumDynamic(EnumPreference<dynamic> preference) {
     final stored = _requirePrefs.getString(preference.key);
@@ -103,6 +108,36 @@ class PreferenceStore {
   bool containsKey(String key) => _requirePrefs.containsKey(key);
 
   Future<bool> remove(String key) => _requirePrefs.remove(key);
+
+  Set<String> getKeys() => _requirePrefs.getKeys();
+
+  Future<int> removeAll(Set<String> keys) async {
+    final keysToRemove = keys.where(_requirePrefs.containsKey).toSet();
+    if (keysToRemove.isEmpty) return 0;
+
+    try {
+      final asyncPrefs = SharedPreferencesAsync();
+      await asyncPrefs.clear(
+        allowList: {
+          ...keysToRemove,
+          ...keysToRemove.map((key) => 'flutter.$key'),
+        },
+      );
+      await _requirePrefs.reload();
+    } catch (_) {
+      for (final key in keysToRemove) {
+        await _requirePrefs.remove(key);
+      }
+      return keysToRemove.length;
+    }
+
+    final remainingKeys = keysToRemove.where(_requirePrefs.containsKey);
+    for (final key in remainingKeys) {
+      await _requirePrefs.remove(key);
+    }
+    return keysToRemove.length;
+  }
+
   Future<bool> clear() => _requirePrefs.clear();
 
   static final _versionKey = 'store_version';

@@ -31,6 +31,14 @@ class UserPreferences extends ChangeNotifier {
     notifyListeners();
   }
 
+  Set<String> get preferenceKeys => _store.getKeys();
+
+  Future<int> removePreferenceKeys(Set<String> keys) async {
+    final removedCount = await _store.removeAll(keys);
+    if (removedCount > 0) notifyListeners();
+    return removedCount;
+  }
+
   bool containsPreferenceKey(String key) => _store.containsKey(key);
 
   bool containsPreference<T>(Preference<T> pref) =>
@@ -929,8 +937,10 @@ class UserPreferences extends ChangeNotifier {
     defaultValue: true,
   );
 
+  static const advancedFilterCacheKeyPrefix = 'advanced_filter_cache_';
+
   static Preference<String> advancedFilterCache(String serverId) => Preference(
-    key: 'advanced_filter_cache_${_advancedFilterKeySuffix(serverId)}',
+    key: '$advancedFilterCacheKeyPrefix${_advancedFilterKeySuffix(serverId)}',
     defaultValue: '',
   );
 

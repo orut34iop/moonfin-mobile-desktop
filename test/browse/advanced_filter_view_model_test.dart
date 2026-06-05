@@ -382,7 +382,7 @@ void main() {
   );
 
   test(
-    'clears legacy shared preferences catalog after loading local cache',
+    'clears all legacy shared preferences catalogs after loading local cache',
     () async {
       final prefs = await createPreferences();
       final catalogRepository = createCatalogRepository();
@@ -403,6 +403,14 @@ void main() {
         UserPreferences.advancedFilterCache('$serverUrl::cached-user'),
         jsonEncode({'version': 1, 'items': _items}),
       );
+      await prefs.set(
+        UserPreferences.advancedFilterCache(serverUrl),
+        jsonEncode({'version': 1, 'items': _secondUserItems}),
+      );
+      await prefs.set(
+        UserPreferences.advancedFilterCache('$serverUrl::other-user'),
+        jsonEncode({'version': 1, 'items': _updatedItems}),
+      );
 
       final api = _FakeItemsApi(items: const []);
       final vm = AdvancedFilterViewModel(
@@ -421,6 +429,16 @@ void main() {
       expect(
         prefs.get(
           UserPreferences.advancedFilterCache('$serverUrl::cached-user'),
+        ),
+        isEmpty,
+      );
+      expect(
+        prefs.get(UserPreferences.advancedFilterCache(serverUrl)),
+        isEmpty,
+      );
+      expect(
+        prefs.get(
+          UserPreferences.advancedFilterCache('$serverUrl::other-user'),
         ),
         isEmpty,
       );

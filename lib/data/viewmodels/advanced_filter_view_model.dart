@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:jellyfin_preference/jellyfin_preference.dart';
 import 'package:server_core/server_core.dart' hide ImageType;
 
 import '../../preference/user_preferences.dart';
@@ -567,7 +568,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         reason: background ? 'refresh-background' : 'refresh-foreground',
         traceId: traceId,
       );
-      await _clearLegacyCatalogPreference(
+      await _clearLegacyCatalogPreferences(
         traceId: traceId,
         reason: 'server-refresh',
       );
@@ -678,7 +679,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       userId: _catalogUserId,
     );
     if (snapshot != null) {
-      await _clearLegacyCatalogPreference(
+      await _clearLegacyCatalogPreferences(
         traceId: traceId,
         reason: 'sqlite-cache-hit',
       );
@@ -737,26 +738,34 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _clearLegacyCatalogPreference({
+  Future<void> _clearLegacyCatalogPreferences({
     required int traceId,
     required String reason,
   }) async {
     if (_legacyCatalogPreferenceCleared) return;
-    final pref = UserPreferences.advancedFilterCache(_preferenceScopeKey);
-    final rawLength = _prefs.get(pref).length;
+    final cacheKeys = _prefs.preferenceKeys
+        .where(
+          (key) => key.startsWith(UserPreferences.advancedFilterCacheKeyPrefix),
+        )
+        .toSet();
     _legacyCatalogPreferenceCleared = true;
-    if (rawLength == 0) {
+    if (cacheKeys.isEmpty) {
       _logPerf(traceId, 'legacyCacheClear:skip reason=$reason empty=true');
       return;
     }
+    final rawLength = cacheKeys.fold<int>(0, (total, key) {
+      return total +
+          _prefs.get(Preference<String>(key: key, defaultValue: '')).length;
+    });
 
     final clearWatch = Stopwatch()..start();
     try {
-      await _prefs.removePreference(pref);
+      final removedCount = await _prefs.removePreferenceKeys(cacheKeys);
       clearWatch.stop();
       _logPerf(
         traceId,
-        'legacyCacheClear:done reason=$reason bytes=$rawLength '
+        'legacyCacheClear:done reason=$reason keys=$removedCount '
+        'bytes=$rawLength '
         'ms=${clearWatch.elapsedMilliseconds}',
       );
     } catch (error) {
@@ -764,7 +773,8 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       _legacyCatalogPreferenceCleared = false;
       _logPerf(
         traceId,
-        'legacyCacheClear:error reason=$reason bytes=$rawLength '
+        'legacyCacheClear:error reason=$reason keys=${cacheKeys.length} '
+        'bytes=$rawLength '
         'ms=${clearWatch.elapsedMilliseconds} error=$error',
       );
     }
@@ -782,7 +792,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         items: items,
       );
       if (clearLegacyAfterSave && traceId != null) {
-        await _clearLegacyCatalogPreference(
+        await _clearLegacyCatalogPreferences(
           traceId: traceId,
           reason: 'legacy-migrated-to-sqlite',
         );
