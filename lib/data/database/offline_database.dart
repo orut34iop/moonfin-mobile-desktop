@@ -44,16 +44,77 @@ class DownloadedItems extends Table {
   Set<Column> get primaryKey => {itemId, serverId};
 }
 
-@DriftDatabase(tables: [DownloadedItems])
+class AdvancedFilterCatalogItems extends Table {
+  TextColumn get serverId => text()();
+  TextColumn get userId => text()();
+  TextColumn get itemId => text()();
+  TextColumn get type => text()();
+  TextColumn get name => text()();
+  TextColumn get sortName => text()();
+  IntColumn get productionYear => integer().nullable()();
+  TextColumn get metadataJson => text()();
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {serverId, userId, itemId};
+}
+
+class AdvancedFilterCatalogItemGenres extends Table {
+  TextColumn get serverId => text()();
+  TextColumn get userId => text()();
+  TextColumn get itemId => text()();
+  TextColumn get genre => text()();
+
+  @override
+  Set<Column> get primaryKey => {serverId, userId, itemId, genre};
+}
+
+class AdvancedFilterCatalogItemRegions extends Table {
+  TextColumn get serverId => text()();
+  TextColumn get userId => text()();
+  TextColumn get itemId => text()();
+  TextColumn get region => text()();
+
+  @override
+  Set<Column> get primaryKey => {serverId, userId, itemId, region};
+}
+
+class AdvancedFilterCatalogSyncStates extends Table {
+  TextColumn get serverId => text()();
+  TextColumn get userId => text()();
+  IntColumn get cacheVersion => integer()();
+  IntColumn get itemCount => integer()();
+  DateTimeColumn get syncedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {serverId, userId};
+}
+
+@DriftDatabase(
+  tables: [
+    DownloadedItems,
+    AdvancedFilterCatalogItems,
+    AdvancedFilterCatalogItemGenres,
+    AdvancedFilterCatalogItemRegions,
+    AdvancedFilterCatalogSyncStates,
+  ],
+)
 class OfflineDatabase extends _$OfflineDatabase {
   OfflineDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
-    onUpgrade: (m, from, to) async {},
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(advancedFilterCatalogItems);
+        await m.createTable(advancedFilterCatalogItemGenres);
+        await m.createTable(advancedFilterCatalogItemRegions);
+        await m.createTable(advancedFilterCatalogSyncStates);
+      }
+    },
   );
 }

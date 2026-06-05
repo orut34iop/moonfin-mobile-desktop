@@ -6,6 +6,7 @@ import 'package:server_core/server_core.dart' hide ImageType;
 
 import '../../preference/user_preferences.dart';
 import '../models/aggregated_item.dart';
+import '../repositories/advanced_filter_catalog_repository.dart';
 
 enum AdvancedFilterLoadState { loading, ready, error }
 
@@ -25,12 +26,15 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   final MediaServerClient _client;
   final UserPreferences _prefs;
+  final AdvancedFilterCatalogRepository _catalogRepository;
 
   AdvancedFilterViewModel({
     required MediaServerClient client,
     required UserPreferences prefs,
+    required AdvancedFilterCatalogRepository catalogRepository,
   }) : _client = client,
-       _prefs = prefs;
+       _prefs = prefs,
+       _catalogRepository = catalogRepository;
 
   AdvancedFilterLoadState _state = AdvancedFilterLoadState.loading;
   AdvancedFilterLoadState get state => _state;
@@ -96,6 +100,8 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     return '${_client.baseUrl}::$userId';
   }
 
+  String get _catalogUserId => _client.userId?.trim() ?? '';
+
   Future<void> load() async {
     _state = AdvancedFilterLoadState.loading;
     _errorMessage = null;
@@ -103,17 +109,17 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _totalItemCount = null;
     notifyListeners();
 
-    _restoreSelections();
-
-    final cachedItems = _loadCachedCatalogItems();
-    if (cachedItems != null) {
-      _useCatalogItems(cachedItems);
-      _state = AdvancedFilterLoadState.ready;
-      notifyListeners();
-      return;
-    }
-
     try {
+      _restoreSelections();
+
+      final cachedItems = await _loadCachedCatalogItems();
+      if (cachedItems != null) {
+        _useCatalogItems(cachedItems);
+        _state = AdvancedFilterLoadState.ready;
+        notifyListeners();
+        return;
+      }
+
       final items = await _loadCatalogItems();
       _useCatalogItems(items);
       _state = AdvancedFilterLoadState.ready;
@@ -329,7 +335,21 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     await _persistSelections(applied: true);
   }
 
-  List<AggregatedItem>? _loadCachedCatalogItems() {
+  Future<List<AggregatedItem>?> _loadCachedCatalogItems() async {
+    final snapshot = await _catalogRepository.loadSnapshot(
+      serverId: _client.baseUrl,
+      userId: _catalogUserId,
+    );
+    if (snapshot != null) return snapshot.items;
+
+    final legacyItems = _loadLegacyCachedCatalogItems();
+    if (legacyItems != null) {
+      unawaited(_saveCatalogCache(legacyItems));
+    }
+    return legacyItems;
+  }
+
+  List<AggregatedItem>? _loadLegacyCachedCatalogItems() {
     final raw = _prefs.get(
       UserPreferences.advancedFilterCache(_preferenceScopeKey),
     );
@@ -365,14 +385,10 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   Future<void> _saveCatalogCache(List<AggregatedItem> items) async {
     try {
-      final payload = <String, dynamic>{
-        'version': _cacheVersion,
-        'updatedAt': DateTime.now().toUtc().toIso8601String(),
-        'items': items.map((item) => item.rawData).toList(growable: false),
-      };
-      await _prefs.set(
-        UserPreferences.advancedFilterCache(_preferenceScopeKey),
-        jsonEncode(payload),
+      await _catalogRepository.replaceScope(
+        serverId: _client.baseUrl,
+        userId: _catalogUserId,
+        items: items,
       );
     } catch (_) {
       // A cache write failure should not block filtering or navigation.

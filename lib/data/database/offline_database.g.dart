@@ -1368,17 +1368,1636 @@ class DownloadedItemsCompanion extends UpdateCompanion<DownloadedItem> {
   }
 }
 
+class $AdvancedFilterCatalogItemsTable extends AdvancedFilterCatalogItems
+    with
+        TableInfo<$AdvancedFilterCatalogItemsTable, AdvancedFilterCatalogItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AdvancedFilterCatalogItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<String> itemId = GeneratedColumn<String>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortNameMeta = const VerificationMeta(
+    'sortName',
+  );
+  @override
+  late final GeneratedColumn<String> sortName = GeneratedColumn<String>(
+    'sort_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productionYearMeta = const VerificationMeta(
+    'productionYear',
+  );
+  @override
+  late final GeneratedColumn<int> productionYear = GeneratedColumn<int>(
+    'production_year',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _metadataJsonMeta = const VerificationMeta(
+    'metadataJson',
+  );
+  @override
+  late final GeneratedColumn<String> metadataJson = GeneratedColumn<String>(
+    'metadata_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cachedAtMeta = const VerificationMeta(
+    'cachedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> cachedAt = GeneratedColumn<DateTime>(
+    'cached_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    serverId,
+    userId,
+    itemId,
+    type,
+    name,
+    sortName,
+    productionYear,
+    metadataJson,
+    cachedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'advanced_filter_catalog_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AdvancedFilterCatalogItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('sort_name')) {
+      context.handle(
+        _sortNameMeta,
+        sortName.isAcceptableOrUnknown(data['sort_name']!, _sortNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sortNameMeta);
+    }
+    if (data.containsKey('production_year')) {
+      context.handle(
+        _productionYearMeta,
+        productionYear.isAcceptableOrUnknown(
+          data['production_year']!,
+          _productionYearMeta,
+        ),
+      );
+    }
+    if (data.containsKey('metadata_json')) {
+      context.handle(
+        _metadataJsonMeta,
+        metadataJson.isAcceptableOrUnknown(
+          data['metadata_json']!,
+          _metadataJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_metadataJsonMeta);
+    }
+    if (data.containsKey('cached_at')) {
+      context.handle(
+        _cachedAtMeta,
+        cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cachedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, userId, itemId};
+  @override
+  AdvancedFilterCatalogItem map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AdvancedFilterCatalogItem(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_id'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      sortName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sort_name'],
+      )!,
+      productionYear: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}production_year'],
+      ),
+      metadataJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}metadata_json'],
+      )!,
+      cachedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}cached_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AdvancedFilterCatalogItemsTable createAlias(String alias) {
+    return $AdvancedFilterCatalogItemsTable(attachedDatabase, alias);
+  }
+}
+
+class AdvancedFilterCatalogItem extends DataClass
+    implements Insertable<AdvancedFilterCatalogItem> {
+  final String serverId;
+  final String userId;
+  final String itemId;
+  final String type;
+  final String name;
+  final String sortName;
+  final int? productionYear;
+  final String metadataJson;
+  final DateTime cachedAt;
+  const AdvancedFilterCatalogItem({
+    required this.serverId,
+    required this.userId,
+    required this.itemId,
+    required this.type,
+    required this.name,
+    required this.sortName,
+    this.productionYear,
+    required this.metadataJson,
+    required this.cachedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['user_id'] = Variable<String>(userId);
+    map['item_id'] = Variable<String>(itemId);
+    map['type'] = Variable<String>(type);
+    map['name'] = Variable<String>(name);
+    map['sort_name'] = Variable<String>(sortName);
+    if (!nullToAbsent || productionYear != null) {
+      map['production_year'] = Variable<int>(productionYear);
+    }
+    map['metadata_json'] = Variable<String>(metadataJson);
+    map['cached_at'] = Variable<DateTime>(cachedAt);
+    return map;
+  }
+
+  AdvancedFilterCatalogItemsCompanion toCompanion(bool nullToAbsent) {
+    return AdvancedFilterCatalogItemsCompanion(
+      serverId: Value(serverId),
+      userId: Value(userId),
+      itemId: Value(itemId),
+      type: Value(type),
+      name: Value(name),
+      sortName: Value(sortName),
+      productionYear: productionYear == null && nullToAbsent
+          ? const Value.absent()
+          : Value(productionYear),
+      metadataJson: Value(metadataJson),
+      cachedAt: Value(cachedAt),
+    );
+  }
+
+  factory AdvancedFilterCatalogItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AdvancedFilterCatalogItem(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      itemId: serializer.fromJson<String>(json['itemId']),
+      type: serializer.fromJson<String>(json['type']),
+      name: serializer.fromJson<String>(json['name']),
+      sortName: serializer.fromJson<String>(json['sortName']),
+      productionYear: serializer.fromJson<int?>(json['productionYear']),
+      metadataJson: serializer.fromJson<String>(json['metadataJson']),
+      cachedAt: serializer.fromJson<DateTime>(json['cachedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'userId': serializer.toJson<String>(userId),
+      'itemId': serializer.toJson<String>(itemId),
+      'type': serializer.toJson<String>(type),
+      'name': serializer.toJson<String>(name),
+      'sortName': serializer.toJson<String>(sortName),
+      'productionYear': serializer.toJson<int?>(productionYear),
+      'metadataJson': serializer.toJson<String>(metadataJson),
+      'cachedAt': serializer.toJson<DateTime>(cachedAt),
+    };
+  }
+
+  AdvancedFilterCatalogItem copyWith({
+    String? serverId,
+    String? userId,
+    String? itemId,
+    String? type,
+    String? name,
+    String? sortName,
+    Value<int?> productionYear = const Value.absent(),
+    String? metadataJson,
+    DateTime? cachedAt,
+  }) => AdvancedFilterCatalogItem(
+    serverId: serverId ?? this.serverId,
+    userId: userId ?? this.userId,
+    itemId: itemId ?? this.itemId,
+    type: type ?? this.type,
+    name: name ?? this.name,
+    sortName: sortName ?? this.sortName,
+    productionYear: productionYear.present
+        ? productionYear.value
+        : this.productionYear,
+    metadataJson: metadataJson ?? this.metadataJson,
+    cachedAt: cachedAt ?? this.cachedAt,
+  );
+  AdvancedFilterCatalogItem copyWithCompanion(
+    AdvancedFilterCatalogItemsCompanion data,
+  ) {
+    return AdvancedFilterCatalogItem(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      type: data.type.present ? data.type.value : this.type,
+      name: data.name.present ? data.name.value : this.name,
+      sortName: data.sortName.present ? data.sortName.value : this.sortName,
+      productionYear: data.productionYear.present
+          ? data.productionYear.value
+          : this.productionYear,
+      metadataJson: data.metadataJson.present
+          ? data.metadataJson.value
+          : this.metadataJson,
+      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdvancedFilterCatalogItem(')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId, ')
+          ..write('itemId: $itemId, ')
+          ..write('type: $type, ')
+          ..write('name: $name, ')
+          ..write('sortName: $sortName, ')
+          ..write('productionYear: $productionYear, ')
+          ..write('metadataJson: $metadataJson, ')
+          ..write('cachedAt: $cachedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    serverId,
+    userId,
+    itemId,
+    type,
+    name,
+    sortName,
+    productionYear,
+    metadataJson,
+    cachedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AdvancedFilterCatalogItem &&
+          other.serverId == this.serverId &&
+          other.userId == this.userId &&
+          other.itemId == this.itemId &&
+          other.type == this.type &&
+          other.name == this.name &&
+          other.sortName == this.sortName &&
+          other.productionYear == this.productionYear &&
+          other.metadataJson == this.metadataJson &&
+          other.cachedAt == this.cachedAt);
+}
+
+class AdvancedFilterCatalogItemsCompanion
+    extends UpdateCompanion<AdvancedFilterCatalogItem> {
+  final Value<String> serverId;
+  final Value<String> userId;
+  final Value<String> itemId;
+  final Value<String> type;
+  final Value<String> name;
+  final Value<String> sortName;
+  final Value<int?> productionYear;
+  final Value<String> metadataJson;
+  final Value<DateTime> cachedAt;
+  final Value<int> rowid;
+  const AdvancedFilterCatalogItemsCompanion({
+    this.serverId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.itemId = const Value.absent(),
+    this.type = const Value.absent(),
+    this.name = const Value.absent(),
+    this.sortName = const Value.absent(),
+    this.productionYear = const Value.absent(),
+    this.metadataJson = const Value.absent(),
+    this.cachedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AdvancedFilterCatalogItemsCompanion.insert({
+    required String serverId,
+    required String userId,
+    required String itemId,
+    required String type,
+    required String name,
+    required String sortName,
+    this.productionYear = const Value.absent(),
+    required String metadataJson,
+    required DateTime cachedAt,
+    this.rowid = const Value.absent(),
+  }) : serverId = Value(serverId),
+       userId = Value(userId),
+       itemId = Value(itemId),
+       type = Value(type),
+       name = Value(name),
+       sortName = Value(sortName),
+       metadataJson = Value(metadataJson),
+       cachedAt = Value(cachedAt);
+  static Insertable<AdvancedFilterCatalogItem> custom({
+    Expression<String>? serverId,
+    Expression<String>? userId,
+    Expression<String>? itemId,
+    Expression<String>? type,
+    Expression<String>? name,
+    Expression<String>? sortName,
+    Expression<int>? productionYear,
+    Expression<String>? metadataJson,
+    Expression<DateTime>? cachedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (userId != null) 'user_id': userId,
+      if (itemId != null) 'item_id': itemId,
+      if (type != null) 'type': type,
+      if (name != null) 'name': name,
+      if (sortName != null) 'sort_name': sortName,
+      if (productionYear != null) 'production_year': productionYear,
+      if (metadataJson != null) 'metadata_json': metadataJson,
+      if (cachedAt != null) 'cached_at': cachedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AdvancedFilterCatalogItemsCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? userId,
+    Value<String>? itemId,
+    Value<String>? type,
+    Value<String>? name,
+    Value<String>? sortName,
+    Value<int?>? productionYear,
+    Value<String>? metadataJson,
+    Value<DateTime>? cachedAt,
+    Value<int>? rowid,
+  }) {
+    return AdvancedFilterCatalogItemsCompanion(
+      serverId: serverId ?? this.serverId,
+      userId: userId ?? this.userId,
+      itemId: itemId ?? this.itemId,
+      type: type ?? this.type,
+      name: name ?? this.name,
+      sortName: sortName ?? this.sortName,
+      productionYear: productionYear ?? this.productionYear,
+      metadataJson: metadataJson ?? this.metadataJson,
+      cachedAt: cachedAt ?? this.cachedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (itemId.present) {
+      map['item_id'] = Variable<String>(itemId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (sortName.present) {
+      map['sort_name'] = Variable<String>(sortName.value);
+    }
+    if (productionYear.present) {
+      map['production_year'] = Variable<int>(productionYear.value);
+    }
+    if (metadataJson.present) {
+      map['metadata_json'] = Variable<String>(metadataJson.value);
+    }
+    if (cachedAt.present) {
+      map['cached_at'] = Variable<DateTime>(cachedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdvancedFilterCatalogItemsCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId, ')
+          ..write('itemId: $itemId, ')
+          ..write('type: $type, ')
+          ..write('name: $name, ')
+          ..write('sortName: $sortName, ')
+          ..write('productionYear: $productionYear, ')
+          ..write('metadataJson: $metadataJson, ')
+          ..write('cachedAt: $cachedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AdvancedFilterCatalogItemGenresTable
+    extends AdvancedFilterCatalogItemGenres
+    with
+        TableInfo<
+          $AdvancedFilterCatalogItemGenresTable,
+          AdvancedFilterCatalogItemGenre
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AdvancedFilterCatalogItemGenresTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<String> itemId = GeneratedColumn<String>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _genreMeta = const VerificationMeta('genre');
+  @override
+  late final GeneratedColumn<String> genre = GeneratedColumn<String>(
+    'genre',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serverId, userId, itemId, genre];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'advanced_filter_catalog_item_genres';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AdvancedFilterCatalogItemGenre> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('genre')) {
+      context.handle(
+        _genreMeta,
+        genre.isAcceptableOrUnknown(data['genre']!, _genreMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_genreMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, userId, itemId, genre};
+  @override
+  AdvancedFilterCatalogItemGenre map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AdvancedFilterCatalogItemGenre(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_id'],
+      )!,
+      genre: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}genre'],
+      )!,
+    );
+  }
+
+  @override
+  $AdvancedFilterCatalogItemGenresTable createAlias(String alias) {
+    return $AdvancedFilterCatalogItemGenresTable(attachedDatabase, alias);
+  }
+}
+
+class AdvancedFilterCatalogItemGenre extends DataClass
+    implements Insertable<AdvancedFilterCatalogItemGenre> {
+  final String serverId;
+  final String userId;
+  final String itemId;
+  final String genre;
+  const AdvancedFilterCatalogItemGenre({
+    required this.serverId,
+    required this.userId,
+    required this.itemId,
+    required this.genre,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['user_id'] = Variable<String>(userId);
+    map['item_id'] = Variable<String>(itemId);
+    map['genre'] = Variable<String>(genre);
+    return map;
+  }
+
+  AdvancedFilterCatalogItemGenresCompanion toCompanion(bool nullToAbsent) {
+    return AdvancedFilterCatalogItemGenresCompanion(
+      serverId: Value(serverId),
+      userId: Value(userId),
+      itemId: Value(itemId),
+      genre: Value(genre),
+    );
+  }
+
+  factory AdvancedFilterCatalogItemGenre.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AdvancedFilterCatalogItemGenre(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      itemId: serializer.fromJson<String>(json['itemId']),
+      genre: serializer.fromJson<String>(json['genre']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'userId': serializer.toJson<String>(userId),
+      'itemId': serializer.toJson<String>(itemId),
+      'genre': serializer.toJson<String>(genre),
+    };
+  }
+
+  AdvancedFilterCatalogItemGenre copyWith({
+    String? serverId,
+    String? userId,
+    String? itemId,
+    String? genre,
+  }) => AdvancedFilterCatalogItemGenre(
+    serverId: serverId ?? this.serverId,
+    userId: userId ?? this.userId,
+    itemId: itemId ?? this.itemId,
+    genre: genre ?? this.genre,
+  );
+  AdvancedFilterCatalogItemGenre copyWithCompanion(
+    AdvancedFilterCatalogItemGenresCompanion data,
+  ) {
+    return AdvancedFilterCatalogItemGenre(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      genre: data.genre.present ? data.genre.value : this.genre,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdvancedFilterCatalogItemGenre(')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId, ')
+          ..write('itemId: $itemId, ')
+          ..write('genre: $genre')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, userId, itemId, genre);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AdvancedFilterCatalogItemGenre &&
+          other.serverId == this.serverId &&
+          other.userId == this.userId &&
+          other.itemId == this.itemId &&
+          other.genre == this.genre);
+}
+
+class AdvancedFilterCatalogItemGenresCompanion
+    extends UpdateCompanion<AdvancedFilterCatalogItemGenre> {
+  final Value<String> serverId;
+  final Value<String> userId;
+  final Value<String> itemId;
+  final Value<String> genre;
+  final Value<int> rowid;
+  const AdvancedFilterCatalogItemGenresCompanion({
+    this.serverId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.itemId = const Value.absent(),
+    this.genre = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AdvancedFilterCatalogItemGenresCompanion.insert({
+    required String serverId,
+    required String userId,
+    required String itemId,
+    required String genre,
+    this.rowid = const Value.absent(),
+  }) : serverId = Value(serverId),
+       userId = Value(userId),
+       itemId = Value(itemId),
+       genre = Value(genre);
+  static Insertable<AdvancedFilterCatalogItemGenre> custom({
+    Expression<String>? serverId,
+    Expression<String>? userId,
+    Expression<String>? itemId,
+    Expression<String>? genre,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (userId != null) 'user_id': userId,
+      if (itemId != null) 'item_id': itemId,
+      if (genre != null) 'genre': genre,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AdvancedFilterCatalogItemGenresCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? userId,
+    Value<String>? itemId,
+    Value<String>? genre,
+    Value<int>? rowid,
+  }) {
+    return AdvancedFilterCatalogItemGenresCompanion(
+      serverId: serverId ?? this.serverId,
+      userId: userId ?? this.userId,
+      itemId: itemId ?? this.itemId,
+      genre: genre ?? this.genre,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (itemId.present) {
+      map['item_id'] = Variable<String>(itemId.value);
+    }
+    if (genre.present) {
+      map['genre'] = Variable<String>(genre.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdvancedFilterCatalogItemGenresCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId, ')
+          ..write('itemId: $itemId, ')
+          ..write('genre: $genre, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AdvancedFilterCatalogItemRegionsTable
+    extends AdvancedFilterCatalogItemRegions
+    with
+        TableInfo<
+          $AdvancedFilterCatalogItemRegionsTable,
+          AdvancedFilterCatalogItemRegion
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AdvancedFilterCatalogItemRegionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _itemIdMeta = const VerificationMeta('itemId');
+  @override
+  late final GeneratedColumn<String> itemId = GeneratedColumn<String>(
+    'item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _regionMeta = const VerificationMeta('region');
+  @override
+  late final GeneratedColumn<String> region = GeneratedColumn<String>(
+    'region',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [serverId, userId, itemId, region];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'advanced_filter_catalog_item_regions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AdvancedFilterCatalogItemRegion> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('item_id')) {
+      context.handle(
+        _itemIdMeta,
+        itemId.isAcceptableOrUnknown(data['item_id']!, _itemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemIdMeta);
+    }
+    if (data.containsKey('region')) {
+      context.handle(
+        _regionMeta,
+        region.isAcceptableOrUnknown(data['region']!, _regionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_regionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, userId, itemId, region};
+  @override
+  AdvancedFilterCatalogItemRegion map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AdvancedFilterCatalogItemRegion(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      itemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_id'],
+      )!,
+      region: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}region'],
+      )!,
+    );
+  }
+
+  @override
+  $AdvancedFilterCatalogItemRegionsTable createAlias(String alias) {
+    return $AdvancedFilterCatalogItemRegionsTable(attachedDatabase, alias);
+  }
+}
+
+class AdvancedFilterCatalogItemRegion extends DataClass
+    implements Insertable<AdvancedFilterCatalogItemRegion> {
+  final String serverId;
+  final String userId;
+  final String itemId;
+  final String region;
+  const AdvancedFilterCatalogItemRegion({
+    required this.serverId,
+    required this.userId,
+    required this.itemId,
+    required this.region,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['user_id'] = Variable<String>(userId);
+    map['item_id'] = Variable<String>(itemId);
+    map['region'] = Variable<String>(region);
+    return map;
+  }
+
+  AdvancedFilterCatalogItemRegionsCompanion toCompanion(bool nullToAbsent) {
+    return AdvancedFilterCatalogItemRegionsCompanion(
+      serverId: Value(serverId),
+      userId: Value(userId),
+      itemId: Value(itemId),
+      region: Value(region),
+    );
+  }
+
+  factory AdvancedFilterCatalogItemRegion.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AdvancedFilterCatalogItemRegion(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      itemId: serializer.fromJson<String>(json['itemId']),
+      region: serializer.fromJson<String>(json['region']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'userId': serializer.toJson<String>(userId),
+      'itemId': serializer.toJson<String>(itemId),
+      'region': serializer.toJson<String>(region),
+    };
+  }
+
+  AdvancedFilterCatalogItemRegion copyWith({
+    String? serverId,
+    String? userId,
+    String? itemId,
+    String? region,
+  }) => AdvancedFilterCatalogItemRegion(
+    serverId: serverId ?? this.serverId,
+    userId: userId ?? this.userId,
+    itemId: itemId ?? this.itemId,
+    region: region ?? this.region,
+  );
+  AdvancedFilterCatalogItemRegion copyWithCompanion(
+    AdvancedFilterCatalogItemRegionsCompanion data,
+  ) {
+    return AdvancedFilterCatalogItemRegion(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      itemId: data.itemId.present ? data.itemId.value : this.itemId,
+      region: data.region.present ? data.region.value : this.region,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdvancedFilterCatalogItemRegion(')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId, ')
+          ..write('itemId: $itemId, ')
+          ..write('region: $region')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(serverId, userId, itemId, region);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AdvancedFilterCatalogItemRegion &&
+          other.serverId == this.serverId &&
+          other.userId == this.userId &&
+          other.itemId == this.itemId &&
+          other.region == this.region);
+}
+
+class AdvancedFilterCatalogItemRegionsCompanion
+    extends UpdateCompanion<AdvancedFilterCatalogItemRegion> {
+  final Value<String> serverId;
+  final Value<String> userId;
+  final Value<String> itemId;
+  final Value<String> region;
+  final Value<int> rowid;
+  const AdvancedFilterCatalogItemRegionsCompanion({
+    this.serverId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.itemId = const Value.absent(),
+    this.region = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AdvancedFilterCatalogItemRegionsCompanion.insert({
+    required String serverId,
+    required String userId,
+    required String itemId,
+    required String region,
+    this.rowid = const Value.absent(),
+  }) : serverId = Value(serverId),
+       userId = Value(userId),
+       itemId = Value(itemId),
+       region = Value(region);
+  static Insertable<AdvancedFilterCatalogItemRegion> custom({
+    Expression<String>? serverId,
+    Expression<String>? userId,
+    Expression<String>? itemId,
+    Expression<String>? region,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (userId != null) 'user_id': userId,
+      if (itemId != null) 'item_id': itemId,
+      if (region != null) 'region': region,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AdvancedFilterCatalogItemRegionsCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? userId,
+    Value<String>? itemId,
+    Value<String>? region,
+    Value<int>? rowid,
+  }) {
+    return AdvancedFilterCatalogItemRegionsCompanion(
+      serverId: serverId ?? this.serverId,
+      userId: userId ?? this.userId,
+      itemId: itemId ?? this.itemId,
+      region: region ?? this.region,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (itemId.present) {
+      map['item_id'] = Variable<String>(itemId.value);
+    }
+    if (region.present) {
+      map['region'] = Variable<String>(region.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdvancedFilterCatalogItemRegionsCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId, ')
+          ..write('itemId: $itemId, ')
+          ..write('region: $region, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AdvancedFilterCatalogSyncStatesTable
+    extends AdvancedFilterCatalogSyncStates
+    with
+        TableInfo<
+          $AdvancedFilterCatalogSyncStatesTable,
+          AdvancedFilterCatalogSyncState
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AdvancedFilterCatalogSyncStatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _serverIdMeta = const VerificationMeta(
+    'serverId',
+  );
+  @override
+  late final GeneratedColumn<String> serverId = GeneratedColumn<String>(
+    'server_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cacheVersionMeta = const VerificationMeta(
+    'cacheVersion',
+  );
+  @override
+  late final GeneratedColumn<int> cacheVersion = GeneratedColumn<int>(
+    'cache_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _itemCountMeta = const VerificationMeta(
+    'itemCount',
+  );
+  @override
+  late final GeneratedColumn<int> itemCount = GeneratedColumn<int>(
+    'item_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _syncedAtMeta = const VerificationMeta(
+    'syncedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
+    'synced_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    serverId,
+    userId,
+    cacheVersion,
+    itemCount,
+    syncedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'advanced_filter_catalog_sync_states';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AdvancedFilterCatalogSyncState> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('server_id')) {
+      context.handle(
+        _serverIdMeta,
+        serverId.isAcceptableOrUnknown(data['server_id']!, _serverIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_serverIdMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    if (data.containsKey('cache_version')) {
+      context.handle(
+        _cacheVersionMeta,
+        cacheVersion.isAcceptableOrUnknown(
+          data['cache_version']!,
+          _cacheVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_cacheVersionMeta);
+    }
+    if (data.containsKey('item_count')) {
+      context.handle(
+        _itemCountMeta,
+        itemCount.isAcceptableOrUnknown(data['item_count']!, _itemCountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_itemCountMeta);
+    }
+    if (data.containsKey('synced_at')) {
+      context.handle(
+        _syncedAtMeta,
+        syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_syncedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {serverId, userId};
+  @override
+  AdvancedFilterCatalogSyncState map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AdvancedFilterCatalogSyncState(
+      serverId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_id'],
+      )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      )!,
+      cacheVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cache_version'],
+      )!,
+      itemCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}item_count'],
+      )!,
+      syncedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}synced_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AdvancedFilterCatalogSyncStatesTable createAlias(String alias) {
+    return $AdvancedFilterCatalogSyncStatesTable(attachedDatabase, alias);
+  }
+}
+
+class AdvancedFilterCatalogSyncState extends DataClass
+    implements Insertable<AdvancedFilterCatalogSyncState> {
+  final String serverId;
+  final String userId;
+  final int cacheVersion;
+  final int itemCount;
+  final DateTime syncedAt;
+  const AdvancedFilterCatalogSyncState({
+    required this.serverId,
+    required this.userId,
+    required this.cacheVersion,
+    required this.itemCount,
+    required this.syncedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['server_id'] = Variable<String>(serverId);
+    map['user_id'] = Variable<String>(userId);
+    map['cache_version'] = Variable<int>(cacheVersion);
+    map['item_count'] = Variable<int>(itemCount);
+    map['synced_at'] = Variable<DateTime>(syncedAt);
+    return map;
+  }
+
+  AdvancedFilterCatalogSyncStatesCompanion toCompanion(bool nullToAbsent) {
+    return AdvancedFilterCatalogSyncStatesCompanion(
+      serverId: Value(serverId),
+      userId: Value(userId),
+      cacheVersion: Value(cacheVersion),
+      itemCount: Value(itemCount),
+      syncedAt: Value(syncedAt),
+    );
+  }
+
+  factory AdvancedFilterCatalogSyncState.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AdvancedFilterCatalogSyncState(
+      serverId: serializer.fromJson<String>(json['serverId']),
+      userId: serializer.fromJson<String>(json['userId']),
+      cacheVersion: serializer.fromJson<int>(json['cacheVersion']),
+      itemCount: serializer.fromJson<int>(json['itemCount']),
+      syncedAt: serializer.fromJson<DateTime>(json['syncedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'serverId': serializer.toJson<String>(serverId),
+      'userId': serializer.toJson<String>(userId),
+      'cacheVersion': serializer.toJson<int>(cacheVersion),
+      'itemCount': serializer.toJson<int>(itemCount),
+      'syncedAt': serializer.toJson<DateTime>(syncedAt),
+    };
+  }
+
+  AdvancedFilterCatalogSyncState copyWith({
+    String? serverId,
+    String? userId,
+    int? cacheVersion,
+    int? itemCount,
+    DateTime? syncedAt,
+  }) => AdvancedFilterCatalogSyncState(
+    serverId: serverId ?? this.serverId,
+    userId: userId ?? this.userId,
+    cacheVersion: cacheVersion ?? this.cacheVersion,
+    itemCount: itemCount ?? this.itemCount,
+    syncedAt: syncedAt ?? this.syncedAt,
+  );
+  AdvancedFilterCatalogSyncState copyWithCompanion(
+    AdvancedFilterCatalogSyncStatesCompanion data,
+  ) {
+    return AdvancedFilterCatalogSyncState(
+      serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      cacheVersion: data.cacheVersion.present
+          ? data.cacheVersion.value
+          : this.cacheVersion,
+      itemCount: data.itemCount.present ? data.itemCount.value : this.itemCount,
+      syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdvancedFilterCatalogSyncState(')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId, ')
+          ..write('cacheVersion: $cacheVersion, ')
+          ..write('itemCount: $itemCount, ')
+          ..write('syncedAt: $syncedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(serverId, userId, cacheVersion, itemCount, syncedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AdvancedFilterCatalogSyncState &&
+          other.serverId == this.serverId &&
+          other.userId == this.userId &&
+          other.cacheVersion == this.cacheVersion &&
+          other.itemCount == this.itemCount &&
+          other.syncedAt == this.syncedAt);
+}
+
+class AdvancedFilterCatalogSyncStatesCompanion
+    extends UpdateCompanion<AdvancedFilterCatalogSyncState> {
+  final Value<String> serverId;
+  final Value<String> userId;
+  final Value<int> cacheVersion;
+  final Value<int> itemCount;
+  final Value<DateTime> syncedAt;
+  final Value<int> rowid;
+  const AdvancedFilterCatalogSyncStatesCompanion({
+    this.serverId = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.cacheVersion = const Value.absent(),
+    this.itemCount = const Value.absent(),
+    this.syncedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AdvancedFilterCatalogSyncStatesCompanion.insert({
+    required String serverId,
+    required String userId,
+    required int cacheVersion,
+    required int itemCount,
+    required DateTime syncedAt,
+    this.rowid = const Value.absent(),
+  }) : serverId = Value(serverId),
+       userId = Value(userId),
+       cacheVersion = Value(cacheVersion),
+       itemCount = Value(itemCount),
+       syncedAt = Value(syncedAt);
+  static Insertable<AdvancedFilterCatalogSyncState> custom({
+    Expression<String>? serverId,
+    Expression<String>? userId,
+    Expression<int>? cacheVersion,
+    Expression<int>? itemCount,
+    Expression<DateTime>? syncedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (serverId != null) 'server_id': serverId,
+      if (userId != null) 'user_id': userId,
+      if (cacheVersion != null) 'cache_version': cacheVersion,
+      if (itemCount != null) 'item_count': itemCount,
+      if (syncedAt != null) 'synced_at': syncedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AdvancedFilterCatalogSyncStatesCompanion copyWith({
+    Value<String>? serverId,
+    Value<String>? userId,
+    Value<int>? cacheVersion,
+    Value<int>? itemCount,
+    Value<DateTime>? syncedAt,
+    Value<int>? rowid,
+  }) {
+    return AdvancedFilterCatalogSyncStatesCompanion(
+      serverId: serverId ?? this.serverId,
+      userId: userId ?? this.userId,
+      cacheVersion: cacheVersion ?? this.cacheVersion,
+      itemCount: itemCount ?? this.itemCount,
+      syncedAt: syncedAt ?? this.syncedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (serverId.present) {
+      map['server_id'] = Variable<String>(serverId.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (cacheVersion.present) {
+      map['cache_version'] = Variable<int>(cacheVersion.value);
+    }
+    if (itemCount.present) {
+      map['item_count'] = Variable<int>(itemCount.value);
+    }
+    if (syncedAt.present) {
+      map['synced_at'] = Variable<DateTime>(syncedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AdvancedFilterCatalogSyncStatesCompanion(')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId, ')
+          ..write('cacheVersion: $cacheVersion, ')
+          ..write('itemCount: $itemCount, ')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$OfflineDatabase extends GeneratedDatabase {
   _$OfflineDatabase(QueryExecutor e) : super(e);
   $OfflineDatabaseManager get managers => $OfflineDatabaseManager(this);
   late final $DownloadedItemsTable downloadedItems = $DownloadedItemsTable(
     this,
   );
+  late final $AdvancedFilterCatalogItemsTable advancedFilterCatalogItems =
+      $AdvancedFilterCatalogItemsTable(this);
+  late final $AdvancedFilterCatalogItemGenresTable
+  advancedFilterCatalogItemGenres = $AdvancedFilterCatalogItemGenresTable(this);
+  late final $AdvancedFilterCatalogItemRegionsTable
+  advancedFilterCatalogItemRegions = $AdvancedFilterCatalogItemRegionsTable(
+    this,
+  );
+  late final $AdvancedFilterCatalogSyncStatesTable
+  advancedFilterCatalogSyncStates = $AdvancedFilterCatalogSyncStatesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [downloadedItems];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    downloadedItems,
+    advancedFilterCatalogItems,
+    advancedFilterCatalogItemGenres,
+    advancedFilterCatalogItemRegions,
+    advancedFilterCatalogSyncStates,
+  ];
 }
 
 typedef $$DownloadedItemsTableCreateCompanionBuilder =
@@ -1984,10 +3603,957 @@ typedef $$DownloadedItemsTableProcessedTableManager =
       DownloadedItem,
       PrefetchHooks Function()
     >;
+typedef $$AdvancedFilterCatalogItemsTableCreateCompanionBuilder =
+    AdvancedFilterCatalogItemsCompanion Function({
+      required String serverId,
+      required String userId,
+      required String itemId,
+      required String type,
+      required String name,
+      required String sortName,
+      Value<int?> productionYear,
+      required String metadataJson,
+      required DateTime cachedAt,
+      Value<int> rowid,
+    });
+typedef $$AdvancedFilterCatalogItemsTableUpdateCompanionBuilder =
+    AdvancedFilterCatalogItemsCompanion Function({
+      Value<String> serverId,
+      Value<String> userId,
+      Value<String> itemId,
+      Value<String> type,
+      Value<String> name,
+      Value<String> sortName,
+      Value<int?> productionYear,
+      Value<String> metadataJson,
+      Value<DateTime> cachedAt,
+      Value<int> rowid,
+    });
+
+class $$AdvancedFilterCatalogItemsTableFilterComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemsTable> {
+  $$AdvancedFilterCatalogItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sortName => $composableBuilder(
+    column: $table.sortName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get productionYear => $composableBuilder(
+    column: $table.productionYear,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metadataJson => $composableBuilder(
+    column: $table.metadataJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AdvancedFilterCatalogItemsTableOrderingComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemsTable> {
+  $$AdvancedFilterCatalogItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sortName => $composableBuilder(
+    column: $table.sortName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get productionYear => $composableBuilder(
+    column: $table.productionYear,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get metadataJson => $composableBuilder(
+    column: $table.metadataJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AdvancedFilterCatalogItemsTableAnnotationComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemsTable> {
+  $$AdvancedFilterCatalogItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get serverId =>
+      $composableBuilder(column: $table.serverId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get itemId =>
+      $composableBuilder(column: $table.itemId, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get sortName =>
+      $composableBuilder(column: $table.sortName, builder: (column) => column);
+
+  GeneratedColumn<int> get productionYear => $composableBuilder(
+    column: $table.productionYear,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get metadataJson => $composableBuilder(
+    column: $table.metadataJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get cachedAt =>
+      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
+}
+
+class $$AdvancedFilterCatalogItemsTableTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          $AdvancedFilterCatalogItemsTable,
+          AdvancedFilterCatalogItem,
+          $$AdvancedFilterCatalogItemsTableFilterComposer,
+          $$AdvancedFilterCatalogItemsTableOrderingComposer,
+          $$AdvancedFilterCatalogItemsTableAnnotationComposer,
+          $$AdvancedFilterCatalogItemsTableCreateCompanionBuilder,
+          $$AdvancedFilterCatalogItemsTableUpdateCompanionBuilder,
+          (
+            AdvancedFilterCatalogItem,
+            BaseReferences<
+              _$OfflineDatabase,
+              $AdvancedFilterCatalogItemsTable,
+              AdvancedFilterCatalogItem
+            >,
+          ),
+          AdvancedFilterCatalogItem,
+          PrefetchHooks Function()
+        > {
+  $$AdvancedFilterCatalogItemsTableTableManager(
+    _$OfflineDatabase db,
+    $AdvancedFilterCatalogItemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AdvancedFilterCatalogItemsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$AdvancedFilterCatalogItemsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AdvancedFilterCatalogItemsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> itemId = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> sortName = const Value.absent(),
+                Value<int?> productionYear = const Value.absent(),
+                Value<String> metadataJson = const Value.absent(),
+                Value<DateTime> cachedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AdvancedFilterCatalogItemsCompanion(
+                serverId: serverId,
+                userId: userId,
+                itemId: itemId,
+                type: type,
+                name: name,
+                sortName: sortName,
+                productionYear: productionYear,
+                metadataJson: metadataJson,
+                cachedAt: cachedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required String userId,
+                required String itemId,
+                required String type,
+                required String name,
+                required String sortName,
+                Value<int?> productionYear = const Value.absent(),
+                required String metadataJson,
+                required DateTime cachedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => AdvancedFilterCatalogItemsCompanion.insert(
+                serverId: serverId,
+                userId: userId,
+                itemId: itemId,
+                type: type,
+                name: name,
+                sortName: sortName,
+                productionYear: productionYear,
+                metadataJson: metadataJson,
+                cachedAt: cachedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AdvancedFilterCatalogItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      $AdvancedFilterCatalogItemsTable,
+      AdvancedFilterCatalogItem,
+      $$AdvancedFilterCatalogItemsTableFilterComposer,
+      $$AdvancedFilterCatalogItemsTableOrderingComposer,
+      $$AdvancedFilterCatalogItemsTableAnnotationComposer,
+      $$AdvancedFilterCatalogItemsTableCreateCompanionBuilder,
+      $$AdvancedFilterCatalogItemsTableUpdateCompanionBuilder,
+      (
+        AdvancedFilterCatalogItem,
+        BaseReferences<
+          _$OfflineDatabase,
+          $AdvancedFilterCatalogItemsTable,
+          AdvancedFilterCatalogItem
+        >,
+      ),
+      AdvancedFilterCatalogItem,
+      PrefetchHooks Function()
+    >;
+typedef $$AdvancedFilterCatalogItemGenresTableCreateCompanionBuilder =
+    AdvancedFilterCatalogItemGenresCompanion Function({
+      required String serverId,
+      required String userId,
+      required String itemId,
+      required String genre,
+      Value<int> rowid,
+    });
+typedef $$AdvancedFilterCatalogItemGenresTableUpdateCompanionBuilder =
+    AdvancedFilterCatalogItemGenresCompanion Function({
+      Value<String> serverId,
+      Value<String> userId,
+      Value<String> itemId,
+      Value<String> genre,
+      Value<int> rowid,
+    });
+
+class $$AdvancedFilterCatalogItemGenresTableFilterComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemGenresTable> {
+  $$AdvancedFilterCatalogItemGenresTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get genre => $composableBuilder(
+    column: $table.genre,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AdvancedFilterCatalogItemGenresTableOrderingComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemGenresTable> {
+  $$AdvancedFilterCatalogItemGenresTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get genre => $composableBuilder(
+    column: $table.genre,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AdvancedFilterCatalogItemGenresTableAnnotationComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemGenresTable> {
+  $$AdvancedFilterCatalogItemGenresTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get serverId =>
+      $composableBuilder(column: $table.serverId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get itemId =>
+      $composableBuilder(column: $table.itemId, builder: (column) => column);
+
+  GeneratedColumn<String> get genre =>
+      $composableBuilder(column: $table.genre, builder: (column) => column);
+}
+
+class $$AdvancedFilterCatalogItemGenresTableTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          $AdvancedFilterCatalogItemGenresTable,
+          AdvancedFilterCatalogItemGenre,
+          $$AdvancedFilterCatalogItemGenresTableFilterComposer,
+          $$AdvancedFilterCatalogItemGenresTableOrderingComposer,
+          $$AdvancedFilterCatalogItemGenresTableAnnotationComposer,
+          $$AdvancedFilterCatalogItemGenresTableCreateCompanionBuilder,
+          $$AdvancedFilterCatalogItemGenresTableUpdateCompanionBuilder,
+          (
+            AdvancedFilterCatalogItemGenre,
+            BaseReferences<
+              _$OfflineDatabase,
+              $AdvancedFilterCatalogItemGenresTable,
+              AdvancedFilterCatalogItemGenre
+            >,
+          ),
+          AdvancedFilterCatalogItemGenre,
+          PrefetchHooks Function()
+        > {
+  $$AdvancedFilterCatalogItemGenresTableTableManager(
+    _$OfflineDatabase db,
+    $AdvancedFilterCatalogItemGenresTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AdvancedFilterCatalogItemGenresTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$AdvancedFilterCatalogItemGenresTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AdvancedFilterCatalogItemGenresTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> itemId = const Value.absent(),
+                Value<String> genre = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AdvancedFilterCatalogItemGenresCompanion(
+                serverId: serverId,
+                userId: userId,
+                itemId: itemId,
+                genre: genre,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required String userId,
+                required String itemId,
+                required String genre,
+                Value<int> rowid = const Value.absent(),
+              }) => AdvancedFilterCatalogItemGenresCompanion.insert(
+                serverId: serverId,
+                userId: userId,
+                itemId: itemId,
+                genre: genre,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AdvancedFilterCatalogItemGenresTableProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      $AdvancedFilterCatalogItemGenresTable,
+      AdvancedFilterCatalogItemGenre,
+      $$AdvancedFilterCatalogItemGenresTableFilterComposer,
+      $$AdvancedFilterCatalogItemGenresTableOrderingComposer,
+      $$AdvancedFilterCatalogItemGenresTableAnnotationComposer,
+      $$AdvancedFilterCatalogItemGenresTableCreateCompanionBuilder,
+      $$AdvancedFilterCatalogItemGenresTableUpdateCompanionBuilder,
+      (
+        AdvancedFilterCatalogItemGenre,
+        BaseReferences<
+          _$OfflineDatabase,
+          $AdvancedFilterCatalogItemGenresTable,
+          AdvancedFilterCatalogItemGenre
+        >,
+      ),
+      AdvancedFilterCatalogItemGenre,
+      PrefetchHooks Function()
+    >;
+typedef $$AdvancedFilterCatalogItemRegionsTableCreateCompanionBuilder =
+    AdvancedFilterCatalogItemRegionsCompanion Function({
+      required String serverId,
+      required String userId,
+      required String itemId,
+      required String region,
+      Value<int> rowid,
+    });
+typedef $$AdvancedFilterCatalogItemRegionsTableUpdateCompanionBuilder =
+    AdvancedFilterCatalogItemRegionsCompanion Function({
+      Value<String> serverId,
+      Value<String> userId,
+      Value<String> itemId,
+      Value<String> region,
+      Value<int> rowid,
+    });
+
+class $$AdvancedFilterCatalogItemRegionsTableFilterComposer
+    extends
+        Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemRegionsTable> {
+  $$AdvancedFilterCatalogItemRegionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get region => $composableBuilder(
+    column: $table.region,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AdvancedFilterCatalogItemRegionsTableOrderingComposer
+    extends
+        Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemRegionsTable> {
+  $$AdvancedFilterCatalogItemRegionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get itemId => $composableBuilder(
+    column: $table.itemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get region => $composableBuilder(
+    column: $table.region,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AdvancedFilterCatalogItemRegionsTableAnnotationComposer
+    extends
+        Composer<_$OfflineDatabase, $AdvancedFilterCatalogItemRegionsTable> {
+  $$AdvancedFilterCatalogItemRegionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get serverId =>
+      $composableBuilder(column: $table.serverId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get itemId =>
+      $composableBuilder(column: $table.itemId, builder: (column) => column);
+
+  GeneratedColumn<String> get region =>
+      $composableBuilder(column: $table.region, builder: (column) => column);
+}
+
+class $$AdvancedFilterCatalogItemRegionsTableTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          $AdvancedFilterCatalogItemRegionsTable,
+          AdvancedFilterCatalogItemRegion,
+          $$AdvancedFilterCatalogItemRegionsTableFilterComposer,
+          $$AdvancedFilterCatalogItemRegionsTableOrderingComposer,
+          $$AdvancedFilterCatalogItemRegionsTableAnnotationComposer,
+          $$AdvancedFilterCatalogItemRegionsTableCreateCompanionBuilder,
+          $$AdvancedFilterCatalogItemRegionsTableUpdateCompanionBuilder,
+          (
+            AdvancedFilterCatalogItemRegion,
+            BaseReferences<
+              _$OfflineDatabase,
+              $AdvancedFilterCatalogItemRegionsTable,
+              AdvancedFilterCatalogItemRegion
+            >,
+          ),
+          AdvancedFilterCatalogItemRegion,
+          PrefetchHooks Function()
+        > {
+  $$AdvancedFilterCatalogItemRegionsTableTableManager(
+    _$OfflineDatabase db,
+    $AdvancedFilterCatalogItemRegionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AdvancedFilterCatalogItemRegionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$AdvancedFilterCatalogItemRegionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AdvancedFilterCatalogItemRegionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<String> itemId = const Value.absent(),
+                Value<String> region = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AdvancedFilterCatalogItemRegionsCompanion(
+                serverId: serverId,
+                userId: userId,
+                itemId: itemId,
+                region: region,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required String userId,
+                required String itemId,
+                required String region,
+                Value<int> rowid = const Value.absent(),
+              }) => AdvancedFilterCatalogItemRegionsCompanion.insert(
+                serverId: serverId,
+                userId: userId,
+                itemId: itemId,
+                region: region,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AdvancedFilterCatalogItemRegionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      $AdvancedFilterCatalogItemRegionsTable,
+      AdvancedFilterCatalogItemRegion,
+      $$AdvancedFilterCatalogItemRegionsTableFilterComposer,
+      $$AdvancedFilterCatalogItemRegionsTableOrderingComposer,
+      $$AdvancedFilterCatalogItemRegionsTableAnnotationComposer,
+      $$AdvancedFilterCatalogItemRegionsTableCreateCompanionBuilder,
+      $$AdvancedFilterCatalogItemRegionsTableUpdateCompanionBuilder,
+      (
+        AdvancedFilterCatalogItemRegion,
+        BaseReferences<
+          _$OfflineDatabase,
+          $AdvancedFilterCatalogItemRegionsTable,
+          AdvancedFilterCatalogItemRegion
+        >,
+      ),
+      AdvancedFilterCatalogItemRegion,
+      PrefetchHooks Function()
+    >;
+typedef $$AdvancedFilterCatalogSyncStatesTableCreateCompanionBuilder =
+    AdvancedFilterCatalogSyncStatesCompanion Function({
+      required String serverId,
+      required String userId,
+      required int cacheVersion,
+      required int itemCount,
+      required DateTime syncedAt,
+      Value<int> rowid,
+    });
+typedef $$AdvancedFilterCatalogSyncStatesTableUpdateCompanionBuilder =
+    AdvancedFilterCatalogSyncStatesCompanion Function({
+      Value<String> serverId,
+      Value<String> userId,
+      Value<int> cacheVersion,
+      Value<int> itemCount,
+      Value<DateTime> syncedAt,
+      Value<int> rowid,
+    });
+
+class $$AdvancedFilterCatalogSyncStatesTableFilterComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogSyncStatesTable> {
+  $$AdvancedFilterCatalogSyncStatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cacheVersion => $composableBuilder(
+    column: $table.cacheVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get itemCount => $composableBuilder(
+    column: $table.itemCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AdvancedFilterCatalogSyncStatesTableOrderingComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogSyncStatesTable> {
+  $$AdvancedFilterCatalogSyncStatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get serverId => $composableBuilder(
+    column: $table.serverId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cacheVersion => $composableBuilder(
+    column: $table.cacheVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get itemCount => $composableBuilder(
+    column: $table.itemCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
+    column: $table.syncedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AdvancedFilterCatalogSyncStatesTableAnnotationComposer
+    extends Composer<_$OfflineDatabase, $AdvancedFilterCatalogSyncStatesTable> {
+  $$AdvancedFilterCatalogSyncStatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get serverId =>
+      $composableBuilder(column: $table.serverId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<int> get cacheVersion => $composableBuilder(
+    column: $table.cacheVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get itemCount =>
+      $composableBuilder(column: $table.itemCount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get syncedAt =>
+      $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+}
+
+class $$AdvancedFilterCatalogSyncStatesTableTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          $AdvancedFilterCatalogSyncStatesTable,
+          AdvancedFilterCatalogSyncState,
+          $$AdvancedFilterCatalogSyncStatesTableFilterComposer,
+          $$AdvancedFilterCatalogSyncStatesTableOrderingComposer,
+          $$AdvancedFilterCatalogSyncStatesTableAnnotationComposer,
+          $$AdvancedFilterCatalogSyncStatesTableCreateCompanionBuilder,
+          $$AdvancedFilterCatalogSyncStatesTableUpdateCompanionBuilder,
+          (
+            AdvancedFilterCatalogSyncState,
+            BaseReferences<
+              _$OfflineDatabase,
+              $AdvancedFilterCatalogSyncStatesTable,
+              AdvancedFilterCatalogSyncState
+            >,
+          ),
+          AdvancedFilterCatalogSyncState,
+          PrefetchHooks Function()
+        > {
+  $$AdvancedFilterCatalogSyncStatesTableTableManager(
+    _$OfflineDatabase db,
+    $AdvancedFilterCatalogSyncStatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AdvancedFilterCatalogSyncStatesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$AdvancedFilterCatalogSyncStatesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$AdvancedFilterCatalogSyncStatesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> serverId = const Value.absent(),
+                Value<String> userId = const Value.absent(),
+                Value<int> cacheVersion = const Value.absent(),
+                Value<int> itemCount = const Value.absent(),
+                Value<DateTime> syncedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AdvancedFilterCatalogSyncStatesCompanion(
+                serverId: serverId,
+                userId: userId,
+                cacheVersion: cacheVersion,
+                itemCount: itemCount,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String serverId,
+                required String userId,
+                required int cacheVersion,
+                required int itemCount,
+                required DateTime syncedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => AdvancedFilterCatalogSyncStatesCompanion.insert(
+                serverId: serverId,
+                userId: userId,
+                cacheVersion: cacheVersion,
+                itemCount: itemCount,
+                syncedAt: syncedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AdvancedFilterCatalogSyncStatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      $AdvancedFilterCatalogSyncStatesTable,
+      AdvancedFilterCatalogSyncState,
+      $$AdvancedFilterCatalogSyncStatesTableFilterComposer,
+      $$AdvancedFilterCatalogSyncStatesTableOrderingComposer,
+      $$AdvancedFilterCatalogSyncStatesTableAnnotationComposer,
+      $$AdvancedFilterCatalogSyncStatesTableCreateCompanionBuilder,
+      $$AdvancedFilterCatalogSyncStatesTableUpdateCompanionBuilder,
+      (
+        AdvancedFilterCatalogSyncState,
+        BaseReferences<
+          _$OfflineDatabase,
+          $AdvancedFilterCatalogSyncStatesTable,
+          AdvancedFilterCatalogSyncState
+        >,
+      ),
+      AdvancedFilterCatalogSyncState,
+      PrefetchHooks Function()
+    >;
 
 class $OfflineDatabaseManager {
   final _$OfflineDatabase _db;
   $OfflineDatabaseManager(this._db);
   $$DownloadedItemsTableTableManager get downloadedItems =>
       $$DownloadedItemsTableTableManager(_db, _db.downloadedItems);
+  $$AdvancedFilterCatalogItemsTableTableManager
+  get advancedFilterCatalogItems =>
+      $$AdvancedFilterCatalogItemsTableTableManager(
+        _db,
+        _db.advancedFilterCatalogItems,
+      );
+  $$AdvancedFilterCatalogItemGenresTableTableManager
+  get advancedFilterCatalogItemGenres =>
+      $$AdvancedFilterCatalogItemGenresTableTableManager(
+        _db,
+        _db.advancedFilterCatalogItemGenres,
+      );
+  $$AdvancedFilterCatalogItemRegionsTableTableManager
+  get advancedFilterCatalogItemRegions =>
+      $$AdvancedFilterCatalogItemRegionsTableTableManager(
+        _db,
+        _db.advancedFilterCatalogItemRegions,
+      );
+  $$AdvancedFilterCatalogSyncStatesTableTableManager
+  get advancedFilterCatalogSyncStates =>
+      $$AdvancedFilterCatalogSyncStatesTableTableManager(
+        _db,
+        _db.advancedFilterCatalogSyncStates,
+      );
 }

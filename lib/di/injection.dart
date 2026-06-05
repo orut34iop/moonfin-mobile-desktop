@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import '../auth/store/authentication_store.dart';
 import '../data/database/database_connection.dart';
 import '../data/database/offline_database.dart';
+import '../data/repositories/advanced_filter_catalog_repository.dart';
 import '../data/repositories/offline_repository.dart';
 import '../data/services/connectivity_service.dart';
 import '../data/services/recent_searches_store.dart';
@@ -365,6 +366,9 @@ Future<void> configureDependencies() async {
   getIt.registerSingleton<OfflineDatabase>(OfflineDatabase(openConnection()));
   getIt.registerSingleton<OfflineRepository>(
     OfflineRepository(getIt<OfflineDatabase>()),
+  );
+  getIt.registerSingleton<AdvancedFilterCatalogRepository>(
+    AdvancedFilterCatalogRepository(getIt<OfflineDatabase>()),
   );
 
   final connectivityService = ConnectivityService();

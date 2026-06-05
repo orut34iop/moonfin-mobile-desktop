@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:server_core/server_core.dart';
 
 import '../../../data/models/aggregated_item.dart';
+import '../../../data/repositories/advanced_filter_catalog_repository.dart';
 import '../../../data/viewmodels/advanced_filter_view_model.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../preference/user_preferences.dart';
@@ -35,6 +36,7 @@ class _AdvancedFilterScreenState extends State<AdvancedFilterScreen> {
     _vm = AdvancedFilterViewModel(
       client: getIt<MediaServerClient>(),
       prefs: _prefs,
+      catalogRepository: getIt<AdvancedFilterCatalogRepository>(),
     )..addListener(_onVmChanged);
     _vm.load();
   }

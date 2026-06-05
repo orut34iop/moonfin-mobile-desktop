@@ -1,8 +1,12 @@
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jellyfin_preference/jellyfin_preference.dart';
 import 'package:server_core/server_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:moonfin/data/database/offline_database.dart';
+import 'package:moonfin/data/models/aggregated_item.dart';
+import 'package:moonfin/data/repositories/advanced_filter_catalog_repository.dart';
 import 'package:moonfin/data/viewmodels/advanced_filter_view_model.dart';
 import 'package:moonfin/preference/user_preferences.dart';
 
@@ -18,8 +22,15 @@ void main() {
     return UserPreferences(store);
   }
 
+  AdvancedFilterCatalogRepository createCatalogRepository() {
+    final db = OfflineDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    return AdvancedFilterCatalogRepository(db);
+  }
+
   test('loads dynamic filter options and restores persisted results', () async {
     final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
     await prefs.set(UserPreferences.advancedFilterTypes(serverUrl), const [
       'Movie',
     ]);
@@ -40,6 +51,7 @@ void main() {
         baseUrl: serverUrl,
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await vm.load();
@@ -53,12 +65,14 @@ void main() {
 
   test('loads all movies and series by default', () async {
     final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
     final vm = AdvancedFilterViewModel(
       client: _FakeMediaServerClient(
         itemsApi: _FakeItemsApi(items: _items),
         baseUrl: serverUrl,
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await vm.load();
@@ -75,12 +89,14 @@ void main() {
 
   test('filters immediately with row OR and row AND rules', () async {
     final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
     final vm = AdvancedFilterViewModel(
       client: _FakeMediaServerClient(
         itemsApi: _FakeItemsApi(items: _items),
         baseUrl: serverUrl,
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await vm.load();
@@ -102,12 +118,14 @@ void main() {
 
   test('sorts results by name or year in either direction', () async {
     final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
     final vm = AdvancedFilterViewModel(
       client: _FakeMediaServerClient(
         itemsApi: _FakeItemsApi(items: _items),
         baseUrl: serverUrl,
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await vm.load();
@@ -159,6 +177,7 @@ void main() {
 
   test('restores persisted sort settings', () async {
     final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
     await prefs.set(
       UserPreferences.advancedFilterSortField(serverUrl),
       AdvancedFilterSortField.year.name,
@@ -174,6 +193,7 @@ void main() {
         baseUrl: serverUrl,
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await vm.load();
@@ -190,12 +210,14 @@ void main() {
 
   test('clearAll resets persisted filter state', () async {
     final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
     final vm = AdvancedFilterViewModel(
       client: _FakeMediaServerClient(
         itemsApi: _FakeItemsApi(items: _items),
         baseUrl: serverUrl,
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await vm.load();
@@ -216,23 +238,18 @@ void main() {
     expect(prefs.get(UserPreferences.advancedFilterApplied(serverUrl)), true);
   });
 
-  test('uses persisted catalog cache on subsequent loads', () async {
+  test('uses local catalog cache on subsequent loads', () async {
     final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
     final firstApi = _FakeItemsApi(items: _items);
     final firstVm = AdvancedFilterViewModel(
       client: _FakeMediaServerClient(itemsApi: firstApi, baseUrl: serverUrl),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await firstVm.load();
-    for (var i = 0; i < 10; i++) {
-      if (prefs
-          .get(UserPreferences.advancedFilterCache(serverUrl))
-          .isNotEmpty) {
-        break;
-      }
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-    }
+    await _waitForCatalogCache(catalogRepository, serverUrl, '');
 
     expect(firstApi.getItemsCalls, 1);
 
@@ -240,6 +257,7 @@ void main() {
     final secondVm = AdvancedFilterViewModel(
       client: _FakeMediaServerClient(itemsApi: secondApi, baseUrl: serverUrl),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await secondVm.load();
@@ -251,6 +269,7 @@ void main() {
 
   test('isolates catalog cache and selections per server user', () async {
     final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
     final firstUserApi = _FakeItemsApi(items: _items);
     final firstUserVm = AdvancedFilterViewModel(
       client: _FakeMediaServerClient(
@@ -259,10 +278,11 @@ void main() {
         userId: 'user-a',
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await firstUserVm.load();
-    await _waitForCatalogCache(prefs, '$serverUrl::user-a');
+    await _waitForCatalogCache(catalogRepository, serverUrl, 'user-a');
     await firstUserVm.toggleGenre('Drama');
 
     expect(firstUserApi.getItemsCalls, 1);
@@ -283,6 +303,7 @@ void main() {
         userId: 'user-b',
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await secondUserVm.load();
@@ -302,6 +323,7 @@ void main() {
         userId: 'user-a',
       ),
       prefs: prefs,
+      catalogRepository: catalogRepository,
     );
 
     await firstUserReloadVm.load();
@@ -311,19 +333,67 @@ void main() {
     expect(firstUserReloadVm.genres, const ['Drama', 'Science Fiction']);
     expect(firstUserReloadVm.results.map((item) => item.name), const ['Gamma']);
   });
+
+  test(
+    'loads an existing local catalog without requesting the server',
+    () async {
+      final prefs = await createPreferences();
+      final catalogRepository = createCatalogRepository();
+      await catalogRepository.replaceScope(
+        serverId: serverUrl,
+        userId: 'cached-user',
+        items: _items
+            .map(
+              (raw) => AggregatedItem(
+                id: raw['Id'] as String,
+                serverId: serverUrl,
+                rawData: raw,
+              ),
+            )
+            .toList(),
+      );
+
+      final api = _FakeItemsApi(items: const []);
+      final vm = AdvancedFilterViewModel(
+        client: _FakeMediaServerClient(
+          itemsApi: api,
+          baseUrl: serverUrl,
+          userId: 'cached-user',
+        ),
+        prefs: prefs,
+        catalogRepository: catalogRepository,
+      );
+
+      await vm.load();
+
+      expect(api.getItemsCalls, 0);
+      expect(vm.state, AdvancedFilterLoadState.ready);
+      expect(vm.results.map((item) => item.name), const [
+        'Alpha',
+        'Beta',
+        'Delta',
+        'Gamma',
+      ]);
+    },
+  );
 }
 
 Future<void> _waitForCatalogCache(
-  UserPreferences prefs,
-  String scopeKey,
+  AdvancedFilterCatalogRepository catalogRepository,
+  String serverId,
+  String userId,
 ) async {
   for (var i = 0; i < 10; i++) {
-    if (prefs.get(UserPreferences.advancedFilterCache(scopeKey)).isNotEmpty) {
+    final snapshot = await catalogRepository.loadSnapshot(
+      serverId: serverId,
+      userId: userId,
+    );
+    if (snapshot != null) {
       return;
     }
     await Future<void>.delayed(const Duration(milliseconds: 10));
   }
-  fail('Expected advanced filter cache for $scopeKey');
+  fail('Expected advanced filter cache for $serverId / $userId');
 }
 
 const _items = [
