@@ -2292,6 +2292,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
   }
 
   Future<void> _restoreDesktopWindowStateForExit() async {
+    await Future<void>.delayed(const Duration(milliseconds: 250));
     if (_wasAlwaysOnTopOnEntry == false && _isAlwaysOnTop) {
       await _setAlwaysOnTop(false);
     }
@@ -2951,10 +2952,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
         _showControls();
         return KeyEventResult.handled;
       case LogicalKeyboardKey.escape:
-        if (PlatformDetection.useDesktopUi && _isDesktopFullscreen) {
-          unawaited(_setDesktopFullscreen(false));
-          return KeyEventResult.handled;
-        }
         unawaited(_exitPlayback());
         return KeyEventResult.handled;
       case LogicalKeyboardKey.select:
