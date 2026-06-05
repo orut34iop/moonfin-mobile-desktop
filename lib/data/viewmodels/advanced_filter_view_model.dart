@@ -848,17 +848,14 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       if (!matchesType) continue;
       typePassed++;
 
-      final matchesGenre =
-          _selectedGenres.isEmpty ||
-          item.genres.any((genre) => _selectedGenres.contains(genre));
+      final matchesGenre = _containsAllValues(item.genres, _selectedGenres);
       if (!matchesGenre) continue;
       genrePassed++;
 
-      final matchesRegion =
-          _selectedRegions.isEmpty ||
-          item.productionLocations.any(
-            (region) => _selectedRegions.contains(region),
-          );
+      final matchesRegion = _containsAllValues(
+        item.productionLocations,
+        _selectedRegions,
+      );
       if (!matchesRegion) continue;
       regionPassed++;
 
@@ -968,6 +965,19 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       if (field.name == value) return field;
     }
     return AdvancedFilterSortField.name;
+  }
+
+  bool _containsAllValues(Iterable<String> values, Set<String> requiredValues) {
+    if (requiredValues.isEmpty) return true;
+    if (requiredValues.length == 1) {
+      final requiredValue = requiredValues.first;
+      return values.any((value) => value.trim() == requiredValue);
+    }
+    final availableValues = values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toSet();
+    return requiredValues.every(availableValues.contains);
   }
 
   int _typeSort(String a, String b) {

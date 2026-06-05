@@ -110,6 +110,7 @@ Books and audiobooks download in their **original format** - no transcoding.
 - Filter options are built from the current media catalog, cached locally, refreshed manually or when stale, and updated incrementally from WebSocket library events
 - The media catalog cache is stored in the local database; legacy SharedPreferences catalog payloads are removed after migration
 - Filter rows support inline expansion for long option lists, multi-select chips, and immediate results
+- Genre and production-location multi-selects require every selected value to be present on a result
 - Results show the matched item count and support name/year sorting in either direction
 - Advanced filter performance diagnostics are appended to `Documents/Moonfin/logs/advanced_filter_perf.log`
 

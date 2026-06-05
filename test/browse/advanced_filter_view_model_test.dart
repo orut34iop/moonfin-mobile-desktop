@@ -61,7 +61,7 @@ void main() {
     await vm.load();
 
     expect(vm.state, AdvancedFilterLoadState.ready);
-    expect(vm.genres, const ['Drama', 'Science Fiction']);
+    expect(vm.genres, const ['Adventure', 'Drama', 'Science Fiction']);
     expect(vm.regions, const ['France', 'United States']);
     expect(vm.years, const ['2024', '2023']);
     expect(vm.results.map((item) => item.name), const ['Alpha']);
@@ -91,34 +91,37 @@ void main() {
     ]);
   });
 
-  test('filters immediately with row OR and row AND rules', () async {
-    final prefs = await createPreferences();
-    final catalogRepository = createCatalogRepository();
-    final vm = AdvancedFilterViewModel(
-      client: _FakeMediaServerClient(
-        itemsApi: _FakeItemsApi(items: _items),
-        baseUrl: serverUrl,
-      ),
-      prefs: prefs,
-      catalogRepository: catalogRepository,
-    );
+  test(
+    'filters immediately with multi-value rows requiring all selections',
+    () async {
+      final prefs = await createPreferences();
+      final catalogRepository = createCatalogRepository();
+      final vm = AdvancedFilterViewModel(
+        client: _FakeMediaServerClient(
+          itemsApi: _FakeItemsApi(items: _items),
+          baseUrl: serverUrl,
+        ),
+        prefs: prefs,
+        catalogRepository: catalogRepository,
+      );
 
-    await vm.load();
-    await vm.toggleType('Movie');
-    await vm.toggleType('Series');
-    await vm.toggleGenre('Science Fiction');
-    await vm.toggleRegion('France');
-    await vm.toggleRegion('United States');
-    await vm.toggleYear('2024');
+      await vm.load();
+      await vm.toggleType('Movie');
+      await vm.toggleType('Series');
+      await vm.toggleGenre('Science Fiction');
+      await vm.toggleGenre('Adventure');
+      await vm.toggleRegion('France');
+      await vm.toggleYear('2024');
 
-    expect(vm.results.map((item) => item.name), const ['Alpha', 'Delta']);
-    expect(vm.hasActiveFilters, true);
-    expect(prefs.get(UserPreferences.advancedFilterTypes(serverUrl)), const [
-      'Movie',
-      'Series',
-    ]);
-    expect(prefs.get(UserPreferences.advancedFilterApplied(serverUrl)), true);
-  });
+      expect(vm.results.map((item) => item.name), const ['Delta']);
+      expect(vm.hasActiveFilters, true);
+      expect(prefs.get(UserPreferences.advancedFilterTypes(serverUrl)), const [
+        'Movie',
+        'Series',
+      ]);
+      expect(prefs.get(UserPreferences.advancedFilterApplied(serverUrl)), true);
+    },
+  );
 
   test('sorts results by name or year in either direction', () async {
     final prefs = await createPreferences();
@@ -267,7 +270,7 @@ void main() {
     await secondVm.load();
 
     expect(secondApi.getItemsCalls, 0);
-    expect(secondVm.genres, const ['Drama', 'Science Fiction']);
+    expect(secondVm.genres, const ['Adventure', 'Drama', 'Science Fiction']);
     expect(secondVm.regions, const ['France', 'United States']);
   });
 
@@ -334,7 +337,11 @@ void main() {
 
     expect(firstUserReloadApi.getItemsCalls, 0);
     expect(firstUserReloadVm.selectedGenres, const {'Drama'});
-    expect(firstUserReloadVm.genres, const ['Drama', 'Science Fiction']);
+    expect(firstUserReloadVm.genres, const [
+      'Adventure',
+      'Drama',
+      'Science Fiction',
+    ]);
     expect(firstUserReloadVm.results.map((item) => item.name), const ['Gamma']);
   });
 
@@ -665,7 +672,7 @@ const _items = [
     'Name': 'Beta',
     'Type': 'Series',
     'ProductionYear': 2023,
-    'Genres': ['Science Fiction'],
+    'Genres': ['Science Fiction', 'Adventure'],
     'ProductionLocations': ['United States'],
     'UserData': <String, dynamic>{},
   },
@@ -683,7 +690,7 @@ const _items = [
     'Name': 'Delta',
     'Type': 'Movie',
     'ProductionYear': 2024,
-    'Genres': ['Science Fiction'],
+    'Genres': ['Science Fiction', 'Adventure'],
     'ProductionLocations': ['France'],
     'UserData': <String, dynamic>{},
   },
