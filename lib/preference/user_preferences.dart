@@ -26,6 +26,11 @@ class UserPreferences extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> removePreference<T>(Preference<T> pref) async {
+    await _store.remove(pref.key);
+    notifyListeners();
+  }
+
   bool containsPreferenceKey(String key) => _store.containsKey(key);
 
   bool containsPreference<T>(Preference<T> pref) =>
@@ -917,12 +922,12 @@ class UserPreferences extends ChangeNotifier {
         defaultValue: 'name',
       );
 
-  static Preference<bool> advancedFilterSortAscending(String serverId) =>
-      Preference(
-        key:
-            'advanced_filter_sort_ascending_${_advancedFilterKeySuffix(serverId)}',
-        defaultValue: true,
-      );
+  static Preference<bool> advancedFilterSortAscending(
+    String serverId,
+  ) => Preference(
+    key: 'advanced_filter_sort_ascending_${_advancedFilterKeySuffix(serverId)}',
+    defaultValue: true,
+  );
 
   static Preference<String> advancedFilterCache(String serverId) => Preference(
     key: 'advanced_filter_cache_${_advancedFilterKeySuffix(serverId)}',

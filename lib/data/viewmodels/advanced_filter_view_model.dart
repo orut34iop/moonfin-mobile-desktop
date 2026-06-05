@@ -30,6 +30,13 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   bool _disposed = false;
   int _perfTraceSequence = 0;
   int? _lastPerfTraceId;
+  static const _selectionPersistDelay = Duration(milliseconds: 80);
+  Timer? _selectionPersistTimer;
+  Future<void>? _selectionPersistInFlight;
+  final List<Completer<void>> _selectionPersistWaiters = <Completer<void>>[];
+  int? _selectionPersistTraceId;
+  String? _selectionPersistReason;
+  bool _legacyCatalogPreferenceCleared = false;
 
   AdvancedFilterViewModel({
     required MediaServerClient client,
@@ -185,7 +192,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       );
 
       final cacheWatch = Stopwatch()..start();
-      final cachedSnapshot = await _loadCachedCatalogSnapshot();
+      final cachedSnapshot = await _loadCachedCatalogSnapshot(traceId);
       cacheWatch.stop();
       _logPerf(
         traceId,
@@ -312,15 +319,18 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _results = _filterItems(reason: 'clearAll', traceId: traceId);
     _hasApplied = true;
     _logPerf(traceId, 'clearAll:filterDone results=${_results.length}');
-    final persistWatch = Stopwatch()..start();
-    await _persistSelections(applied: true);
-    persistWatch.stop();
+    final notifyWatch = Stopwatch()..start();
+    notifyListeners();
+    notifyWatch.stop();
     _logPerf(
       traceId,
-      'clearAll:persistSelections ms=${persistWatch.elapsedMilliseconds}',
+      'clearAll:notifyListeners ms=${notifyWatch.elapsedMilliseconds}',
     );
-    notifyListeners();
-    _logPerf(traceId, 'clearAll:notifyListeners');
+    await _schedulePersistSelections(
+      traceId: traceId,
+      reason: 'clearAll',
+      applied: true,
+    );
   }
 
   String? imageUrl(AggregatedItem item) {
@@ -401,6 +411,114 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     ]);
   }
 
+  Future<void> _schedulePersistSelections({
+    required int traceId,
+    required String reason,
+    required bool applied,
+  }) {
+    final waiter = Completer<void>();
+    _selectionPersistWaiters.add(waiter);
+    _selectionPersistTraceId = traceId;
+    _selectionPersistReason = reason;
+    _selectionPersistTimer?.cancel();
+    _selectionPersistTimer = Timer(_selectionPersistDelay, () {
+      _selectionPersistTimer = null;
+      final runTraceId = _selectionPersistTraceId ?? traceId;
+      final runReason = _selectionPersistReason ?? reason;
+      _selectionPersistTraceId = null;
+      _selectionPersistReason = null;
+      _runScheduledSelectionPersist(
+        traceId: runTraceId,
+        reason: runReason,
+        applied: applied,
+      );
+    });
+    _logPerf(
+      traceId,
+      '$reason:persistSelectionsScheduled '
+      'delayMs=${_selectionPersistDelay.inMilliseconds} '
+      'pending=${_selectionPersistWaiters.length}',
+    );
+    return waiter.future;
+  }
+
+  void _runScheduledSelectionPersist({
+    required int traceId,
+    required String reason,
+    required bool applied,
+  }) {
+    final waiters = List<Completer<void>>.of(_selectionPersistWaiters);
+    _selectionPersistWaiters.clear();
+    if (waiters.isEmpty) return;
+
+    unawaited(
+      _persistSelectionsAfterInFlight(
+        traceId: traceId,
+        reason: reason,
+        applied: applied,
+        waiters: waiters,
+      ),
+    );
+  }
+
+  Future<void> _persistSelectionsAfterInFlight({
+    required int traceId,
+    required String reason,
+    required bool applied,
+    required List<Completer<void>> waiters,
+  }) async {
+    final totalWatch = Stopwatch()..start();
+    Future<void>? persistFuture;
+    try {
+      final previous = _selectionPersistInFlight;
+      if (previous != null) {
+        final waitWatch = Stopwatch()..start();
+        try {
+          await previous;
+        } catch (_) {
+          // The new selection snapshot should still be attempted.
+        }
+        waitWatch.stop();
+        _logPerf(
+          traceId,
+          '$reason:persistSelectionsWaitForInFlight '
+          'ms=${waitWatch.elapsedMilliseconds}',
+        );
+      }
+
+      final persistWatch = Stopwatch()..start();
+      persistFuture = _persistSelections(applied: applied);
+      _selectionPersistInFlight = persistFuture;
+      await persistFuture;
+      persistWatch.stop();
+      totalWatch.stop();
+      _logPerf(
+        traceId,
+        '$reason:persistSelectionsDone '
+        'persistMs=${persistWatch.elapsedMilliseconds} '
+        'totalMs=${totalWatch.elapsedMilliseconds} '
+        'waiters=${waiters.length}',
+      );
+      for (final waiter in waiters) {
+        if (!waiter.isCompleted) waiter.complete();
+      }
+    } catch (error, stackTrace) {
+      totalWatch.stop();
+      _logPerf(
+        traceId,
+        '$reason:persistSelectionsError '
+        'ms=${totalWatch.elapsedMilliseconds} error=$error',
+      );
+      for (final waiter in waiters) {
+        if (!waiter.isCompleted) waiter.completeError(error, stackTrace);
+      }
+    } finally {
+      if (_selectionPersistInFlight == persistFuture) {
+        _selectionPersistInFlight = null;
+      }
+    }
+  }
+
   Future<void> _persistSort() async {
     await Future.wait([
       _prefs.set(
@@ -448,6 +566,10 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         items,
         reason: background ? 'refresh-background' : 'refresh-foreground',
         traceId: traceId,
+      );
+      await _clearLegacyCatalogPreference(
+        traceId: traceId,
+        reason: 'server-refresh',
       );
       _state = AdvancedFilterLoadState.ready;
       _errorMessage = null;
@@ -536,27 +658,42 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       traceId,
       '$action:notifyListeners ms=${notifyWatch.elapsedMilliseconds}',
     );
-    final persistWatch = Stopwatch()..start();
-    await _persistSelections(applied: true);
-    persistWatch.stop();
     totalWatch.stop();
     _logPerf(
       traceId,
-      '$action:persistSelections ms=${persistWatch.elapsedMilliseconds} '
-      'totalMethodMs=${totalWatch.elapsedMilliseconds}',
+      '$action:persistSelectionsQueued totalMethodMs=${totalWatch.elapsedMilliseconds}',
+    );
+    await _schedulePersistSelections(
+      traceId: traceId,
+      reason: action,
+      applied: true,
     );
   }
 
-  Future<AdvancedFilterCatalogSnapshot?> _loadCachedCatalogSnapshot() async {
+  Future<AdvancedFilterCatalogSnapshot?> _loadCachedCatalogSnapshot(
+    int traceId,
+  ) async {
     final snapshot = await _catalogRepository.loadSnapshot(
       serverId: _client.baseUrl,
       userId: _catalogUserId,
     );
-    if (snapshot != null) return snapshot;
+    if (snapshot != null) {
+      await _clearLegacyCatalogPreference(
+        traceId: traceId,
+        reason: 'sqlite-cache-hit',
+      );
+      return snapshot;
+    }
 
     final legacyItems = _loadLegacyCachedCatalogItems();
     if (legacyItems != null) {
-      unawaited(_saveCatalogCache(legacyItems));
+      unawaited(
+        _saveCatalogCache(
+          legacyItems,
+          traceId: traceId,
+          clearLegacyAfterSave: true,
+        ),
+      );
       return AdvancedFilterCatalogSnapshot(
         items: legacyItems,
         syncedAt: null,
@@ -600,13 +737,56 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _saveCatalogCache(List<AggregatedItem> items) async {
+  Future<void> _clearLegacyCatalogPreference({
+    required int traceId,
+    required String reason,
+  }) async {
+    if (_legacyCatalogPreferenceCleared) return;
+    final pref = UserPreferences.advancedFilterCache(_preferenceScopeKey);
+    final rawLength = _prefs.get(pref).length;
+    _legacyCatalogPreferenceCleared = true;
+    if (rawLength == 0) {
+      _logPerf(traceId, 'legacyCacheClear:skip reason=$reason empty=true');
+      return;
+    }
+
+    final clearWatch = Stopwatch()..start();
+    try {
+      await _prefs.removePreference(pref);
+      clearWatch.stop();
+      _logPerf(
+        traceId,
+        'legacyCacheClear:done reason=$reason bytes=$rawLength '
+        'ms=${clearWatch.elapsedMilliseconds}',
+      );
+    } catch (error) {
+      clearWatch.stop();
+      _legacyCatalogPreferenceCleared = false;
+      _logPerf(
+        traceId,
+        'legacyCacheClear:error reason=$reason bytes=$rawLength '
+        'ms=${clearWatch.elapsedMilliseconds} error=$error',
+      );
+    }
+  }
+
+  Future<void> _saveCatalogCache(
+    List<AggregatedItem> items, {
+    int? traceId,
+    bool clearLegacyAfterSave = false,
+  }) async {
     try {
       await _catalogRepository.replaceScope(
         serverId: _client.baseUrl,
         userId: _catalogUserId,
         items: items,
       );
+      if (clearLegacyAfterSave && traceId != null) {
+        await _clearLegacyCatalogPreference(
+          traceId: traceId,
+          reason: 'legacy-migrated-to-sqlite',
+        );
+      }
     } catch (_) {
       // A cache write failure should not block filtering or navigation.
     }
@@ -806,6 +986,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _flushPendingSelectionPersistOnDispose();
     _disposed = true;
     _catalogChangeSub?.cancel();
     _catalogChangeSub = null;
@@ -813,5 +994,20 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       _catalogSyncService.dispose();
     }
     super.dispose();
+  }
+
+  void _flushPendingSelectionPersistOnDispose() {
+    if (_selectionPersistWaiters.isEmpty) return;
+    _selectionPersistTimer?.cancel();
+    _selectionPersistTimer = null;
+    final traceId = _selectionPersistTraceId ?? _lastPerfTraceId ?? 0;
+    final reason = _selectionPersistReason ?? 'dispose';
+    _selectionPersistTraceId = null;
+    _selectionPersistReason = null;
+    _runScheduledSelectionPersist(
+      traceId: traceId,
+      reason: '$reason-dispose',
+      applied: true,
+    );
   }
 }

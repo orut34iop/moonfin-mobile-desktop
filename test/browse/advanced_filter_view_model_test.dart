@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -377,6 +378,52 @@ void main() {
         'Delta',
         'Gamma',
       ]);
+    },
+  );
+
+  test(
+    'clears legacy shared preferences catalog after loading local cache',
+    () async {
+      final prefs = await createPreferences();
+      final catalogRepository = createCatalogRepository();
+      await catalogRepository.replaceScope(
+        serverId: serverUrl,
+        userId: 'cached-user',
+        items: _items
+            .map(
+              (raw) => AggregatedItem(
+                id: raw['Id'] as String,
+                serverId: serverUrl,
+                rawData: raw,
+              ),
+            )
+            .toList(),
+      );
+      await prefs.set(
+        UserPreferences.advancedFilterCache('$serverUrl::cached-user'),
+        jsonEncode({'version': 1, 'items': _items}),
+      );
+
+      final api = _FakeItemsApi(items: const []);
+      final vm = AdvancedFilterViewModel(
+        client: _FakeMediaServerClient(
+          itemsApi: api,
+          baseUrl: serverUrl,
+          userId: 'cached-user',
+        ),
+        prefs: prefs,
+        catalogRepository: catalogRepository,
+      );
+
+      await vm.load();
+
+      expect(api.getItemsCalls, 0);
+      expect(
+        prefs.get(
+          UserPreferences.advancedFilterCache('$serverUrl::cached-user'),
+        ),
+        isEmpty,
+      );
     },
   );
 
