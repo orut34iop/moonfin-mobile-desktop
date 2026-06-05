@@ -3259,6 +3259,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get advancedFilterLoadFailed => '筛选项加载失败';
 
   @override
+  String advancedFilterResultsCount(int count) {
+    return '$count 个匹配结果';
+  }
+
+  @override
+  String get advancedFilterSortByName => '名称';
+
+  @override
+  String get advancedFilterSortByYear => '年份';
+
+  @override
+  String get advancedFilterSortAscending => '升序';
+
+  @override
+  String get advancedFilterSortDescending => '降序';
+
+  @override
   String get seerrAvailableStatus => '可用的';
 
   @override
@@ -10087,6 +10104,23 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get advancedFilterLoadFailed => '筛选项加载失败';
 
   @override
+  String advancedFilterResultsCount(int count) {
+    return '$count 个匹配结果';
+  }
+
+  @override
+  String get advancedFilterSortByName => '名称';
+
+  @override
+  String get advancedFilterSortByYear => '年份';
+
+  @override
+  String get advancedFilterSortAscending => '升序';
+
+  @override
+  String get advancedFilterSortDescending => '降序';
+
+  @override
   String get seerrAvailableStatus => '可用的';
 
   @override
@@ -16913,6 +16947,23 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get advancedFilterLoadFailed => '篩選項載入失敗';
+
+  @override
+  String advancedFilterResultsCount(int count) {
+    return '$count 個匹配結果';
+  }
+
+  @override
+  String get advancedFilterSortByName => '名稱';
+
+  @override
+  String get advancedFilterSortByYear => '年份';
+
+  @override
+  String get advancedFilterSortAscending => '升序';
+
+  @override
+  String get advancedFilterSortDescending => '降序';
 
   @override
   String get seerrAvailableStatus => '可用的';

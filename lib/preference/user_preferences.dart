@@ -911,6 +911,19 @@ class UserPreferences extends ChangeNotifier {
     defaultValue: false,
   );
 
+  static Preference<String> advancedFilterSortField(String serverId) =>
+      Preference(
+        key: 'advanced_filter_sort_field_${_advancedFilterKeySuffix(serverId)}',
+        defaultValue: 'name',
+      );
+
+  static Preference<bool> advancedFilterSortAscending(String serverId) =>
+      Preference(
+        key:
+            'advanced_filter_sort_ascending_${_advancedFilterKeySuffix(serverId)}',
+        defaultValue: true,
+      );
+
   static Preference<String> advancedFilterCache(String serverId) => Preference(
     key: 'advanced_filter_cache_${_advancedFilterKeySuffix(serverId)}',
     defaultValue: '',

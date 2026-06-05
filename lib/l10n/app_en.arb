@@ -4640,6 +4640,31 @@
   "@advancedFilterLoadFailed": {
     "description": "Advanced filter error state"
   },
+  "advancedFilterResultsCount": "{count, plural, =0{No matching items} =1{1 matching item} other{{count} matching items}}",
+  "@advancedFilterResultsCount": {
+    "description": "Advanced filter result count summary",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advancedFilterSortByName": "Name",
+  "@advancedFilterSortByName": {
+    "description": "Advanced filter sort option for item name"
+  },
+  "advancedFilterSortByYear": "Year",
+  "@advancedFilterSortByYear": {
+    "description": "Advanced filter sort option for production year"
+  },
+  "advancedFilterSortAscending": "Ascending",
+  "@advancedFilterSortAscending": {
+    "description": "Advanced filter sort direction ascending"
+  },
+  "advancedFilterSortDescending": "Descending",
+  "@advancedFilterSortDescending": {
+    "description": "Advanced filter sort direction descending"
+  },
   "seerrAvailableStatus": "Available",
   "@seerrAvailableStatus": {
     "description": "Seerr media status when item is available"

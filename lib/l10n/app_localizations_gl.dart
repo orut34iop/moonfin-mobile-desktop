@@ -3406,6 +3406,30 @@ class AppLocalizationsGl extends AppLocalizations {
   String get advancedFilterLoadFailed => 'Could not load filters';
 
   @override
+  String advancedFilterResultsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count matching items',
+      one: '1 matching item',
+      zero: 'No matching items',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get advancedFilterSortByName => 'Name';
+
+  @override
+  String get advancedFilterSortByYear => 'Year';
+
+  @override
+  String get advancedFilterSortAscending => 'Ascending';
+
+  @override
+  String get advancedFilterSortDescending => 'Descending';
+
+  @override
   String get seerrAvailableStatus => 'Dispoñible';
 
   @override

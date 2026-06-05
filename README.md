@@ -109,6 +109,7 @@ Books and audiobooks download in their **original format** - no transcoding.
 - Filter the active server's movies and TV series by type, genre, production location, and year
 - Filter options are built from the current media catalog, cached locally, and restored per server
 - Filter rows support inline expansion for long option lists, multi-select chips, and immediate results
+- Results show the matched item count and support name/year sorting in either direction
 
 ### Featured Media Bar
 - Rotating featured hero content on the home screen with rich backdrop presentation

@@ -9,6 +9,8 @@ import '../models/aggregated_item.dart';
 
 enum AdvancedFilterLoadState { loading, ready, error }
 
+enum AdvancedFilterSortField { name, year }
+
 class AdvancedFilterViewModel extends ChangeNotifier {
   static const movieType = 'Movie';
   static const seriesType = 'Series';
@@ -76,6 +78,12 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   Set<String> _selectedYears = <String>{};
   Set<String> get selectedYears => _selectedYears;
 
+  AdvancedFilterSortField _sortField = AdvancedFilterSortField.name;
+  AdvancedFilterSortField get sortField => _sortField;
+
+  bool _sortAscending = true;
+  bool get sortAscending => _sortAscending;
+
   bool get hasActiveFilters =>
       _selectedTypes.isNotEmpty ||
       _selectedGenres.isNotEmpty ||
@@ -134,6 +142,21 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   Future<void> clearYears() => _updateFilters(_selectedYears.clear);
 
+  Future<void> setSortField(AdvancedFilterSortField field) async {
+    if (_sortField == field) return;
+    _sortField = field;
+    _results = _sortItems(_results);
+    notifyListeners();
+    await _persistSort();
+  }
+
+  Future<void> toggleSortDirection() async {
+    _sortAscending = !_sortAscending;
+    _results = _sortItems(_results);
+    notifyListeners();
+    await _persistSort();
+  }
+
   Future<void> clearAll() async {
     _selectedTypes = <String>{};
     _selectedGenres = <String>{};
@@ -181,6 +204,12 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _selectedYears = _prefs
         .get(UserPreferences.advancedFilterYears(_serverKey))
         .toSet();
+    _sortField = _normalizeSortField(
+      _prefs.get(UserPreferences.advancedFilterSortField(_serverKey)),
+    );
+    _sortAscending = _prefs.get(
+      UserPreferences.advancedFilterSortAscending(_serverKey),
+    );
     _hasApplied = _prefs.get(UserPreferences.advancedFilterApplied(_serverKey));
   }
 
@@ -203,6 +232,19 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       ),
       _prefs.set(UserPreferences.advancedFilterYears(_serverKey), orderedYears),
       _prefs.set(UserPreferences.advancedFilterApplied(_serverKey), applied),
+    ]);
+  }
+
+  Future<void> _persistSort() async {
+    await Future.wait([
+      _prefs.set(
+        UserPreferences.advancedFilterSortField(_serverKey),
+        _sortField.name,
+      ),
+      _prefs.set(
+        UserPreferences.advancedFilterSortAscending(_serverKey),
+        _sortAscending,
+      ),
     ]);
   }
 
@@ -347,8 +389,21 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       return matchesYear;
     }).toList();
 
-    filtered.sort((a, b) => _compareText(a.name, b.name));
-    return filtered;
+    return _sortItems(filtered);
+  }
+
+  List<AggregatedItem> _sortItems(List<AggregatedItem> items) {
+    final sorted = items.toList();
+    sorted.sort((a, b) {
+      return switch (_sortField) {
+        AdvancedFilterSortField.name =>
+          _sortAscending
+              ? _compareText(a.name, b.name)
+              : _compareText(b.name, a.name),
+        AdvancedFilterSortField.year => _compareByYear(a, b),
+      };
+    });
+    return sorted;
   }
 
   void _dropUnavailableSelections() {
@@ -401,9 +456,29 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   bool _validType(String value) => value == movieType || value == seriesType;
 
+  AdvancedFilterSortField _normalizeSortField(String value) {
+    for (final field in AdvancedFilterSortField.values) {
+      if (field.name == value) return field;
+    }
+    return AdvancedFilterSortField.name;
+  }
+
   int _typeSort(String a, String b) {
     const order = {movieType: 0, seriesType: 1};
     return (order[a] ?? 99).compareTo(order[b] ?? 99);
+  }
+
+  int _compareByYear(AggregatedItem a, AggregatedItem b) {
+    final yearA = a.productionYear;
+    final yearB = b.productionYear;
+    if (yearA == null && yearB == null) return _compareText(a.name, b.name);
+    if (yearA == null) return 1;
+    if (yearB == null) return -1;
+    final yearComparison = _sortAscending
+        ? yearA.compareTo(yearB)
+        : yearB.compareTo(yearA);
+    if (yearComparison != 0) return yearComparison;
+    return _compareText(a.name, b.name);
   }
 
   static int _compareText(String a, String b) {

@@ -100,6 +100,94 @@ void main() {
     expect(prefs.get(UserPreferences.advancedFilterApplied(serverUrl)), true);
   });
 
+  test('sorts results by name or year in either direction', () async {
+    final prefs = await createPreferences();
+    final vm = AdvancedFilterViewModel(
+      client: _FakeMediaServerClient(
+        itemsApi: _FakeItemsApi(items: _items),
+        baseUrl: serverUrl,
+      ),
+      prefs: prefs,
+    );
+
+    await vm.load();
+
+    expect(vm.sortField, AdvancedFilterSortField.name);
+    expect(vm.sortAscending, true);
+    expect(vm.results.map((item) => item.name), const [
+      'Alpha',
+      'Beta',
+      'Delta',
+      'Gamma',
+    ]);
+
+    await vm.setSortField(AdvancedFilterSortField.year);
+
+    expect(vm.results.map((item) => item.name), const [
+      'Beta',
+      'Alpha',
+      'Delta',
+      'Gamma',
+    ]);
+
+    await vm.toggleSortDirection();
+
+    expect(vm.results.map((item) => item.name), const [
+      'Alpha',
+      'Delta',
+      'Gamma',
+      'Beta',
+    ]);
+    expect(
+      prefs.get(UserPreferences.advancedFilterSortField(serverUrl)),
+      'year',
+    );
+    expect(
+      prefs.get(UserPreferences.advancedFilterSortAscending(serverUrl)),
+      false,
+    );
+
+    await vm.setSortField(AdvancedFilterSortField.name);
+
+    expect(vm.results.map((item) => item.name), const [
+      'Gamma',
+      'Delta',
+      'Beta',
+      'Alpha',
+    ]);
+  });
+
+  test('restores persisted sort settings', () async {
+    final prefs = await createPreferences();
+    await prefs.set(
+      UserPreferences.advancedFilterSortField(serverUrl),
+      AdvancedFilterSortField.year.name,
+    );
+    await prefs.set(
+      UserPreferences.advancedFilterSortAscending(serverUrl),
+      false,
+    );
+
+    final vm = AdvancedFilterViewModel(
+      client: _FakeMediaServerClient(
+        itemsApi: _FakeItemsApi(items: _items),
+        baseUrl: serverUrl,
+      ),
+      prefs: prefs,
+    );
+
+    await vm.load();
+
+    expect(vm.sortField, AdvancedFilterSortField.year);
+    expect(vm.sortAscending, false);
+    expect(vm.results.map((item) => item.name), const [
+      'Alpha',
+      'Delta',
+      'Gamma',
+      'Beta',
+    ]);
+  });
+
   test('clearAll resets persisted filter state', () async {
     final prefs = await createPreferences();
     final vm = AdvancedFilterViewModel(

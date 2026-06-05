@@ -82,7 +82,7 @@ class _AdvancedFilterScreenState extends State<AdvancedFilterScreen> {
                     onClearAll: _vm.clearAll,
                   ),
                 ),
-                _buildBodySliver(),
+                ..._buildBodySlivers(),
               ],
             ),
           ),
@@ -91,52 +91,62 @@ class _AdvancedFilterScreenState extends State<AdvancedFilterScreen> {
     );
   }
 
-  Widget _buildBodySliver() {
+  List<Widget> _buildBodySlivers() {
     final l10n = AppLocalizations.of(context);
     return switch (_vm.state) {
-      AdvancedFilterLoadState.loading => SliverFillRemaining(
-        hasScrollBody: false,
-        child: _CenteredState(
-          icon: Icons.tune_rounded,
-          title: l10n.advancedFilterLoading,
-          showProgress: true,
-          progress: _vm.loadingProgress,
-          progressLabel: _vm.totalItemCount == null
-              ? null
-              : '${_vm.loadedItemCount.clamp(0, _vm.totalItemCount!)} / ${_vm.totalItemCount}',
+      AdvancedFilterLoadState.loading => [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _CenteredState(
+            icon: Icons.tune_rounded,
+            title: l10n.advancedFilterLoading,
+            showProgress: true,
+            progress: _vm.loadingProgress,
+            progressLabel: _vm.totalItemCount == null
+                ? null
+                : '${_vm.loadedItemCount.clamp(0, _vm.totalItemCount!)} / ${_vm.totalItemCount}',
+          ),
         ),
-      ),
-      AdvancedFilterLoadState.error => SliverFillRemaining(
-        hasScrollBody: false,
-        child: _CenteredState(
-          icon: Icons.error_outline_rounded,
-          title: l10n.advancedFilterLoadFailed,
-          actionLabel: l10n.retry,
-          onAction: _vm.load,
+      ],
+      AdvancedFilterLoadState.error => [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _CenteredState(
+            icon: Icons.error_outline_rounded,
+            title: l10n.advancedFilterLoadFailed,
+            actionLabel: l10n.retry,
+            onAction: _vm.load,
+          ),
         ),
-      ),
-      AdvancedFilterLoadState.ready => _buildReadyBodySliver(l10n),
+      ],
+      AdvancedFilterLoadState.ready => _buildReadyBodySlivers(l10n),
     };
   }
 
-  Widget _buildReadyBodySliver(AppLocalizations l10n) {
+  List<Widget> _buildReadyBodySlivers(AppLocalizations l10n) {
     if (_vm.results.isEmpty) {
-      return SliverFillRemaining(
-        hasScrollBody: false,
-        child: _CenteredState(
-          icon: Icons.search_off_rounded,
-          title: l10n.noResults,
-          actionLabel: l10n.clearFilters,
-          onAction: _vm.clearAll,
+      return [
+        _ResultsHeaderSliver(vm: _vm),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _CenteredState(
+            icon: Icons.search_off_rounded,
+            title: l10n.noResults,
+            actionLabel: l10n.clearFilters,
+            onAction: _vm.clearAll,
+          ),
         ),
-      );
+      ];
     }
 
-    return _ResultsGridSliver(
-      items: _vm.results,
-      imageUrlFor: _vm.imageUrl,
-      prefs: _prefs,
-    );
+    return [
+      _ResultsHeaderSliver(vm: _vm),
+      _ResultsGridSliver(
+        items: _vm.results,
+        imageUrlFor: _vm.imageUrl,
+        prefs: _prefs,
+      ),
+    ];
   }
 }
 
@@ -472,6 +482,135 @@ class _FilterChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ResultsHeaderSliver extends StatelessWidget {
+  final AdvancedFilterViewModel vm;
+
+  const _ResultsHeaderSliver({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompact =
+        PlatformDetection.useMobileUi || MediaQuery.sizeOf(context).width < 720;
+    final horizontalPadding = isCompact ? 16.0 : 48.0;
+    final controls = _SortControls(vm: vm);
+
+    return SliverToBoxAdapter(
+      child: Material(
+        color: const Color(0xFFF6F7F9),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            18,
+            horizontalPadding,
+            0,
+          ),
+          child: isCompact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ResultsCount(count: vm.results.length),
+                    const SizedBox(height: 12),
+                    controls,
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: _ResultsCount(count: vm.results.length)),
+                    controls,
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ResultsCount extends StatelessWidget {
+  final int count;
+
+  const _ResultsCount({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Text(
+      l10n.advancedFilterResultsCount(count),
+      style: const TextStyle(
+        color: Color(0xFF343840),
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+class _SortControls extends StatelessWidget {
+  final AdvancedFilterViewModel vm;
+
+  const _SortControls({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SegmentedButton<AdvancedFilterSortField>(
+          showSelectedIcon: false,
+          style: SegmentedButton.styleFrom(
+            selectedBackgroundColor: const Color(0xFFFF5368),
+            selectedForegroundColor: Colors.white,
+            foregroundColor: const Color(0xFF343840),
+            backgroundColor: Colors.white,
+            side: BorderSide(color: Colors.black.withAlpha(22)),
+            textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          segments: [
+            ButtonSegment(
+              value: AdvancedFilterSortField.name,
+              icon: const Icon(Icons.sort_by_alpha_rounded, size: 18),
+              label: Text(l10n.advancedFilterSortByName),
+            ),
+            ButtonSegment(
+              value: AdvancedFilterSortField.year,
+              icon: const Icon(Icons.calendar_month_rounded, size: 18),
+              label: Text(l10n.advancedFilterSortByYear),
+            ),
+          ],
+          selected: {vm.sortField},
+          onSelectionChanged: (selection) {
+            unawaited(vm.setSortField(selection.single));
+          },
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 42,
+          height: 42,
+          child: IconButton(
+            tooltip: vm.sortAscending
+                ? l10n.advancedFilterSortAscending
+                : l10n.advancedFilterSortDescending,
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF343840),
+              side: BorderSide(color: Colors.black.withAlpha(22)),
+            ),
+            icon: Icon(
+              vm.sortAscending
+                  ? Icons.arrow_upward_rounded
+                  : Icons.arrow_downward_rounded,
+            ),
+            onPressed: () => unawaited(vm.toggleSortDirection()),
+          ),
+        ),
+      ],
     );
   }
 }

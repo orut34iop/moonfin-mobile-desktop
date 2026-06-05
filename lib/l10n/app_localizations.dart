@@ -6143,6 +6143,36 @@ abstract class AppLocalizations {
   /// **'Could not load filters'**
   String get advancedFilterLoadFailed;
 
+  /// Advanced filter result count summary
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No matching items} =1{1 matching item} other{{count} matching items}}'**
+  String advancedFilterResultsCount(int count);
+
+  /// Advanced filter sort option for item name
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get advancedFilterSortByName;
+
+  /// Advanced filter sort option for production year
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get advancedFilterSortByYear;
+
+  /// Advanced filter sort direction ascending
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get advancedFilterSortAscending;
+
+  /// Advanced filter sort direction descending
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get advancedFilterSortDescending;
+
   /// Seerr media status when item is available
   ///
   /// In en, this message translates to:
