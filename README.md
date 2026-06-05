@@ -113,6 +113,7 @@ Books and audiobooks download in their **original format** - no transcoding.
 - Genre and production-location multi-selects require every selected value to be present on a result
 - Filter row options are recalculated from the current result set so impossible follow-up choices are hidden
 - Results show the matched item count and support name/year sorting in either direction
+- Item detail title metadata displays the complete genre list for direct comparison with filter selections
 - Advanced filter performance diagnostics are appended to `Documents/Moonfin/logs/advanced_filter_perf.log`
 
 ### Featured Media Bar

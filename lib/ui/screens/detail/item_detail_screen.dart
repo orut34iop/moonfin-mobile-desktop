@@ -68,6 +68,14 @@ bool _useDesktopDetailLayout(BuildContext context) {
       (PlatformDetection.useMobileUi && isLandscape && size.width >= 700);
 }
 
+@visibleForTesting
+List<String> detailTitleGenres(AggregatedItem item) {
+  return item.genres
+      .map((genre) => genre.trim())
+      .where((genre) => genre.isNotEmpty)
+      .toList(growable: false);
+}
+
 double _desktopUiScale({UserPreferences? prefs}) {
   if (!PlatformDetection.useDesktopUi) return 1.0;
   final effectivePrefs = prefs ?? GetIt.instance<UserPreferences>();
@@ -2990,8 +2998,9 @@ class _MetadataRow extends StatelessWidget {
       parts.add(_text(theme, AppLocalizations.of(context).endsAt(endsAt)));
     }
 
-    if (item.genres.isNotEmpty) {
-      parts.add(_genreLinks(context, theme, item.genres.take(3).toList()));
+    final titleGenres = detailTitleGenres(item);
+    if (titleGenres.isNotEmpty) {
+      parts.add(_genreLinks(context, theme, titleGenres));
     }
 
     if (parts.isEmpty) return const SizedBox.shrink();
