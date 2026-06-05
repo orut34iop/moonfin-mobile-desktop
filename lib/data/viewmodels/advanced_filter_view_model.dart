@@ -94,12 +94,18 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   bool _hasApplied = false;
   bool get hasApplied => _hasApplied;
 
+  List<String> _types = const [movieType, seriesType];
+  List<String> get types => _types;
+
+  List<String> _catalogGenres = const [];
   List<String> _genres = const [];
   List<String> get genres => _genres;
 
+  List<String> _catalogRegions = const [];
   List<String> _regions = const [];
   List<String> get regions => _regions;
 
+  List<String> _catalogYears = const [];
   List<String> _years = const [];
   List<String> get years => _years;
 
@@ -240,8 +246,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     await _refreshCatalogFromServer(background: _catalogItems.isNotEmpty);
   }
 
-  Future<void> toggleType(String value) =>
-      _updateFilters('toggleType', value, () => _toggle(_selectedTypes, value));
+  Future<void> toggleType(String value) => _updateFilters(
+    'toggleType',
+    value,
+    () => _toggleExclusive(_selectedTypes, value),
+  );
 
   Future<void> toggleGenre(String value) => _updateFilters(
     'toggleGenre',
@@ -255,8 +264,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     () => _toggle(_selectedRegions, value),
   );
 
-  Future<void> toggleYear(String value) =>
-      _updateFilters('toggleYear', value, () => _toggle(_selectedYears, value));
+  Future<void> toggleYear(String value) => _updateFilters(
+    'toggleYear',
+    value,
+    () => _toggleExclusive(_selectedYears, value),
+  );
 
   Future<void> clearTypes() =>
       _updateFilters('clearTypes', 'all', _selectedTypes.clear);
@@ -318,6 +330,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _selectedRegions = <String>{};
     _selectedYears = <String>{};
     _results = _filterItems(reason: 'clearAll', traceId: traceId);
+    _refreshVisibleFilterOptions(reason: 'clearAll', traceId: traceId);
     _hasApplied = true;
     _logPerf(traceId, 'clearAll:filterDone results=${_results.length}');
     final notifyWatch = Stopwatch()..start();
@@ -604,13 +617,13 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     final totalWatch = Stopwatch()..start();
     _catalogItems = items;
     final genresWatch = Stopwatch()..start();
-    _genres = _collectGenres(items);
+    _catalogGenres = _collectGenres(items);
     genresWatch.stop();
     final regionsWatch = Stopwatch()..start();
-    _regions = _collectRegions(items);
+    _catalogRegions = _collectRegions(items);
     regionsWatch.stop();
     final yearsWatch = Stopwatch()..start();
-    _years = _collectYears(items);
+    _catalogYears = _collectYears(items);
     yearsWatch.stop();
     final dropWatch = Stopwatch()..start();
     _dropUnavailableSelections();
@@ -620,16 +633,23 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       reason: '$reason-useCatalogItems',
       traceId: traceId,
     );
+    final optionsWatch = Stopwatch()..start();
+    _refreshVisibleFilterOptions(
+      reason: '$reason-useCatalogItems',
+      traceId: traceId,
+    );
+    optionsWatch.stop();
     totalWatch.stop();
     _logPerf(
       traceId,
       'useCatalogItems:$reason totalMs=${totalWatch.elapsedMilliseconds} '
-      'items=${items.length} genres=${_genres.length} '
-      'regions=${_regions.length} years=${_years.length} '
+      'items=${items.length} genres=${_catalogGenres.length} '
+      'regions=${_catalogRegions.length} years=${_catalogYears.length} '
       'collectGenresMs=${genresWatch.elapsedMilliseconds} '
       'collectRegionsMs=${regionsWatch.elapsedMilliseconds} '
       'collectYearsMs=${yearsWatch.elapsedMilliseconds} '
       'dropUnavailableMs=${dropWatch.elapsedMilliseconds} '
+      'refreshOptionsMs=${optionsWatch.elapsedMilliseconds} '
       'results=${_results.length}',
     );
   }
@@ -651,6 +671,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       'ms=${updateWatch.elapsedMilliseconds} ${_selectionSummary()}',
     );
     _results = _filterItems(reason: action, traceId: traceId);
+    _refreshVisibleFilterOptions(reason: action, traceId: traceId);
     _logPerf(traceId, '$action:filterDone results=${_results.length}');
     final notifyWatch = Stopwatch()..start();
     notifyListeners();
@@ -841,10 +862,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     final filtered = <AggregatedItem>[];
 
     for (final item in _catalogItems) {
-      final type = item.type;
-      final matchesType =
-          _selectedTypes.isEmpty ||
-          (type != null && _selectedTypes.contains(type));
+      final matchesType = _matchesSingleValue(item.type, _selectedTypes);
       if (!matchesType) continue;
       typePassed++;
 
@@ -860,9 +878,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       regionPassed++;
 
       final year = item.productionYear?.toString();
-      final matchesYear =
-          _selectedYears.isEmpty ||
-          (year != null && _selectedYears.contains(year));
+      final matchesYear = _matchesSingleValue(year, _selectedYears);
       if (!matchesYear) continue;
       yearPassed++;
       filtered.add(item);
@@ -912,13 +928,49 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   void _dropUnavailableSelections() {
     _selectedTypes.removeWhere((type) => !_validType(type));
-    _selectedGenres.removeWhere((genre) => !_genres.contains(genre));
-    _selectedRegions.removeWhere((region) => !_regions.contains(region));
-    _selectedYears.removeWhere((year) => !_years.contains(year));
+    _selectedGenres.removeWhere((genre) => !_catalogGenres.contains(genre));
+    _selectedRegions.removeWhere((region) => !_catalogRegions.contains(region));
+    _selectedYears.removeWhere((year) => !_catalogYears.contains(year));
   }
 
-  List<String> _collectGenres(List<AggregatedItem> items) {
-    final values = <String>{};
+  void _refreshVisibleFilterOptions({
+    required String reason,
+    required int traceId,
+  }) {
+    final optionsWatch = Stopwatch()..start();
+    _types = _collectTypes(_results, include: _selectedTypes);
+    _genres = _collectGenres(_results, include: _selectedGenres);
+    _regions = _collectRegions(_results, include: _selectedRegions);
+    _years = _collectYears(_results, include: _selectedYears);
+    optionsWatch.stop();
+    _logPerf(
+      traceId,
+      'filterOptions:$reason ms=${optionsWatch.elapsedMilliseconds} '
+      'types=${_types.length} genres=${_genres.length} '
+      'regions=${_regions.length} years=${_years.length}',
+    );
+  }
+
+  List<String> _collectTypes(
+    List<AggregatedItem> items, {
+    Set<String> include = const <String>{},
+  }) {
+    final values = include.where(_validType).toSet();
+    for (final item in items) {
+      final type = item.type;
+      if (type != null && _validType(type)) values.add(type);
+    }
+    return values.toList()..sort(_typeSort);
+  }
+
+  List<String> _collectGenres(
+    List<AggregatedItem> items, {
+    Set<String> include = const <String>{},
+  }) {
+    final values = include
+        .map((genre) => genre.trim())
+        .where((genre) => genre.isNotEmpty)
+        .toSet();
     for (final item in items) {
       for (final genre in item.genres) {
         final normalized = genre.trim();
@@ -928,8 +980,14 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     return values.toList()..sort(_compareText);
   }
 
-  List<String> _collectRegions(List<AggregatedItem> items) {
-    final values = <String>{};
+  List<String> _collectRegions(
+    List<AggregatedItem> items, {
+    Set<String> include = const <String>{},
+  }) {
+    final values = include
+        .map((region) => region.trim())
+        .where((region) => region.isNotEmpty)
+        .toSet();
     for (final item in items) {
       for (final region in item.productionLocations) {
         final normalized = region.trim();
@@ -939,8 +997,14 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     return values.toList()..sort(_compareText);
   }
 
-  List<String> _collectYears(List<AggregatedItem> items) {
-    final values = <String>{};
+  List<String> _collectYears(
+    List<AggregatedItem> items, {
+    Set<String> include = const <String>{},
+  }) {
+    final values = include
+        .map((year) => year.trim())
+        .where((year) => year.isNotEmpty)
+        .toSet();
     for (final item in items) {
       final year = item.productionYear;
       if (year != null && year > 0) {
@@ -956,6 +1020,16 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     } else {
       values.add(value);
     }
+  }
+
+  void _toggleExclusive(Set<String> values, String value) {
+    if (values.length == 1 && values.contains(value)) {
+      values.clear();
+      return;
+    }
+    values
+      ..clear()
+      ..add(value);
   }
 
   bool _validType(String value) => value == movieType || value == seriesType;
@@ -978,6 +1052,13 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         .where((value) => value.isNotEmpty)
         .toSet();
     return requiredValues.every(availableValues.contains);
+  }
+
+  bool _matchesSingleValue(String? value, Set<String> selectedValues) {
+    if (selectedValues.isEmpty) return true;
+    return selectedValues.length == 1 &&
+        value != null &&
+        selectedValues.contains(value);
   }
 
   int _typeSort(String a, String b) {

@@ -266,16 +266,21 @@ class _FilterPanel extends StatelessWidget {
               _FilterRow(
                 rowKey: _FilterRowKey.type,
                 label: l10n.advancedFilterByType,
-                options: const [
-                  _FilterOption(
-                    value: AdvancedFilterViewModel.movieType,
-                    labelKey: _FilterOptionLabel.movie,
-                  ),
-                  _FilterOption(
-                    value: AdvancedFilterViewModel.seriesType,
-                    labelKey: _FilterOptionLabel.series,
-                  ),
-                ],
+                options: vm.types
+                    .map(
+                      (value) => _FilterOption(
+                        value: value,
+                        labelKey: switch (value) {
+                          AdvancedFilterViewModel.movieType =>
+                            _FilterOptionLabel.movie,
+                          AdvancedFilterViewModel.seriesType =>
+                            _FilterOptionLabel.series,
+                          _ => null,
+                        },
+                        label: value,
+                      ),
+                    )
+                    .toList(growable: false),
                 selectedValues: vm.selectedTypes,
                 onToggle: vm.toggleType,
                 onClear: vm.clearTypes,

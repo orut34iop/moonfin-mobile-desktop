@@ -61,9 +61,10 @@ void main() {
     await vm.load();
 
     expect(vm.state, AdvancedFilterLoadState.ready);
-    expect(vm.genres, const ['Adventure', 'Drama', 'Science Fiction']);
-    expect(vm.regions, const ['France', 'United States']);
-    expect(vm.years, const ['2024', '2023']);
+    expect(vm.types, const ['Movie']);
+    expect(vm.genres, const ['Science Fiction']);
+    expect(vm.regions, const ['United States']);
+    expect(vm.years, const ['2024']);
     expect(vm.results.map((item) => item.name), const ['Alpha']);
   });
 
@@ -107,7 +108,6 @@ void main() {
 
       await vm.load();
       await vm.toggleType('Movie');
-      await vm.toggleType('Series');
       await vm.toggleGenre('Science Fiction');
       await vm.toggleGenre('Adventure');
       await vm.toggleRegion('France');
@@ -117,11 +117,47 @@ void main() {
       expect(vm.hasActiveFilters, true);
       expect(prefs.get(UserPreferences.advancedFilterTypes(serverUrl)), const [
         'Movie',
-        'Series',
       ]);
       expect(prefs.get(UserPreferences.advancedFilterApplied(serverUrl)), true);
     },
   );
+
+  test('filter options update from the current result set', () async {
+    final prefs = await createPreferences();
+    final catalogRepository = createCatalogRepository();
+    final vm = AdvancedFilterViewModel(
+      client: _FakeMediaServerClient(
+        itemsApi: _FakeItemsApi(items: _facetItems),
+        baseUrl: serverUrl,
+      ),
+      prefs: prefs,
+      catalogRepository: catalogRepository,
+    );
+
+    await vm.load();
+
+    expect(vm.years, const ['2025', '2024']);
+    expect(vm.genres, contains('Action'));
+
+    await vm.toggleYear('2025');
+
+    expect(vm.results.map((item) => item.name), const [
+      'Future Adventure',
+      'Future Drama',
+    ]);
+    expect(vm.years, const ['2025']);
+    expect(vm.genres, const ['Adventure', 'Drama']);
+    expect(vm.genres, isNot(contains('Action')));
+    expect(vm.regions, const ['Canada', 'United States']);
+
+    await vm.clearYears();
+    await vm.toggleGenre('Action');
+
+    expect(vm.results.map((item) => item.name), const ['Action Quest']);
+    expect(vm.years, const ['2024']);
+    expect(vm.genres, const ['Action', 'Adventure']);
+    expect(vm.regions, const ['United States']);
+  });
 
   test('sorts results by name or year in either direction', () async {
     final prefs = await createPreferences();
@@ -337,11 +373,7 @@ void main() {
 
     expect(firstUserReloadApi.getItemsCalls, 0);
     expect(firstUserReloadVm.selectedGenres, const {'Drama'});
-    expect(firstUserReloadVm.genres, const [
-      'Adventure',
-      'Drama',
-      'Science Fiction',
-    ]);
+    expect(firstUserReloadVm.genres, const ['Drama']);
     expect(firstUserReloadVm.results.map((item) => item.name), const ['Gamma']);
   });
 
@@ -692,6 +724,36 @@ const _items = [
     'ProductionYear': 2024,
     'Genres': ['Science Fiction', 'Adventure'],
     'ProductionLocations': ['France'],
+    'UserData': <String, dynamic>{},
+  },
+];
+
+const _facetItems = [
+  {
+    'Id': 'facet-1',
+    'Name': 'Future Drama',
+    'Type': 'Movie',
+    'ProductionYear': 2025,
+    'Genres': ['Drama'],
+    'ProductionLocations': ['United States'],
+    'UserData': <String, dynamic>{},
+  },
+  {
+    'Id': 'facet-2',
+    'Name': 'Future Adventure',
+    'Type': 'Movie',
+    'ProductionYear': 2025,
+    'Genres': ['Adventure'],
+    'ProductionLocations': ['Canada'],
+    'UserData': <String, dynamic>{},
+  },
+  {
+    'Id': 'facet-3',
+    'Name': 'Action Quest',
+    'Type': 'Movie',
+    'ProductionYear': 2024,
+    'Genres': ['Action', 'Adventure'],
+    'ProductionLocations': ['United States'],
     'UserData': <String, dynamic>{},
   },
 ];
