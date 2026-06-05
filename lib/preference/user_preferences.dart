@@ -28,7 +28,8 @@ class UserPreferences extends ChangeNotifier {
 
   bool containsPreferenceKey(String key) => _store.containsKey(key);
 
-  bool containsPreference<T>(Preference<T> pref) => _store.containsKey(pref.key);
+  bool containsPreference<T>(Preference<T> pref) =>
+      _store.containsKey(pref.key);
 
   AudioOutputMode resolveAudioOutputMode() => get(audioOutputMode);
 
@@ -874,6 +875,46 @@ class UserPreferences extends ChangeNotifier {
         defaultValue: ImageType.poster,
         values: ImageType.values,
       );
+
+  static String _advancedFilterKeySuffix(String serverId) {
+    final trimmed = serverId.trim();
+    if (trimmed.isEmpty) return 'default';
+    return trimmed.replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '_');
+  }
+
+  static Preference<List<String>> advancedFilterTypes(String serverId) =>
+      Preference(
+        key: 'advanced_filter_types_${_advancedFilterKeySuffix(serverId)}',
+        defaultValue: const <String>[],
+      );
+
+  static Preference<List<String>> advancedFilterGenres(String serverId) =>
+      Preference(
+        key: 'advanced_filter_genres_${_advancedFilterKeySuffix(serverId)}',
+        defaultValue: const <String>[],
+      );
+
+  static Preference<List<String>> advancedFilterRegions(String serverId) =>
+      Preference(
+        key: 'advanced_filter_regions_${_advancedFilterKeySuffix(serverId)}',
+        defaultValue: const <String>[],
+      );
+
+  static Preference<List<String>> advancedFilterYears(String serverId) =>
+      Preference(
+        key: 'advanced_filter_years_${_advancedFilterKeySuffix(serverId)}',
+        defaultValue: const <String>[],
+      );
+
+  static Preference<bool> advancedFilterApplied(String serverId) => Preference(
+    key: 'advanced_filter_applied_${_advancedFilterKeySuffix(serverId)}',
+    defaultValue: false,
+  );
+
+  static Preference<String> advancedFilterCache(String serverId) => Preference(
+    key: 'advanced_filter_cache_${_advancedFilterKeySuffix(serverId)}',
+    defaultValue: '',
+  );
 
   static final allGenresImageType = EnumPreference(
     key: 'all_genres_image_type',

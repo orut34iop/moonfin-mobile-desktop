@@ -4600,6 +4600,46 @@
   "@noResults": {
     "description": "Shown when a search or browse returns no items"
   },
+  "advancedFilter": "Advanced Filter",
+  "@advancedFilter": {
+    "description": "Navigation label and title for advanced media filtering"
+  },
+  "advancedFilterByType": "By Type",
+  "@advancedFilterByType": {
+    "description": "Advanced filter row label for media types"
+  },
+  "advancedFilterByGenre": "By Genre",
+  "@advancedFilterByGenre": {
+    "description": "Advanced filter row label for genres"
+  },
+  "advancedFilterByRegion": "By Region",
+  "@advancedFilterByRegion": {
+    "description": "Advanced filter row label for production locations"
+  },
+  "advancedFilterByYear": "By Year",
+  "@advancedFilterByYear": {
+    "description": "Advanced filter row label for production years"
+  },
+  "advancedFilterMovie": "Movie",
+  "@advancedFilterMovie": {
+    "description": "Advanced filter media type option for movies"
+  },
+  "advancedFilterSeries": "TV Series",
+  "@advancedFilterSeries": {
+    "description": "Advanced filter media type option for series"
+  },
+  "clearFilters": "Clear Filters",
+  "@clearFilters": {
+    "description": "Button label to clear advanced filters"
+  },
+  "advancedFilterLoading": "Loading filters",
+  "@advancedFilterLoading": {
+    "description": "Advanced filter loading state"
+  },
+  "advancedFilterLoadFailed": "Could not load filters",
+  "@advancedFilterLoadFailed": {
+    "description": "Advanced filter error state"
+  },
   "seerrAvailableStatus": "Available",
   "@seerrAvailableStatus": {
     "description": "Seerr media status when item is available"

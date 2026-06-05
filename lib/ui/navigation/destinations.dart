@@ -43,6 +43,7 @@ class Destinations {
   // General
   static const home = '/home';
   static const search = '/search';
+  static const advancedFilter = '/advanced-filter';
 
   // Browsing
   static const libraryBrowse = '/library/:libraryId';

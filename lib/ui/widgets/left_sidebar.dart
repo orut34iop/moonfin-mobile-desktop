@@ -740,6 +740,21 @@ class _LeftSidebarState extends State<LeftSidebar> {
                     context.navigateTopLevel(Destinations.search);
                   },
                 ),
+                _SidebarItem(
+                  icon: Icons.tune_rounded,
+                  label: l10n.advancedFilter,
+                  baseColor: nextSidebarColor(),
+                  showLabel: _showLabels,
+                  onPressed: () {
+                    _onNavigate();
+                    if (_isActive(Destinations.advancedFilter)) {
+                      _exitSidebarToContent();
+                      return;
+                    }
+                    _markNavigationAwayFromSidebar();
+                    context.navigateTopLevel(Destinations.advancedFilter);
+                  },
+                ),
                 if (showShuffle)
                   _SidebarItem(
                     icon: Icons.shuffle_rounded,

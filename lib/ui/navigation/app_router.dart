@@ -29,6 +29,7 @@ import '../screens/browse/music_browse_screen.dart';
 import '../screens/detail/item_detail_screen.dart';
 import '../screens/detail/item_list_screen.dart';
 import '../screens/detail/music_favorites_screen.dart';
+import '../screens/filter/advanced_filter_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/seerr/seerr_browse_screen.dart';
 import '../screens/seerr/seerr_discover_screen.dart';
@@ -251,6 +252,10 @@ final appRouter = GoRouter(
         initialQuery: state.uri.queryParameters['query'],
         scopedLibraryId: state.uri.queryParameters['libraryId'],
       ),
+    ),
+    GoRoute(
+      path: Destinations.advancedFilter,
+      builder: (context, state) => const AdvancedFilterScreen(),
     ),
 
     // Browsing

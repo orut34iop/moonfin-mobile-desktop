@@ -104,6 +104,12 @@ Books and audiobooks download in their **original format** - no transcoding.
 - Aggregated Continue Watching, Next Up, and Latest rows pull from every connected server
 - Toggle unified mode on or off per preference; works independently per server type
 
+### Advanced Library Filtering
+- Advanced filtering entry points are available from the top toolbar and desktop sidebar
+- Filter the active server's movies and TV series by type, genre, production location, and year
+- Filter options are built from the current media catalog, cached locally, and restored per server
+- Filter rows support inline expansion for long option lists, multi-select chips, and immediate results
+
 ### Featured Media Bar
 - Rotating featured hero content on the home screen with rich backdrop presentation
 - Includes quick-glance metadata like ratings, genres, runtime, and overview

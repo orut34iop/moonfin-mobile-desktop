@@ -3229,6 +3229,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noResults => '没有结果';
 
   @override
+  String get advancedFilter => '高级筛选';
+
+  @override
+  String get advancedFilterByType => '按类型';
+
+  @override
+  String get advancedFilterByGenre => '按流派';
+
+  @override
+  String get advancedFilterByRegion => '按地区';
+
+  @override
+  String get advancedFilterByYear => '按年份';
+
+  @override
+  String get advancedFilterMovie => '电影';
+
+  @override
+  String get advancedFilterSeries => '电视剧';
+
+  @override
+  String get clearFilters => '清空筛选';
+
+  @override
+  String get advancedFilterLoading => '正在加载筛选项';
+
+  @override
+  String get advancedFilterLoadFailed => '筛选项加载失败';
+
+  @override
   String get seerrAvailableStatus => '可用的';
 
   @override
@@ -10027,6 +10057,36 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get noResults => '没有结果';
 
   @override
+  String get advancedFilter => '高级筛选';
+
+  @override
+  String get advancedFilterByType => '按类型';
+
+  @override
+  String get advancedFilterByGenre => '按流派';
+
+  @override
+  String get advancedFilterByRegion => '按地区';
+
+  @override
+  String get advancedFilterByYear => '按年份';
+
+  @override
+  String get advancedFilterMovie => '电影';
+
+  @override
+  String get advancedFilterSeries => '电视剧';
+
+  @override
+  String get clearFilters => '清空筛选';
+
+  @override
+  String get advancedFilterLoading => '正在加载筛选项';
+
+  @override
+  String get advancedFilterLoadFailed => '筛选项加载失败';
+
+  @override
   String get seerrAvailableStatus => '可用的';
 
   @override
@@ -16823,6 +16883,36 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get noResults => '沒有結果';
+
+  @override
+  String get advancedFilter => '進階篩選';
+
+  @override
+  String get advancedFilterByType => '按類型';
+
+  @override
+  String get advancedFilterByGenre => '按流派';
+
+  @override
+  String get advancedFilterByRegion => '按地區';
+
+  @override
+  String get advancedFilterByYear => '按年份';
+
+  @override
+  String get advancedFilterMovie => '電影';
+
+  @override
+  String get advancedFilterSeries => '電視劇';
+
+  @override
+  String get clearFilters => '清空篩選';
+
+  @override
+  String get advancedFilterLoading => '正在載入篩選項';
+
+  @override
+  String get advancedFilterLoadFailed => '篩選項載入失敗';
 
   @override
   String get seerrAvailableStatus => '可用的';

@@ -3350,6 +3350,36 @@ class AppLocalizationsNl extends AppLocalizations {
   String get noResults => 'Geen resultaten';
 
   @override
+  String get advancedFilter => 'Advanced Filter';
+
+  @override
+  String get advancedFilterByType => 'By Type';
+
+  @override
+  String get advancedFilterByGenre => 'By Genre';
+
+  @override
+  String get advancedFilterByRegion => 'By Region';
+
+  @override
+  String get advancedFilterByYear => 'By Year';
+
+  @override
+  String get advancedFilterMovie => 'Movie';
+
+  @override
+  String get advancedFilterSeries => 'TV Series';
+
+  @override
+  String get clearFilters => 'Clear Filters';
+
+  @override
+  String get advancedFilterLoading => 'Loading filters';
+
+  @override
+  String get advancedFilterLoadFailed => 'Could not load filters';
+
+  @override
   String get seerrAvailableStatus => 'Beschikbaar';
 
   @override

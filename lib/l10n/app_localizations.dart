@@ -6083,6 +6083,66 @@ abstract class AppLocalizations {
   /// **'No results'**
   String get noResults;
 
+  /// Navigation label and title for advanced media filtering
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Filter'**
+  String get advancedFilter;
+
+  /// Advanced filter row label for media types
+  ///
+  /// In en, this message translates to:
+  /// **'By Type'**
+  String get advancedFilterByType;
+
+  /// Advanced filter row label for genres
+  ///
+  /// In en, this message translates to:
+  /// **'By Genre'**
+  String get advancedFilterByGenre;
+
+  /// Advanced filter row label for production locations
+  ///
+  /// In en, this message translates to:
+  /// **'By Region'**
+  String get advancedFilterByRegion;
+
+  /// Advanced filter row label for production years
+  ///
+  /// In en, this message translates to:
+  /// **'By Year'**
+  String get advancedFilterByYear;
+
+  /// Advanced filter media type option for movies
+  ///
+  /// In en, this message translates to:
+  /// **'Movie'**
+  String get advancedFilterMovie;
+
+  /// Advanced filter media type option for series
+  ///
+  /// In en, this message translates to:
+  /// **'TV Series'**
+  String get advancedFilterSeries;
+
+  /// Button label to clear advanced filters
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Filters'**
+  String get clearFilters;
+
+  /// Advanced filter loading state
+  ///
+  /// In en, this message translates to:
+  /// **'Loading filters'**
+  String get advancedFilterLoading;
+
+  /// Advanced filter error state
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load filters'**
+  String get advancedFilterLoadFailed;
+
   /// Seerr media status when item is available
   ///
   /// In en, this message translates to:

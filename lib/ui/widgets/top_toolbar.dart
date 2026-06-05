@@ -624,6 +624,20 @@ class _TopToolbarState extends State<TopToolbar> {
                     },
                   ),
                 ),
+                _gap(),
+                _orderButton(
+                  order: (order++).toDouble(),
+                  child: ExpandableIconButton(
+                    key: const ValueKey('toolbar_advanced_filter'),
+                    icon: Icons.tune_rounded,
+                    label: l10n.advancedFilter,
+                    baseColor: nextNavColor(),
+                    onPressed: () {
+                      if (_isActive(Destinations.advancedFilter)) return;
+                      context.navigateTopLevel(Destinations.advancedFilter);
+                    },
+                  ),
+                ),
                 if (showShuffle) ...[
                   _gap(),
                   _orderButton(
