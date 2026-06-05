@@ -11,6 +11,7 @@ class PlaybackManager {
   static const _mediaReadyPollInterval = Duration(milliseconds: 100);
   static const _defaultMediaReadyTimeout = Duration(seconds: 60);
   static const _onlineStartupReadyTimeout = Duration(seconds: 15);
+  static const _backendStopTimeout = Duration(seconds: 8);
 
   PlayerBackend? _backend;
   MediaStreamResolver? _resolver;
@@ -1131,6 +1132,10 @@ class PlaybackManager {
     await _stopAndReportCurrent();
   }
 
+  void stopInBackground({bool userInitiated = false}) {
+    unawaited(stop(userInitiated: userInitiated).catchError((Object _) {}));
+  }
+
   Future<void> seekTo(Duration position) async {
     if (await _maybeIntercept(TransportAction.seek, position: position)) return;
     _lastKnownPosition = position;
@@ -1765,7 +1770,7 @@ class PlaybackManager {
         return;
       }
       if (_isOfflinePlayback) {
-        await _backend?.stop();
+        await _stopBackend(_backend);
         _playbackStartTime = null;
         _waitingForMedia = false;
         if (!skipQueueChange) {
@@ -1784,23 +1789,21 @@ class PlaybackManager {
       final item = queueService.currentItem;
       final resolution = _currentResolution ?? _lastPlaybackResolution;
       final reportItem = item ?? _lastPlaybackItem;
+      Duration? reportPosition;
       if (reportItem != null && resolution != null) {
         final backendPos = _backend?.position ?? Duration.zero;
-        final pos = Duration(
+        reportPosition = Duration(
           microseconds: [
             backendPos.inMicroseconds,
             state.position.inMicroseconds,
             _lastKnownPosition.inMicroseconds,
           ].reduce((a, b) => a > b ? a : b),
         );
-        try {
-          await _service?.onPlaybackStop(reportItem, resolution, pos);
-        } catch (_) {}
       }
       _currentResolution = null;
       _lastPlaybackItem = null;
       _lastPlaybackResolution = null;
-      await _backend?.stop();
+      await _stopBackend(_backend);
       _playbackStartTime = null;
       _waitingForMedia = false;
       if (!skipQueueChange) {
@@ -1809,6 +1812,15 @@ class PlaybackManager {
         queueService.clear();
         state.reset();
         _setBringupState(const PlaybackBringupState.idle());
+      }
+      if (reportItem != null && resolution != null && reportPosition != null) {
+        try {
+          await _service?.onPlaybackStop(
+            reportItem,
+            resolution,
+            reportPosition,
+          );
+        } catch (_) {}
       }
     })();
 
@@ -1820,6 +1832,13 @@ class PlaybackManager {
         _stopInFlight = null;
       }
     }
+  }
+
+  Future<void> _stopBackend(PlayerBackend? backend) async {
+    if (backend == null) return;
+    try {
+      await backend.stop().timeout(_backendStopTimeout);
+    } catch (_) {}
   }
 
   void dispose() {

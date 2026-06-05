@@ -938,7 +938,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     if (_wasAlwaysOnTopOnEntry == false && _isAlwaysOnTop) {
       unawaited(_setAlwaysOnTop(false));
     }
-    if (!_isStopping) _manager.stop(userInitiated: false);
+    if (!_isStopping) _manager.stopInBackground(userInitiated: false);
     unawaited(_restoreSystemUiForExit());
     super.dispose();
   }
@@ -1356,7 +1356,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
         if (PlatformDetection.isAndroid && isForeground) {
           return;
         }
-        _exitPlayback();
+        unawaited(_exitPlayback());
         return;
       default:
         return;
@@ -2232,7 +2232,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
       _consecutiveEpisodes = 0;
       _manager.resume();
     } else {
-      _exitPlayback();
+      unawaited(_exitPlayback());
     }
   }
 
@@ -2283,20 +2283,24 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     _isStopping = true;
     _cancelTvTemporarySpeedHold();
     if (!PlatformDetection.isTV) _pipService.enableAutoPiP(false);
+    _manager.stopInBackground(userInitiated: false);
+    unawaited(_restoreDesktopWindowStateForExit());
+    unawaited(_restoreSystemUiForExit());
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _restoreDesktopWindowStateForExit() async {
     if (_wasAlwaysOnTopOnEntry == false && _isAlwaysOnTop) {
       await _setAlwaysOnTop(false);
     }
-    await _manager.stop(userInitiated: false);
     if (PlatformDetection.useDesktopUi &&
         _wasDesktopFullscreenOnEntry == false) {
       final isFullscreen = await FullscreenHelper.isFullscreen();
       if (isFullscreen) {
         await _setDesktopFullscreen(false);
       }
-    }
-    await _restoreSystemUiForExit();
-    if (mounted) {
-      Navigator.of(context).pop();
     }
   }
 
@@ -2812,7 +2816,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
             setState(() => _controlsVisible = false);
             return KeyEventResult.handled;
           }
-          _exitPlayback();
+          unawaited(_exitPlayback());
           return KeyEventResult.handled;
         case LogicalKeyboardKey.arrowLeft:
           if (_showNextUp) {
@@ -2951,7 +2955,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
           unawaited(_setDesktopFullscreen(false));
           return KeyEventResult.handled;
         }
-        _exitPlayback();
+        unawaited(_exitPlayback());
         return KeyEventResult.handled;
       case LogicalKeyboardKey.select:
       case LogicalKeyboardKey.enter:
@@ -3000,7 +3004,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
           setState(() => _controlsVisible = false);
           return;
         }
-        _exitPlayback();
+        unawaited(_exitPlayback());
       },
       child: Scaffold(
         backgroundColor: Colors.black,

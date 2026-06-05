@@ -89,7 +89,7 @@ class _LiveTvPlayerScreenState extends State<LiveTvPlayerScreen> {
     _backendSub?.cancel();
     _overlayFocus.dispose();
     if (!_isStopping) {
-      _manager.stop(userInitiated: false);
+      _manager.stopInBackground(userInitiated: false);
     }
     unawaited(_restoreSystemUiForExit());
     super.dispose();
@@ -221,8 +221,8 @@ class _LiveTvPlayerScreenState extends State<LiveTvPlayerScreen> {
   Future<void> _exitPlayback() async {
     if (_isStopping) return;
     _isStopping = true;
-    await _manager.stop(userInitiated: false);
-    await _restoreSystemUiForExit();
+    _manager.stopInBackground(userInitiated: false);
+    unawaited(_restoreSystemUiForExit());
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -319,7 +319,7 @@ class _LiveTvPlayerScreenState extends State<LiveTvPlayerScreen> {
         if (_infoVisible) {
           _toggleInfo();
         } else {
-          _exitPlayback();
+          unawaited(_exitPlayback());
         }
       },
       child: Scaffold(
