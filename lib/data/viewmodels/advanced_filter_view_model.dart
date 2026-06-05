@@ -8,6 +8,7 @@ import '../../preference/user_preferences.dart';
 import '../models/aggregated_item.dart';
 import '../repositories/advanced_filter_catalog_repository.dart';
 import '../services/advanced_filter_catalog_constants.dart';
+import '../services/advanced_filter_perf_logger.dart';
 import '../services/advanced_filter_catalog_sync_service.dart';
 
 enum AdvancedFilterLoadState { loading, ready, error }
@@ -27,6 +28,8 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   final bool _ownsCatalogSyncService;
   StreamSubscription<void>? _catalogChangeSub;
   bool _disposed = false;
+  int _perfTraceSequence = 0;
+  int? _lastPerfTraceId;
 
   AdvancedFilterViewModel({
     required MediaServerClient client,
@@ -56,6 +59,8 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   AdvancedFilterLoadState _state = AdvancedFilterLoadState.loading;
   AdvancedFilterLoadState get state => _state;
+
+  int? get lastPerfTraceId => _lastPerfTraceId;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
@@ -126,7 +131,43 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   String get _catalogUserId => _client.userId?.trim() ?? '';
 
+  int _startPerfTrace(String action) {
+    final traceId = ++_perfTraceSequence;
+    _lastPerfTraceId = traceId;
+    _logPerf(
+      traceId,
+      '$action:start ${_stateSummary()} ${_selectionSummary()}',
+    );
+    return traceId;
+  }
+
+  void _logPerf(int traceId, String message) {
+    AdvancedFilterPerfLogger.write(
+      '[AdvancedFilterPerf][trace=$traceId] $message',
+    );
+  }
+
+  String _stateSummary() {
+    return 'state=${_state.name} catalog=${_catalogItems.length} '
+        'results=${_results.length} genres=${_genres.length} '
+        'regions=${_regions.length} years=${_years.length} '
+        'sort=${_sortField.name}:${_sortAscending ? 'asc' : 'desc'}';
+  }
+
+  String _selectionSummary() {
+    return 'selectedTypes=${_selectedTypes.length} '
+        'selectedGenres=${_selectedGenres.length} '
+        'selectedRegions=${_selectedRegions.length} '
+        'selectedYears=${_selectedYears.length}';
+  }
+
   Future<void> load() async {
+    final traceId = _startPerfTrace('load');
+    unawaited(
+      AdvancedFilterPerfLogger.getLogPath().then(
+        (path) => _logPerf(traceId, 'logPath=$path'),
+      ),
+    );
     _state = AdvancedFilterLoadState.loading;
     _errorMessage = null;
     _loadedItemCount = 0;
@@ -134,25 +175,51 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final restoreWatch = Stopwatch()..start();
       _restoreSelections();
+      restoreWatch.stop();
+      _logPerf(
+        traceId,
+        'load:restoreSelections ms=${restoreWatch.elapsedMilliseconds} '
+        '${_selectionSummary()}',
+      );
 
+      final cacheWatch = Stopwatch()..start();
       final cachedSnapshot = await _loadCachedCatalogSnapshot();
+      cacheWatch.stop();
+      _logPerf(
+        traceId,
+        'load:cacheLookup ms=${cacheWatch.elapsedMilliseconds} '
+        'hit=${cachedSnapshot != null} '
+        'items=${cachedSnapshot?.items.length ?? 0} '
+        'syncedAt=${cachedSnapshot?.syncedAt?.toIso8601String()}',
+      );
       if (cachedSnapshot != null) {
         _catalogSyncedAt = cachedSnapshot.syncedAt;
-        _useCatalogItems(cachedSnapshot.items);
+        _useCatalogItems(
+          cachedSnapshot.items,
+          reason: 'load-cache',
+          traceId: traceId,
+        );
         _state = AdvancedFilterLoadState.ready;
         notifyListeners();
         if (_catalogRepository.isExpired(
           cachedSnapshot,
           maxAge: _catalogMaxAge,
         )) {
+          _logPerf(
+            traceId,
+            'load:cacheExpired schedulingBackgroundRefresh=true',
+          );
           unawaited(_refreshCatalogFromServer(background: true));
         }
+        _logPerf(traceId, 'load:readyFromCache ${_stateSummary()}');
         return;
       }
 
       await _refreshCatalogFromServer(background: false);
     } catch (error) {
+      _logPerf(traceId, 'load:error $error');
       _errorMessage = error.toString();
       _state = AdvancedFilterLoadState.error;
       notifyListeners();
@@ -160,53 +227,100 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   }
 
   Future<void> refreshCatalog() async {
+    final traceId = _startPerfTrace('manualRefreshCatalog');
+    _logPerf(traceId, 'manualRefreshCatalog:requested');
     await _refreshCatalogFromServer(background: _catalogItems.isNotEmpty);
   }
 
   Future<void> toggleType(String value) =>
-      _updateFilters(() => _toggle(_selectedTypes, value));
+      _updateFilters('toggleType', value, () => _toggle(_selectedTypes, value));
 
-  Future<void> toggleGenre(String value) =>
-      _updateFilters(() => _toggle(_selectedGenres, value));
+  Future<void> toggleGenre(String value) => _updateFilters(
+    'toggleGenre',
+    value,
+    () => _toggle(_selectedGenres, value),
+  );
 
-  Future<void> toggleRegion(String value) =>
-      _updateFilters(() => _toggle(_selectedRegions, value));
+  Future<void> toggleRegion(String value) => _updateFilters(
+    'toggleRegion',
+    value,
+    () => _toggle(_selectedRegions, value),
+  );
 
   Future<void> toggleYear(String value) =>
-      _updateFilters(() => _toggle(_selectedYears, value));
+      _updateFilters('toggleYear', value, () => _toggle(_selectedYears, value));
 
-  Future<void> clearTypes() => _updateFilters(_selectedTypes.clear);
+  Future<void> clearTypes() =>
+      _updateFilters('clearTypes', 'all', _selectedTypes.clear);
 
-  Future<void> clearGenres() => _updateFilters(_selectedGenres.clear);
+  Future<void> clearGenres() =>
+      _updateFilters('clearGenres', 'all', _selectedGenres.clear);
 
-  Future<void> clearRegions() => _updateFilters(_selectedRegions.clear);
+  Future<void> clearRegions() =>
+      _updateFilters('clearRegions', 'all', _selectedRegions.clear);
 
-  Future<void> clearYears() => _updateFilters(_selectedYears.clear);
+  Future<void> clearYears() =>
+      _updateFilters('clearYears', 'all', _selectedYears.clear);
 
   Future<void> setSortField(AdvancedFilterSortField field) async {
     if (_sortField == field) return;
+    final traceId = _startPerfTrace('setSortField:${field.name}');
     _sortField = field;
-    _results = _sortItems(_results);
+    _results = _sortItems(_results, reason: 'setSortField', traceId: traceId);
     notifyListeners();
+    _logPerf(
+      traceId,
+      'setSortField:notifyListeners results=${_results.length}',
+    );
+    final persistWatch = Stopwatch()..start();
     await _persistSort();
+    persistWatch.stop();
+    _logPerf(
+      traceId,
+      'setSortField:persistSort ms=${persistWatch.elapsedMilliseconds}',
+    );
   }
 
   Future<void> toggleSortDirection() async {
+    final traceId = _startPerfTrace('toggleSortDirection');
     _sortAscending = !_sortAscending;
-    _results = _sortItems(_results);
+    _results = _sortItems(
+      _results,
+      reason: 'toggleSortDirection',
+      traceId: traceId,
+    );
     notifyListeners();
+    _logPerf(
+      traceId,
+      'toggleSortDirection:notifyListeners results=${_results.length}',
+    );
+    final persistWatch = Stopwatch()..start();
     await _persistSort();
+    persistWatch.stop();
+    _logPerf(
+      traceId,
+      'toggleSortDirection:persistSort ms=${persistWatch.elapsedMilliseconds}',
+    );
   }
 
   Future<void> clearAll() async {
+    final traceId = _startPerfTrace('clearAll');
     _selectedTypes = <String>{};
     _selectedGenres = <String>{};
     _selectedRegions = <String>{};
     _selectedYears = <String>{};
-    _results = _filterItems();
+    _results = _filterItems(reason: 'clearAll', traceId: traceId);
     _hasApplied = true;
+    _logPerf(traceId, 'clearAll:filterDone results=${_results.length}');
+    final persistWatch = Stopwatch()..start();
     await _persistSelections(applied: true);
+    persistWatch.stop();
+    _logPerf(
+      traceId,
+      'clearAll:persistSelections ms=${persistWatch.elapsedMilliseconds}',
+    );
     notifyListeners();
+    _logPerf(traceId, 'clearAll:notifyListeners');
   }
 
   String? imageUrl(AggregatedItem item) {
@@ -302,6 +416,9 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   Future<void> _refreshCatalogFromServer({required bool background}) async {
     if (_disposed || _isRefreshingCatalog) return;
+    final traceId = _startPerfTrace(
+      background ? 'refreshCatalogBackground' : 'refreshCatalogForeground',
+    );
 
     _isRefreshingCatalog = true;
     _loadedItemCount = 0;
@@ -310,16 +427,32 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       _state = AdvancedFilterLoadState.loading;
     }
     notifyListeners();
+    _logPerf(
+      traceId,
+      'refreshCatalog:notifyLoading background=$background ${_stateSummary()}',
+    );
 
     try {
+      final refreshWatch = Stopwatch()..start();
       final items = await _catalogSyncService.refreshCatalog(
         onProgress: _setLoadProgress,
       );
+      refreshWatch.stop();
+      _logPerf(
+        traceId,
+        'refreshCatalog:serverAndCache ms=${refreshWatch.elapsedMilliseconds} '
+        'items=${items.length}',
+      );
       _catalogSyncedAt = DateTime.now().toUtc();
-      _useCatalogItems(items);
+      _useCatalogItems(
+        items,
+        reason: background ? 'refresh-background' : 'refresh-foreground',
+        traceId: traceId,
+      );
       _state = AdvancedFilterLoadState.ready;
       _errorMessage = null;
     } catch (error) {
+      _logPerf(traceId, 'refreshCatalog:error $error');
       _errorMessage = error.toString();
       if (!background || _catalogItems.isEmpty) {
         _state = AdvancedFilterLoadState.error;
@@ -327,6 +460,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     } finally {
       _isRefreshingCatalog = false;
       if (!_disposed) notifyListeners();
+      _logPerf(traceId, 'refreshCatalog:done ${_stateSummary()}');
     }
   }
 
@@ -334,25 +468,83 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     if (_disposed) return;
     _loadedItemCount = loaded;
     _totalItemCount = total;
+    final traceId = _lastPerfTraceId ?? 0;
+    _logPerf(traceId, 'refreshCatalog:progress loaded=$loaded total=$total');
     notifyListeners();
   }
 
-  void _useCatalogItems(List<AggregatedItem> items) {
+  void _useCatalogItems(
+    List<AggregatedItem> items, {
+    required String reason,
+    required int traceId,
+  }) {
+    final totalWatch = Stopwatch()..start();
     _catalogItems = items;
+    final genresWatch = Stopwatch()..start();
     _genres = _collectGenres(items);
+    genresWatch.stop();
+    final regionsWatch = Stopwatch()..start();
     _regions = _collectRegions(items);
+    regionsWatch.stop();
+    final yearsWatch = Stopwatch()..start();
     _years = _collectYears(items);
+    yearsWatch.stop();
+    final dropWatch = Stopwatch()..start();
     _dropUnavailableSelections();
+    dropWatch.stop();
     _hasApplied = true;
-    _results = _filterItems();
+    _results = _filterItems(
+      reason: '$reason-useCatalogItems',
+      traceId: traceId,
+    );
+    totalWatch.stop();
+    _logPerf(
+      traceId,
+      'useCatalogItems:$reason totalMs=${totalWatch.elapsedMilliseconds} '
+      'items=${items.length} genres=${_genres.length} '
+      'regions=${_regions.length} years=${_years.length} '
+      'collectGenresMs=${genresWatch.elapsedMilliseconds} '
+      'collectRegionsMs=${regionsWatch.elapsedMilliseconds} '
+      'collectYearsMs=${yearsWatch.elapsedMilliseconds} '
+      'dropUnavailableMs=${dropWatch.elapsedMilliseconds} '
+      'results=${_results.length}',
+    );
   }
 
-  Future<void> _updateFilters(VoidCallback updateSelection) async {
+  Future<void> _updateFilters(
+    String action,
+    String value,
+    VoidCallback updateSelection,
+  ) async {
+    final traceId = _startPerfTrace('$action:$value');
+    final totalWatch = Stopwatch()..start();
+    final updateWatch = Stopwatch()..start();
     updateSelection();
+    updateWatch.stop();
     _hasApplied = true;
-    _results = _filterItems();
+    _logPerf(
+      traceId,
+      '$action:updateSelection value="$value" '
+      'ms=${updateWatch.elapsedMilliseconds} ${_selectionSummary()}',
+    );
+    _results = _filterItems(reason: action, traceId: traceId);
+    _logPerf(traceId, '$action:filterDone results=${_results.length}');
+    final notifyWatch = Stopwatch()..start();
     notifyListeners();
+    notifyWatch.stop();
+    _logPerf(
+      traceId,
+      '$action:notifyListeners ms=${notifyWatch.elapsedMilliseconds}',
+    );
+    final persistWatch = Stopwatch()..start();
     await _persistSelections(applied: true);
+    persistWatch.stop();
+    totalWatch.stop();
+    _logPerf(
+      traceId,
+      '$action:persistSelections ms=${persistWatch.elapsedMilliseconds} '
+      'totalMethodMs=${totalWatch.elapsedMilliseconds}',
+    );
   }
 
   Future<AdvancedFilterCatalogSnapshot?> _loadCachedCatalogSnapshot() async {
@@ -422,50 +614,96 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   Future<void> _reloadCatalogFromCacheAfterExternalChange() async {
     if (_disposed || _state != AdvancedFilterLoadState.ready) return;
+    final traceId = _startPerfTrace('externalCatalogChange');
 
+    final loadWatch = Stopwatch()..start();
     final snapshot = await _catalogRepository.loadSnapshot(
       serverId: _client.baseUrl,
       userId: _catalogUserId,
     );
+    loadWatch.stop();
     if (_disposed || snapshot == null) return;
+    _logPerf(
+      traceId,
+      'externalCatalogChange:loadSnapshot ms=${loadWatch.elapsedMilliseconds} '
+      'items=${snapshot.items.length} syncedAt=${snapshot.syncedAt?.toIso8601String()}',
+    );
 
     _catalogSyncedAt = snapshot.syncedAt;
-    _useCatalogItems(snapshot.items);
+    _useCatalogItems(
+      snapshot.items,
+      reason: 'external-catalog-change',
+      traceId: traceId,
+    );
     notifyListeners();
+    _logPerf(traceId, 'externalCatalogChange:notifyListeners');
   }
 
-  List<AggregatedItem> _filterItems() {
-    final filtered = _catalogItems.where((item) {
+  List<AggregatedItem> _filterItems({
+    required String reason,
+    required int traceId,
+  }) {
+    final scanWatch = Stopwatch()..start();
+    var typePassed = 0;
+    var genrePassed = 0;
+    var regionPassed = 0;
+    var yearPassed = 0;
+    final filtered = <AggregatedItem>[];
+
+    for (final item in _catalogItems) {
       final type = item.type;
       final matchesType =
           _selectedTypes.isEmpty ||
           (type != null && _selectedTypes.contains(type));
-      if (!matchesType) return false;
+      if (!matchesType) continue;
+      typePassed++;
 
       final matchesGenre =
           _selectedGenres.isEmpty ||
           item.genres.any((genre) => _selectedGenres.contains(genre));
-      if (!matchesGenre) return false;
+      if (!matchesGenre) continue;
+      genrePassed++;
 
       final matchesRegion =
           _selectedRegions.isEmpty ||
           item.productionLocations.any(
             (region) => _selectedRegions.contains(region),
           );
-      if (!matchesRegion) return false;
+      if (!matchesRegion) continue;
+      regionPassed++;
 
       final year = item.productionYear?.toString();
       final matchesYear =
           _selectedYears.isEmpty ||
           (year != null && _selectedYears.contains(year));
-      return matchesYear;
-    }).toList();
+      if (!matchesYear) continue;
+      yearPassed++;
+      filtered.add(item);
+    }
+    scanWatch.stop();
+    _logPerf(
+      traceId,
+      'filter:$reason scanMs=${scanWatch.elapsedMilliseconds} '
+      'catalog=${_catalogItems.length} typePassed=$typePassed '
+      'genrePassed=$genrePassed regionPassed=$regionPassed '
+      'yearPassed=$yearPassed selectedTypes=${_selectedTypes.length} '
+      'selectedGenres=${_selectedGenres.length} '
+      'selectedRegions=${_selectedRegions.length} '
+      'selectedYears=${_selectedYears.length}',
+    );
 
-    return _sortItems(filtered);
+    return _sortItems(filtered, reason: '$reason-filter', traceId: traceId);
   }
 
-  List<AggregatedItem> _sortItems(List<AggregatedItem> items) {
+  List<AggregatedItem> _sortItems(
+    List<AggregatedItem> items, {
+    required String reason,
+    required int traceId,
+  }) {
+    final copyWatch = Stopwatch()..start();
     final sorted = items.toList();
+    copyWatch.stop();
+    final sortWatch = Stopwatch()..start();
     sorted.sort((a, b) {
       return switch (_sortField) {
         AdvancedFilterSortField.name =>
@@ -475,6 +713,13 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         AdvancedFilterSortField.year => _compareByYear(a, b),
       };
     });
+    sortWatch.stop();
+    _logPerf(
+      traceId,
+      'sort:$reason copyMs=${copyWatch.elapsedMilliseconds} '
+      'sortMs=${sortWatch.elapsedMilliseconds} items=${items.length} '
+      'field=${_sortField.name} direction=${_sortAscending ? 'asc' : 'desc'}',
+    );
     return sorted;
   }
 

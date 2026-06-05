@@ -110,6 +110,7 @@ Books and audiobooks download in their **original format** - no transcoding.
 - Filter options are built from the current media catalog, cached locally, refreshed manually or when stale, and updated incrementally from WebSocket library events
 - Filter rows support inline expansion for long option lists, multi-select chips, and immediate results
 - Results show the matched item count and support name/year sorting in either direction
+- Advanced filter performance diagnostics are appended to `Documents/Moonfin/logs/advanced_filter_perf.log`
 
 ### Featured Media Bar
 - Rotating featured hero content on the home screen with rich backdrop presentation

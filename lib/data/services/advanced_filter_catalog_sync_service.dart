@@ -5,6 +5,7 @@ import 'package:server_core/server_core.dart';
 import '../models/aggregated_item.dart';
 import '../repositories/advanced_filter_catalog_repository.dart';
 import 'advanced_filter_catalog_constants.dart';
+import 'advanced_filter_perf_logger.dart';
 
 typedef AdvancedFilterCatalogProgress = void Function(int loaded, int? total);
 
@@ -43,6 +44,9 @@ class AdvancedFilterCatalogSyncService {
 
   void start() {
     if (_disposed || _subscription != null) return;
+    AdvancedFilterPerfLogger.write(
+      '[AdvancedFilterPerf][sync] start serverScope active',
+    );
     _subscription = _events.listen((message) {
       unawaited(_handleMessage(message));
     });
@@ -52,17 +56,35 @@ class AdvancedFilterCatalogSyncService {
     AdvancedFilterCatalogProgress? onProgress,
   }) {
     final existing = _fullRefreshFuture;
-    if (existing != null) return existing;
+    if (existing != null) {
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][sync] fullRefresh reuseInFlight=true',
+      );
+      return existing;
+    }
 
+    final refreshWatch = Stopwatch()..start();
+    AdvancedFilterPerfLogger.write(
+      '[AdvancedFilterPerf][sync] fullRefresh:start',
+    );
     final future = _fetchFullCatalog(onProgress: onProgress).then((
       items,
     ) async {
+      final replaceWatch = Stopwatch()..start();
       await _repository.replaceScope(
         serverId: _serverId,
         userId: _userId,
         items: items,
       );
+      replaceWatch.stop();
       _notifyCatalogChanged();
+      refreshWatch.stop();
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][sync] fullRefresh:done '
+        'totalMs=${refreshWatch.elapsedMilliseconds} '
+        'replaceScopeMs=${replaceWatch.elapsedMilliseconds} '
+        'items=${items.length}',
+      );
       return items;
     });
 
@@ -76,12 +98,22 @@ class AdvancedFilterCatalogSyncService {
     AdvancedFilterCatalogSnapshot? snapshot,
     Duration maxAge = defaultCacheMaxAge,
   }) async {
+    final watch = Stopwatch()..start();
     final current =
         snapshot ??
         await _repository.loadSnapshot(serverId: _serverId, userId: _userId);
+    watch.stop();
     if (current == null || !_repository.isExpired(current, maxAge: maxAge)) {
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][sync] refreshIfStale skip '
+        'loadMs=${watch.elapsedMilliseconds} hasSnapshot=${current != null}',
+      );
       return null;
     }
+    AdvancedFilterPerfLogger.write(
+      '[AdvancedFilterPerf][sync] refreshIfStale expired '
+      'loadMs=${watch.elapsedMilliseconds} items=${current.items.length}',
+    );
     return refreshCatalog();
   }
 
@@ -92,12 +124,22 @@ class AdvancedFilterCatalogSyncService {
 
     switch (message) {
       case LibraryChangedMessage():
+        AdvancedFilterPerfLogger.write(
+          '[AdvancedFilterPerf][sync] websocket:LibraryChanged '
+          'added=${message.itemsAdded.length} '
+          'updated=${message.itemsUpdated.length} '
+          'removed=${message.itemsRemoved.length}',
+        );
         final removed = message.itemsRemoved.toSet();
         final changed = <String>{...message.itemsAdded, ...message.itemsUpdated}
           ..removeAll(removed);
         _queueIncremental(refreshIds: changed, removeIds: removed);
       case UserDataChangedMessage():
         if (message.userId.trim() == _userId) {
+          AdvancedFilterPerfLogger.write(
+            '[AdvancedFilterPerf][sync] websocket:UserDataChanged '
+            'items=${message.itemIds.length}',
+          );
           _queueIncremental(refreshIds: message.itemIds);
         }
       default:
@@ -125,6 +167,11 @@ class AdvancedFilterCatalogSyncService {
     }
 
     _incrementalTimer?.cancel();
+    AdvancedFilterPerfLogger.write(
+      '[AdvancedFilterPerf][sync] incremental:queued '
+      'pendingRefresh=${_pendingRefreshIds.length} '
+      'pendingRemove=${_pendingRemoveIds.length}',
+    );
     _incrementalTimer = Timer(_incrementalDebounce, () {
       unawaited(_flushIncremental());
     });
@@ -133,6 +180,7 @@ class AdvancedFilterCatalogSyncService {
   Future<void> _flushIncremental() async {
     if (_incrementalFlushRunning || _disposed) return;
     _incrementalFlushRunning = true;
+    final flushWatch = Stopwatch()..start();
 
     try {
       while (!_disposed) {
@@ -144,34 +192,63 @@ class AdvancedFilterCatalogSyncService {
 
         if (removeIds.isEmpty && refreshIds.isEmpty) break;
 
+        AdvancedFilterPerfLogger.write(
+          '[AdvancedFilterPerf][sync] incremental:flushBatch '
+          'refresh=${refreshIds.length} remove=${removeIds.length}',
+        );
         if (removeIds.isNotEmpty) {
+          final removeWatch = Stopwatch()..start();
           await _repository.removeItems(
             serverId: _serverId,
             userId: _userId,
             itemIds: removeIds,
           );
+          removeWatch.stop();
+          AdvancedFilterPerfLogger.write(
+            '[AdvancedFilterPerf][sync] incremental:removeItems '
+            'ms=${removeWatch.elapsedMilliseconds} count=${removeIds.length}',
+          );
         }
 
         if (refreshIds.isNotEmpty) {
+          final fetchWatch = Stopwatch()..start();
           final items = await _fetchItemsByIds(refreshIds);
+          fetchWatch.stop();
           final returnedIds = items.map((item) => item.id).toSet();
           final missingIds = refreshIds
               .where((id) => !returnedIds.contains(id))
               .toList(growable: false);
+          AdvancedFilterPerfLogger.write(
+            '[AdvancedFilterPerf][sync] incremental:fetchByIds '
+            'ms=${fetchWatch.elapsedMilliseconds} requested=${refreshIds.length} '
+            'returned=${items.length} missing=${missingIds.length}',
+          );
 
           if (items.isNotEmpty) {
+            final upsertWatch = Stopwatch()..start();
             await _repository.upsertItems(
               serverId: _serverId,
               userId: _userId,
               items: items,
             );
+            upsertWatch.stop();
+            AdvancedFilterPerfLogger.write(
+              '[AdvancedFilterPerf][sync] incremental:upsertItems '
+              'ms=${upsertWatch.elapsedMilliseconds} count=${items.length}',
+            );
           }
 
           if (missingIds.isNotEmpty) {
+            final missingWatch = Stopwatch()..start();
             await _repository.removeItems(
               serverId: _serverId,
               userId: _userId,
               itemIds: missingIds,
+            );
+            missingWatch.stop();
+            AdvancedFilterPerfLogger.write(
+              '[AdvancedFilterPerf][sync] incremental:removeMissing '
+              'ms=${missingWatch.elapsedMilliseconds} count=${missingIds.length}',
             );
           }
         }
@@ -180,6 +257,11 @@ class AdvancedFilterCatalogSyncService {
       }
     } finally {
       _incrementalFlushRunning = false;
+      flushWatch.stop();
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][sync] incremental:flushDone '
+        'ms=${flushWatch.elapsedMilliseconds}',
+      );
     }
   }
 
@@ -191,6 +273,7 @@ class AdvancedFilterCatalogSyncService {
     int? total;
 
     while (true) {
+      final pageWatch = Stopwatch()..start();
       final response = await _client.itemsApi.getItems(
         includeItemTypes: AdvancedFilterCatalogConstants.mediaTypes,
         recursive: true,
@@ -205,10 +288,16 @@ class AdvancedFilterCatalogSyncService {
 
       total ??= _readTotal(response['TotalRecordCount']);
       final pageItems = response['Items'] as List? ?? const [];
+      pageWatch.stop();
       if (pageItems.isEmpty) break;
 
       items.addAll(_parseItems(pageItems));
       startIndex += pageItems.length;
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][sync] fullRefresh:page '
+        'pageMs=${pageWatch.elapsedMilliseconds} loaded=$startIndex '
+        'pageItems=${pageItems.length} total=$total',
+      );
       onProgress?.call(startIndex, total);
 
       if (pageItems.length < AdvancedFilterCatalogConstants.pageSize) break;

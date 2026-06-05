@@ -7,6 +7,7 @@ import 'package:server_core/server_core.dart';
 
 import '../../../data/models/aggregated_item.dart';
 import '../../../data/repositories/advanced_filter_catalog_repository.dart';
+import '../../../data/services/advanced_filter_perf_logger.dart';
 import '../../../data/services/advanced_filter_catalog_sync_service.dart';
 import '../../../data/viewmodels/advanced_filter_view_model.dart';
 import '../../../l10n/app_localizations.dart';
@@ -51,7 +52,24 @@ class _AdvancedFilterScreenState extends State<AdvancedFilterScreen> {
   }
 
   void _onVmChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    final traceId = _vm.lastPerfTraceId;
+    final frameStart = DateTime.now();
+    AdvancedFilterPerfLogger.write(
+      '[AdvancedFilterPerf][trace=${traceId ?? 'ui'}] '
+      'screen:onVmChanged results=${_vm.results.length} '
+      'state=${_vm.state.name}',
+    );
+    setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final frameMs = DateTime.now().difference(frameStart).inMilliseconds;
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][trace=${traceId ?? 'ui'}] '
+        'screen:postFrame ms=$frameMs results=${_vm.results.length} '
+        'state=${_vm.state.name}',
+      );
+    });
   }
 
   void _toggleExpandedRow(_FilterRowKey rowKey) {
@@ -393,12 +411,14 @@ class _FilterRow extends StatelessWidget {
     final labelWidth = isCompact ? 78.0 : 104.0;
     final chips = <Widget>[
       _FilterChip(
+        debugLabel: '${rowKey.name}:all',
         label: l10n.all,
         selected: selectedValues.isEmpty,
         onTap: () => unawaited(onClear()),
       ),
       for (final option in options)
         _FilterChip(
+          debugLabel: '${rowKey.name}:${option.value}',
           label: option.resolveLabel(l10n),
           selected: selectedValues.contains(option.value),
           onTap: () => unawaited(onToggle(option.value)),
@@ -498,11 +518,13 @@ class _FilterExpandButton extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
+  final String debugLabel;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   const _FilterChip({
+    required this.debugLabel,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -512,7 +534,13 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(19),
-      onTap: onTap,
+      onTap: () {
+        AdvancedFilterPerfLogger.write(
+          '[AdvancedFilterPerf][trace=ui] chip:tap '
+          'target="$debugLabel" label="$label" selectedBefore=$selected',
+        );
+        onTap();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         constraints: const BoxConstraints(minHeight: 38, minWidth: 54),
