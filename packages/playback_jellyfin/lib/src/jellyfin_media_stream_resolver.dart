@@ -83,16 +83,27 @@ class JellyfinMediaStreamResolver implements MediaStreamResolver {
       throw Exception('No media sources available for item $itemId');
     }
 
-    final source = _selectBestSource(info.mediaSources, preferredId: mediaSourceId);
+    final source = _selectBestSource(
+      info.mediaSources,
+      preferredId: mediaSourceId,
+    );
     final hasKnownMediaStreams = source.mediaStreams.isNotEmpty;
-    final hasVideoStream = source.mediaStreams.any((stream) => stream['Type'] == 'Video');
+    final hasVideoStream = source.mediaStreams.any(
+      (stream) => stream['Type'] == 'Video',
+    );
     final isAudioByStreams = hasKnownMediaStreams && !hasVideoStream;
     final isAudio = isAudioByStreams || _isAudioMediaItem(mediaItem);
     var (url, playMethod) = _resolveStreamUrl(itemId, source, isAudio: isAudio);
 
     if (playMethod == StreamPlayMethod.transcode) {
-      url = MediaStreamResolver.applyStreamIndices(url, audioStreamIndex, subtitleStreamIndex);
-      if (!enableDirectPlay && subtitleStreamIndex != null && subtitleStreamIndex >= 0) {
+      url = MediaStreamResolver.applyStreamIndices(
+        url,
+        audioStreamIndex,
+        subtitleStreamIndex,
+      );
+      if (!enableDirectPlay &&
+          subtitleStreamIndex != null &&
+          subtitleStreamIndex >= 0) {
         final smRegex = RegExp(r'SubtitleMethod=\w+');
         if (smRegex.hasMatch(url)) {
           url = url.replaceFirst(smRegex, 'SubtitleMethod=Encode');
@@ -105,16 +116,23 @@ class JellyfinMediaStreamResolver implements MediaStreamResolver {
     // Append auth token for mpv (which doesn't use our Dio interceptors).
     url = _appendAuth(url);
 
-    final externalSubs = MediaStreamResolver.extractExternalSubtitles(source.mediaStreams, _client.baseUrl);
-    final authedSubs = externalSubs.map((s) => ExternalSubtitle(
-      deliveryUrl: _appendAuth(s.deliveryUrl),
-      title: s.title,
-      language: s.language,
-      codec: s.codec,
-      isDefault: s.isDefault,
-      isForced: s.isForced,
-      streamIndex: s.streamIndex,
-    )).toList();
+    final externalSubs = MediaStreamResolver.extractExternalSubtitles(
+      source.mediaStreams,
+      _client.baseUrl,
+    );
+    final authedSubs = externalSubs
+        .map(
+          (s) => ExternalSubtitle(
+            deliveryUrl: _appendAuth(s.deliveryUrl),
+            title: s.title,
+            language: s.language,
+            codec: s.codec,
+            isDefault: s.isDefault,
+            isForced: s.isForced,
+            streamIndex: s.streamIndex,
+          ),
+        )
+        .toList();
 
     final mediaType = MediaStreamResolver.detectMediaType(
       source.mediaStreams,
@@ -123,9 +141,13 @@ class JellyfinMediaStreamResolver implements MediaStreamResolver {
     final videoRangeType = source.mediaStreams
         .where((stream) => stream['Type'] == 'Video')
         .map((stream) => stream['VideoRangeType']?.toString())
-        .firstWhere((value) => value != null && value.isNotEmpty, orElse: () => null);
-    final normalizationGainDb =
-        MediaStreamResolver.extractNormalizationGainDb(source.mediaStreams);
+        .firstWhere(
+          (value) => value != null && value.isNotEmpty,
+          orElse: () => null,
+        );
+    final normalizationGainDb = MediaStreamResolver.extractNormalizationGainDb(
+      source.mediaStreams,
+    );
     final requestHeaders = _buildRequestHeaders();
 
     return StreamResolutionResult(
@@ -142,6 +164,9 @@ class JellyfinMediaStreamResolver implements MediaStreamResolver {
       externalSubtitles: authedSubs,
       mediaStreams: source.mediaStreams,
       transcodingReasons: source.transcodingReasons,
+      sourceSupportsDirectPlay: source.supportsDirectPlay,
+      sourceSupportsDirectStream: source.supportsDirectStream,
+      sourceSupportsTranscoding: source.supportsTranscoding,
     );
   }
 
@@ -171,7 +196,9 @@ class JellyfinMediaStreamResolver implements MediaStreamResolver {
     final token = _client.accessToken;
     if (token == null || token.isEmpty) return url;
     final lowerUrl = url.toLowerCase();
-    if (lowerUrl.contains('api_key=') || lowerUrl.contains('apikey=')) return url;
+    if (lowerUrl.contains('api_key=') || lowerUrl.contains('apikey=')) {
+      return url;
+    }
     final separator = url.contains('?') ? '&' : '?';
     return '$url${separator}api_key=${Uri.encodeComponent(token)}';
   }
@@ -181,8 +208,7 @@ class JellyfinMediaStreamResolver implements MediaStreamResolver {
       if (source.id.isNotEmpty) 'MediaSourceId': source.id,
       if (source.container != null && source.container!.isNotEmpty)
         'Container': source.container!,
-      if (source.eTag != null && source.eTag!.isNotEmpty)
-        'Tag': source.eTag!,
+      if (source.eTag != null && source.eTag!.isNotEmpty) 'Tag': source.eTag!,
       if (source.liveStreamId != null && source.liveStreamId!.isNotEmpty)
         'LiveStreamId': source.liveStreamId!,
       'Static': 'true',
@@ -207,26 +233,36 @@ class JellyfinMediaStreamResolver implements MediaStreamResolver {
 
     if (source.supportsDirectPlay) {
       return (
-        _client.playbackApi.getStreamUrl(itemId, mediaSourceId: source.id, liveStreamId: source.liveStreamId),
+        _client.playbackApi.getStreamUrl(
+          itemId,
+          mediaSourceId: source.id,
+          liveStreamId: source.liveStreamId,
+        ),
         StreamPlayMethod.directPlay,
       );
     }
     if (source.supportsDirectStream && source.directStreamUrl != null) {
       var dsUrl = '${_client.baseUrl}${source.directStreamUrl}';
       if (source.liveStreamId != null) {
-        dsUrl = '$dsUrl${dsUrl.contains('?') ? '&' : '?'}LiveStreamId=${Uri.encodeComponent(source.liveStreamId!)}';
+        dsUrl =
+            '$dsUrl${dsUrl.contains('?') ? '&' : '?'}LiveStreamId=${Uri.encodeComponent(source.liveStreamId!)}';
       }
       return (dsUrl, StreamPlayMethod.directStream);
     }
     if (source.supportsTranscoding && source.transcodingUrl != null) {
       var tcUrl = '${_client.baseUrl}${source.transcodingUrl}';
       if (source.liveStreamId != null) {
-        tcUrl = '$tcUrl${tcUrl.contains('?') ? '&' : '?'}LiveStreamId=${Uri.encodeComponent(source.liveStreamId!)}';
+        tcUrl =
+            '$tcUrl${tcUrl.contains('?') ? '&' : '?'}LiveStreamId=${Uri.encodeComponent(source.liveStreamId!)}';
       }
       return (tcUrl, StreamPlayMethod.transcode);
     }
     return (
-      _client.playbackApi.getStreamUrl(itemId, mediaSourceId: source.id, liveStreamId: source.liveStreamId),
+      _client.playbackApi.getStreamUrl(
+        itemId,
+        mediaSourceId: source.id,
+        liveStreamId: source.liveStreamId,
+      ),
       StreamPlayMethod.directPlay,
     );
   }

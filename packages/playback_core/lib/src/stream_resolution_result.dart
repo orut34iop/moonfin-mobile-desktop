@@ -34,6 +34,9 @@ class StreamResolutionResult {
   final List<ExternalSubtitle> externalSubtitles;
   final List<Map<String, dynamic>> mediaStreams;
   final List<String> transcodingReasons;
+  final bool sourceSupportsDirectPlay;
+  final bool sourceSupportsDirectStream;
+  final bool sourceSupportsTranscoding;
 
   const StreamResolutionResult({
     required this.streamUrl,
@@ -49,5 +52,8 @@ class StreamResolutionResult {
     this.externalSubtitles = const [],
     this.mediaStreams = const [],
     this.transcodingReasons = const [],
+    this.sourceSupportsDirectPlay = false,
+    this.sourceSupportsDirectStream = false,
+    this.sourceSupportsTranscoding = false,
   });
 }

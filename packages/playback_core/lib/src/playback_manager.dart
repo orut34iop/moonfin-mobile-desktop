@@ -78,6 +78,9 @@ class PlaybackManager {
   bool _awaitingNativeAudioRetryResult = false;
   bool _unsupportedAudioRecoveryInFlight = false;
   bool _suppressNextGenericBackendError = false;
+  Duration _backendOpenTimeout = _onlineStartupReadyTimeout;
+  Duration _onlineStartupReadyTimeoutDuration = _onlineStartupReadyTimeout;
+  Duration _backendStopTimeoutDuration = _backendStopTimeout;
   final _backendChangedController = StreamController<PlayerBackend>.broadcast();
   final _bringupStateController =
       StreamController<PlaybackBringupState>.broadcast();
@@ -94,8 +97,8 @@ class PlaybackManager {
   StreamResolutionResult? get currentResolution => _currentResolution;
   int? get audioStreamIndex => _audioStreamIndex;
   int? get subtitleStreamIndex => _subtitleStreamIndex;
-    int? get pendingAudioStreamIndex => _pendingItemAudioStreamIndex;
-    int? get pendingSubtitleStreamIndex => _pendingItemSubtitleStreamIndex;
+  int? get pendingAudioStreamIndex => _pendingItemAudioStreamIndex;
+  int? get pendingSubtitleStreamIndex => _pendingItemSubtitleStreamIndex;
   String? get pendingMediaSourceId => _mediaSourceId;
   bool get playbackDeferredToExternalPlayer => _deferPlaybackToExternalPlayer;
   bool consumeSkipExternalRoutingOnce() {
@@ -141,8 +144,9 @@ class PlaybackManager {
     _pendingItemOverrideId = normalizedItemId;
     _pendingItemAudioStreamIndex = audioStreamIndex;
     _pendingItemSubtitleStreamIndex = subtitleStreamIndex;
-    _pendingItemMediaSourceId =
-      mediaSourceId == null || mediaSourceId.isEmpty ? null : mediaSourceId;
+    _pendingItemMediaSourceId = mediaSourceId == null || mediaSourceId.isEmpty
+        ? null
+        : mediaSourceId;
   }
 
   List<Map<String, dynamic>> get _currentMediaStreams {
@@ -264,9 +268,7 @@ class PlaybackManager {
     _resolverConfigurator = configurator;
   }
 
-  void setExternalPlaybackDecider(
-    bool Function(List<dynamic> items)? decider,
-  ) {
+  void setExternalPlaybackDecider(bool Function(List<dynamic> items)? decider) {
     _externalPlaybackDecider = decider;
   }
 
@@ -323,6 +325,24 @@ class PlaybackManager {
     _playbackDecisionLogger = logger;
   }
 
+  void setBackendOpenTimeout(Duration timeout) {
+    if (timeout > Duration.zero) {
+      _backendOpenTimeout = timeout;
+    }
+  }
+
+  void setStartupReadyTimeout(Duration timeout) {
+    if (timeout > Duration.zero) {
+      _onlineStartupReadyTimeoutDuration = timeout;
+    }
+  }
+
+  void setBackendStopTimeout(Duration timeout) {
+    if (timeout > Duration.zero) {
+      _backendStopTimeoutDuration = timeout;
+    }
+  }
+
   void _resetBackendSelectionLock() {
     _backendSelectionLockedForSession = false;
     _sessionLockedBackend = null;
@@ -377,10 +397,7 @@ class PlaybackManager {
     final errorStream = backend.errorStream;
     if (errorStream != null) {
       _streamSubs.add(
-        errorStream.listen(
-          _onBackendErrorEvent,
-          onError: (_) {},
-        ),
+        errorStream.listen(_onBackendErrorEvent, onError: (_) {}),
       );
     }
   }
@@ -434,11 +451,10 @@ class PlaybackManager {
     if (!autoAdvanceEnabled) {
       _isAutoNexting = true;
       _mediaSourceId = null;
-      _stopAndReportCurrent(skipQueueChange: true)
-          .whenComplete(() {
-            _isAutoNexting = false;
-            _notifySessionEnded();
-          });
+      _stopAndReportCurrent(skipQueueChange: true).whenComplete(() {
+        _isAutoNexting = false;
+        _notifySessionEnded();
+      });
       return;
     }
     // Ignore completed events that fire during initial load/seek.
@@ -619,7 +635,11 @@ class PlaybackManager {
 
     List<dynamic> nextSeasonItems;
     try {
-      nextSeasonItems = await provider(completedItem, queueSnapshot, completedIndex);
+      nextSeasonItems = await provider(
+        completedItem,
+        queueSnapshot,
+        completedIndex,
+      );
     } catch (_) {
       return false;
     }
@@ -861,10 +881,12 @@ class PlaybackManager {
         headers: resolution.requestHeaders,
         normalizationGainDb: resolution.normalizationGainDb,
       );
-      await _backend!.play(
-        backendMediaPayload,
-        startPosition: useNativeStart ? startPosition : Duration.zero,
-      );
+      await _backend!
+          .play(
+            backendMediaPayload,
+            startPosition: useNativeStart ? startPosition : Duration.zero,
+          )
+          .timeout(_backendOpenTimeout);
       if (_backend!.requiresStartupMediaReadyCheck) {
         _setBringupState(
           PlaybackBringupState(
@@ -877,7 +899,7 @@ class PlaybackManager {
         );
         mediaReady = await _waitForMediaReady(
           isTranscode: resolution.playMethod == StreamPlayMethod.transcode,
-          timeout: _onlineStartupReadyTimeout,
+          timeout: _onlineStartupReadyTimeoutDuration,
         );
       } else {
         mediaReady = true;
@@ -893,22 +915,23 @@ class PlaybackManager {
       final backend = _backend!;
       if (backend.position > Duration.zero ||
           backend.buffer > Duration.zero ||
-          backend.isPlaying) {
+          backend.duration > Duration.zero ||
+          (resolution.playMethod == StreamPlayMethod.transcode &&
+              backend.isPlaying &&
+              !backend.isBuffering)) {
         mediaReady = true;
       }
     }
 
     if (!mediaReady) {
       _currentResolution = null;
-      try {
-        await _backend!.stop();
-      } catch (_) {}
+      await _stopBackend(_backend);
 
       if (allowStartupRecovery) {
         final forceTranscodeFallback =
             resolution.playMethod != StreamPlayMethod.transcode;
         if (forceTranscodeFallback) {
-          var decision = PlaybackStartupRecoveryDecision.retryWithTranscode;
+          var decision = PlaybackStartupRecoveryDecision.abortPlayback;
           final decider = _startupRecoveryDecider;
           if (decider != null) {
             try {
@@ -931,22 +954,20 @@ class PlaybackManager {
                 itemId: itemId,
                 backend: _traceBackendName(_backend),
                 playMethod: resolution.playMethod.name,
-                error: 'startupRecoveryAborted',
+                error: 'mediaNotReady',
               ),
             );
-            throw const PlaybackStartupRecoveryAbortedException();
+            throw PlaybackStartupNotReadyException(resolution.playMethod);
           }
-        }
 
-        await _playCurrentItem(
-          startPosition: startPosition,
-          enableDirectPlay: forceTranscodeFallback ? false : enableDirectPlay,
-          enableDirectStream: forceTranscodeFallback
-              ? false
-              : enableDirectStream,
-          allowStartupRecovery: false,
-        );
-        return;
+          await _playCurrentItem(
+            startPosition: startPosition,
+            enableDirectPlay: false,
+            enableDirectStream: false,
+            allowStartupRecovery: false,
+          );
+          return;
+        }
       }
 
       if (startupError != null && startupStackTrace != null) {
@@ -972,7 +993,7 @@ class PlaybackManager {
           error: 'mediaNotReady',
         ),
       );
-      return;
+      throw PlaybackStartupNotReadyException(resolution.playMethod);
     }
 
     if (useNativeStart && !_backend!.nativelyHandlesStartPosition) {
@@ -1087,17 +1108,19 @@ class PlaybackManager {
     bool isTranscode = false,
     Duration timeout = _defaultMediaReadyTimeout,
   }) async {
-
     bool isReady() {
       if (_backend!.duration > Duration.zero) return true;
 
-      // Some Android TV pipelines begin decoding before duration metadata is
-      // available. Consider playback progression as readiness.
+      // Some pipelines begin decoding before duration metadata is available.
+      // For direct streams, require actual progress/buffer metadata so a media
+      // source that reports "playing" but never renders does not get stuck in
+      // the player bring-up overlay.
       if (_backend!.position > Duration.zero) return true;
       if (_backend!.buffer > Duration.zero) return true;
-      if (_backend!.isPlaying) return true;
 
-      if (isTranscode && !_backend!.isBuffering) return true;
+      if (isTranscode && _backend!.isPlaying && !_backend!.isBuffering) {
+        return true;
+      }
       return false;
     }
 
@@ -1837,7 +1860,7 @@ class PlaybackManager {
   Future<void> _stopBackend(PlayerBackend? backend) async {
     if (backend == null) return;
     try {
-      await backend.stop().timeout(_backendStopTimeout);
+      await backend.stop().timeout(_backendStopTimeoutDuration);
     } catch (_) {}
   }
 
@@ -1902,6 +1925,16 @@ class PlaybackStartupRecoveryAbortedException implements Exception {
   @override
   String toString() =>
       'PlaybackStartupRecoveryAbortedException: startup fallback canceled by user';
+}
+
+class PlaybackStartupNotReadyException implements Exception {
+  final StreamPlayMethod playMethod;
+
+  const PlaybackStartupNotReadyException(this.playMethod);
+
+  @override
+  String toString() =>
+      'PlaybackStartupNotReadyException: media did not become ready (${playMethod.name})';
 }
 
 enum PlaybackBringupPhase {

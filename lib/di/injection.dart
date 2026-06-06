@@ -175,6 +175,23 @@ Future<void> _migrateLegacyBitrateCap(PreferenceStore store) async {
   await store.setBool(migrationKey, true);
 }
 
+Future<void> _migrateDefaultBitrateCapToAuto(PreferenceStore store) async {
+  const migrationKey = 'pref_max_bitrate_default_auto_v1';
+  if (store.getBool(migrationKey) == true) {
+    return;
+  }
+
+  final current = store.getString(UserPreferences.maxBitrate.key);
+  if (current == '120') {
+    await store.setString(
+      UserPreferences.maxBitrate.key,
+      UserPreferences.maxBitrate.defaultValue,
+    );
+  }
+
+  await store.setBool(migrationKey, true);
+}
+
 Future<void> _migrateLegacyMediaBarMode(PreferenceStore store) async {
   const migrationKey = 'pref_media_bar_mode_migrated_v1';
   if (store.getBool(migrationKey) == true) {
@@ -198,9 +215,7 @@ Future<void> _migrateLegacyMediaBarMode(PreferenceStore store) async {
   await store.setBool(migrationKey, true);
 }
 
-Future<void> _migrateAndroidTvPassthroughDefaults(
-  PreferenceStore store,
-) async {
+Future<void> _migrateAndroidTvPassthroughDefaults(PreferenceStore store) async {
   const migrationKey = 'pref_audio_passthrough_defaults_android_tv_v1';
 
   if (!PlatformDetection.isAndroid || !PlatformDetection.isTV) {
@@ -235,9 +250,7 @@ Future<void> _migrateAndroidMobileStereoAacFallbackDefault(
   await store.setBool(migrationKey, true);
 }
 
-Future<void> _migrateAndroidMobileAudioDefaults(
-  PreferenceStore store,
-) async {
+Future<void> _migrateAndroidMobileAudioDefaults(PreferenceStore store) async {
   const migrationKey = 'pref_audio_defaults_android_mobile_v1';
 
   if (!PlatformDetection.isAndroid || PlatformDetection.isTV) {
@@ -292,9 +305,11 @@ Future<void> migrateAudioPreferenceSplit(PreferenceStore store) async {
   }
 
   if (store.containsKey(_legacyDtsEnabledKey)) {
-    final legacyDts =
-        store.getBool(_legacyDtsEnabledKey) ?? false;
-    await setBoolIfMissing(UserPreferences.dtsCorePassthroughEnabled, legacyDts);
+    final legacyDts = store.getBool(_legacyDtsEnabledKey) ?? false;
+    await setBoolIfMissing(
+      UserPreferences.dtsCorePassthroughEnabled,
+      legacyDts,
+    );
     await setBoolIfMissing(UserPreferences.dtsHdPassthroughEnabled, legacyDts);
   }
 
@@ -302,7 +317,10 @@ Future<void> migrateAudioPreferenceSplit(PreferenceStore store) async {
     final legacyTrueHd =
         store.getBool(_legacyTrueHdEnabledKey) ??
         _legacyBitstreamDefaultForPlatform();
-    await setBoolIfMissing(UserPreferences.trueHdPassthroughEnabled, legacyTrueHd);
+    await setBoolIfMissing(
+      UserPreferences.trueHdPassthroughEnabled,
+      legacyTrueHd,
+    );
     await setBoolIfMissing(
       UserPreferences.trueHdAtmosPassthroughEnabled,
       legacyTrueHd,
@@ -333,6 +351,7 @@ Future<void> configureDependencies() async {
   await preferenceStore.init();
   final appVersion = await _resolveAppVersion();
   await _migrateLegacyBitrateCap(preferenceStore);
+  await _migrateDefaultBitrateCapToAuto(preferenceStore);
   await _migrateLegacyMediaBarMode(preferenceStore);
   await _migrateAndroidTvPassthroughDefaults(preferenceStore);
   await _migrateAndroidMobileStereoAacFallbackDefault(preferenceStore);

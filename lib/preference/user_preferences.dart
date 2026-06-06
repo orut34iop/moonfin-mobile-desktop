@@ -260,7 +260,7 @@ class UserPreferences extends ChangeNotifier {
   );
   static final maxBitrate = Preference(
     key: 'pref_max_bitrate',
-    defaultValue: '120',
+    defaultValue: 'auto',
   );
 
   static final maxVideoResolution = EnumPreference(

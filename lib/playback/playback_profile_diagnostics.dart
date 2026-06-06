@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:playback_core/playback_core.dart';
 
 import 'audio_capability_profile.dart';
@@ -10,6 +13,10 @@ class PlaybackProfileDiagnostics {
 
   static final PlaybackProfileDiagnostics instance =
       PlaybackProfileDiagnostics._();
+
+  static Future<void>? _initFuture;
+  static Future<void> _writeChain = Future<void>.value();
+  static File? _file;
 
   Map<String, dynamic>? _lastDecision;
 
@@ -30,7 +37,9 @@ class PlaybackProfileDiagnostics {
       'Subtitle',
     );
 
-    final allowedAudioCodecs = _extractAllowedAudioCodecs(context.deviceProfile);
+    final allowedAudioCodecs = _extractAllowedAudioCodecs(
+      context.deviceProfile,
+    );
     final hlsAudioTargets = _extractHlsAudioTargets(context.deviceProfile);
 
     final entry = <String, dynamic>{
@@ -40,7 +49,12 @@ class PlaybackProfileDiagnostics {
       'backend': context.backend.runtimeType.toString(),
       'mediaSourceId': resolution.mediaSourceId,
       'playMethod': resolution.playMethod.name,
+      'streamUrl': _describeUrl(resolution.streamUrl),
+      'requestHeaderKeys': resolution.requestHeaders.keys.toList()..sort(),
       'transcodingReasons': List<String>.from(resolution.transcodingReasons),
+      'sourceSupportsDirectPlay': resolution.sourceSupportsDirectPlay,
+      'sourceSupportsDirectStream': resolution.sourceSupportsDirectStream,
+      'sourceSupportsTranscoding': resolution.sourceSupportsTranscoding,
       'selectedAudioStreamIndex': context.audioStreamIndex,
       'selectedSubtitleStreamIndex': context.subtitleStreamIndex,
       'container': (resolution.container ?? '').toUpperCase(),
@@ -66,9 +80,65 @@ class PlaybackProfileDiagnostics {
 
     _lastDecision = entry;
 
-    developer.log(
-      _safeJson(entry),
-      name: 'PlaybackProfileDiagnostics',
+    _writeEntry('decision', entry);
+  }
+
+  void logPlayerBackendEvent(String event, Map<String, dynamic> payload) {
+    _writeEntry(event, {
+      'timestamp': DateTime.now().toIso8601String(),
+      ...payload,
+    });
+  }
+
+  Future<String> getLogPath() async {
+    final file = await _ensureFile();
+    return file.path;
+  }
+
+  void _writeEntry(String event, Map<String, dynamic> payload) {
+    final entry = <String, dynamic>{'event': event, ...payload};
+    final line = _safeJson(entry);
+    developer.log(line, name: 'PlaybackProfileDiagnostics');
+    _writeChain = _writeChain
+        .catchError((_) {})
+        .then((_) => _append(line))
+        .catchError((error, stackTrace) {
+          developer.log(
+            'Failed to write playback diagnostics log',
+            name: 'PlaybackProfileDiagnostics',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        });
+  }
+
+  Future<void> _append(String line) async {
+    final file = await _ensureFile();
+    await file.writeAsString('$line\n', mode: FileMode.append);
+  }
+
+  Future<File> _ensureFile() async {
+    final existing = _file;
+    if (existing != null) return existing;
+
+    await (_initFuture ??= _init());
+    return _file!;
+  }
+
+  Future<void> _init() async {
+    Directory docs;
+    try {
+      docs = await getApplicationDocumentsDirectory();
+    } catch (_) {
+      docs = Directory.systemTemp;
+    }
+    final dir = Directory('${docs.path}/Moonfin/logs');
+    await dir.create(recursive: true);
+    final file = File('${dir.path}/playback_diagnostics.log');
+    _file = file;
+    await file.writeAsString(
+      '\n--- PlaybackDiagnostics session ${DateTime.now().toIso8601String()} ---\n',
+      mode: FileMode.append,
     );
   }
 
@@ -78,6 +148,30 @@ class PlaybackProfileDiagnostics {
     } catch (_) {
       return payload.toString();
     }
+  }
+
+  Map<String, dynamic> _describeUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      return const <String, dynamic>{'parseable': false};
+    }
+    final queryKeys = uri.queryParametersAll.keys.toList()..sort();
+    final path = uri.path;
+    final dot = path.lastIndexOf('.');
+    final extension = dot >= 0 && dot < path.length - 1
+        ? path.substring(dot + 1).toLowerCase()
+        : '';
+    return <String, dynamic>{
+      'parseable': true,
+      'scheme': uri.scheme,
+      'host': uri.host,
+      'port': uri.hasPort ? uri.port : null,
+      'path': path,
+      'extension': extension,
+      'queryKeys': queryKeys,
+      'hasApiKey': queryKeys.any((key) => key.toLowerCase() == 'api_key'),
+      'hasToken': queryKeys.any((key) => key.toLowerCase().contains('token')),
+    };
   }
 
   String? _extractItemId(dynamic item) {
@@ -266,10 +360,7 @@ class PlaybackProfileDiagnostics {
 
     final mpegTsList = mpegTs.toList()..sort();
     final fmp4List = fmp4.toList()..sort();
-    return <String, List<String>>{
-      'mpegts': mpegTsList,
-      'fmp4': fmp4List,
-    };
+    return <String, List<String>>{'mpegts': mpegTsList, 'fmp4': fmp4List};
   }
 
   List<Map<String, dynamic>> _readMaps(dynamic value) {
@@ -282,11 +373,7 @@ class PlaybackProfileDiagnostics {
       if (entry is Map<String, dynamic>) {
         rows.add(entry);
       } else if (entry is Map) {
-        rows.add(
-          entry.map(
-            (key, value) => MapEntry(key.toString(), value),
-          ),
-        );
+        rows.add(entry.map((key, value) => MapEntry(key.toString(), value)));
       }
     }
     return rows;

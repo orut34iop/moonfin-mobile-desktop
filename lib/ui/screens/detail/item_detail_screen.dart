@@ -4074,7 +4074,9 @@ class _ActionButtonsState extends State<_ActionButtons> {
 
   void _focusTarget(FocusNode? target) {
     if (target == null) {
-      if (GetIt.instance<UserPreferences>().get(UserPreferences.navbarPosition) ==
+      if (GetIt.instance<UserPreferences>().get(
+            UserPreferences.navbarPosition,
+          ) ==
           NavbarPosition.top) {
         NavigationLayout.focusNavbarNotifier.value?.call();
       }
@@ -4090,7 +4092,9 @@ class _ActionButtonsState extends State<_ActionButtons> {
     }
 
     if (target.context == null) {
-      if (GetIt.instance<UserPreferences>().get(UserPreferences.navbarPosition) ==
+      if (GetIt.instance<UserPreferences>().get(
+            UserPreferences.navbarPosition,
+          ) ==
           NavbarPosition.top) {
         NavigationLayout.focusNavbarNotifier.value?.call();
       }
@@ -4099,7 +4103,8 @@ class _ActionButtonsState extends State<_ActionButtons> {
 
     if (target.canRequestFocus) {
       target.requestFocus();
-      if (target.context?.findAncestorWidgetOfExactType<_ExpandableBiography>() !=
+      if (target.context
+              ?.findAncestorWidgetOfExactType<_ExpandableBiography>() !=
           null) {
         return;
       }
@@ -4554,9 +4559,7 @@ class _ActionButtonsState extends State<_ActionButtons> {
         if (button is! _DetailActionButton) return button;
         return _copyActionButton(
           button,
-          onArrowUp:
-              button.onArrowUp ??
-            _focusUpTarget,
+          onArrowUp: button.onArrowUp ?? _focusUpTarget,
           onArrowLeft: index == 0 ? _focusSidebar : null,
           onArrowDown: _expanded
               ? () => _focusFirstExpandedOverflowButton(context)
@@ -4805,8 +4808,9 @@ class _ActionButtonsState extends State<_ActionButtons> {
     if (stream['IsExternal'] == true) {
       return true;
     }
-    final deliveryMethod =
-        (stream['DeliveryMethod'] as String?)?.trim().toLowerCase();
+    final deliveryMethod = (stream['DeliveryMethod'] as String?)
+        ?.trim()
+        .toLowerCase();
     return deliveryMethod == 'external';
   }
 
@@ -5073,14 +5077,17 @@ class _ActionButtonsState extends State<_ActionButtons> {
     bool started;
     try {
       started = await startupFuture;
-    } catch (_) {
+    } catch (error) {
       if (routeFuture != null && context.mounted) {
         final route = ModalRoute.of(context);
         if (route != null && !route.isCurrent) {
           Navigator.of(context).pop();
         }
       }
-      rethrow;
+      if (context.mounted) {
+        _showPlaybackStartupError(context, error);
+      }
+      return false;
     }
 
     if (!started) {
@@ -5110,6 +5117,16 @@ class _ActionButtonsState extends State<_ActionButtons> {
       viewModel.load();
     }
     return true;
+  }
+
+  void _showPlaybackStartupError(BuildContext context, Object error) {
+    final l10n = AppLocalizations.of(context);
+    final message = error is PlaybackStartupNotReadyException
+        ? '${l10n.failedToLoad}: mediaNotReady'
+        : '${l10n.failedToLoad}: $error';
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _playInternal(
@@ -5182,10 +5199,9 @@ class _ActionButtonsState extends State<_ActionButtons> {
               }
               throw PlaybackStartupRecoveryAbortedException();
             }
-            final seriesId =
-                (nextUp.seriesId?.isNotEmpty ?? false)
-                    ? nextUp.seriesId!
-                    : item.id;
+            final seriesId = (nextUp.seriesId?.isNotEmpty ?? false)
+                ? nextUp.seriesId!
+                : item.id;
             final seasonId = nextUp.seasonId;
             var episodes = <AggregatedItem>[nextUp];
             if (seasonId != null && seasonId.isNotEmpty) {
@@ -5448,7 +5464,9 @@ class _ActionButtonsState extends State<_ActionButtons> {
     List<AggregatedItem> features,
   ) {
     final candidates = features
-        .where((feature) => _isTrailerFeatureItem(feature) && feature.id.isNotEmpty)
+        .where(
+          (feature) => _isTrailerFeatureItem(feature) && feature.id.isNotEmpty,
+        )
         .toList(growable: false);
     return _preferredLocalTrailer(candidates);
   }
@@ -5458,8 +5476,9 @@ class _ActionButtonsState extends State<_ActionButtons> {
       return null;
     }
 
-    final preferred =
-        GetIt.instance<UserPreferences>().get(UserPreferences.defaultAudioLanguage).trim();
+    final preferred = GetIt.instance<UserPreferences>()
+        .get(UserPreferences.defaultAudioLanguage)
+        .trim();
     if (preferred.isEmpty) {
       return candidates.first;
     }
@@ -5933,10 +5952,7 @@ class _ActionButtonsState extends State<_ActionButtons> {
     final externalStreams = streams
         .where(_isExternalSubtitleStream)
         .toList(growable: false);
-    final displayStreams = [
-      ...internalStreams,
-      ...externalStreams,
-    ];
+    final displayStreams = [...internalStreams, ...externalStreams];
 
     final effectiveSubtitleIndex = _effectiveSubtitleStreamIndex(streams);
     final currentIdx = effectiveSubtitleIndex != null
@@ -5956,10 +5972,11 @@ class _ActionButtonsState extends State<_ActionButtons> {
             s['DisplayTitle'] as String? ??
             s['Language'] as String? ??
             'Unknown';
-        final subtitleType =
-            ((s['Codec'] as String?) ?? 'Unknown').toUpperCase();
-        final deliveryMethod =
-            (s['DeliveryMethod'] as String?)?.trim().toLowerCase();
+        final subtitleType = ((s['Codec'] as String?) ?? 'Unknown')
+            .toUpperCase();
+        final deliveryMethod = (s['DeliveryMethod'] as String?)
+            ?.trim()
+            .toLowerCase();
         final location = s['IsExternal'] == true
             ? 'External'
             : (deliveryMethod == 'embed' ? 'Embedded' : 'Internal');
@@ -5996,8 +6013,8 @@ class _ActionButtonsState extends State<_ActionButtons> {
         setState(() => _selectedSubtitleIndex = -1);
       } else if (result - 1 < displayStreams.length) {
         setState(
-          () =>
-              _selectedSubtitleIndex = displayStreams[result - 1]['Index'] as int?,
+          () => _selectedSubtitleIndex =
+              displayStreams[result - 1]['Index'] as int?,
         );
       }
     }
@@ -6136,10 +6153,10 @@ Future<bool> _runWithDolbyVisionStartupFallbackPrompt(
 
   manager.setStartupRecoveryDecider((failure) async {
     if (!_shouldPromptDolbyVisionDirectPlayStartupFailure(failure, prefs)) {
-      return PlaybackStartupRecoveryDecision.retryWithTranscode;
+      return PlaybackStartupRecoveryDecision.abortPlayback;
     }
     if (!context.mounted) {
-      return PlaybackStartupRecoveryDecision.retryWithTranscode;
+      return PlaybackStartupRecoveryDecision.abortPlayback;
     }
     return _showDolbyVisionDirectPlayStartupFailureDecisionDialog(context);
   });

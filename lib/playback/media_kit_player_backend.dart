@@ -15,6 +15,7 @@ import '../util/platform_detection.dart';
 import 'audio_capability_profile.dart';
 import 'device_profile_builder.dart';
 import 'known_defects.dart';
+import 'playback_profile_diagnostics.dart';
 
 class _ParsedMpvConfCacheEntry {
   final DateTime modified;
@@ -410,8 +411,10 @@ class MediaKitPlayerBackend implements PlayerBackend {
       dtsCorePassthroughEnabled: _prefs.resolveDtsCorePassthroughEnabled(),
       dtsHdPassthroughEnabled: _prefs.resolveDtsHdPassthroughEnabled(),
       trueHdPassthroughEnabled: _prefs.resolveTrueHdPassthroughEnabled(),
-      trueHdAtmosPassthroughEnabled: _prefs.resolveTrueHdAtmosPassthroughEnabled(),
-      downMixAudio: _prefs.resolveAudioOutputMode() == AudioOutputMode.forceStereo,
+      trueHdAtmosPassthroughEnabled: _prefs
+          .resolveTrueHdAtmosPassthroughEnabled(),
+      downMixAudio:
+          _prefs.resolveAudioOutputMode() == AudioOutputMode.forceStereo,
       audioFallbackToStereoAac:
           _prefs.resolveAudioFallbackCodec() == AudioFallbackCodec.aacStereo,
       maxResolution: maxResolution,
@@ -460,19 +463,81 @@ class MediaKitPlayerBackend implements PlayerBackend {
         ? mediaItem
         : payload['url']?.toString() ?? '';
     if (url.isEmpty) return;
+    final headers = payload['headers'] is Map
+        ? (payload['headers'] as Map).map(
+            (key, value) => MapEntry(key.toString(), value.toString()),
+          )
+        : <String, String>{};
+    final mediaType = payload['mediaType']?.toString();
+    final container = payload['container']?.toString();
 
     await _notifyNativeHandleReady();
     await _configureAppleMobileLibassFont();
     await _applyAudioPassthroughOptions();
     await _applyCustomMpvConfIfEnabled();
     await _applyAssOverrideMode();
-    final media = Media(url);
+    final media = headers.isEmpty
+        ? Media(url)
+        : Media(url, httpHeaders: headers);
     final openPaused = startPosition > Duration.zero;
-    await _player.open(media, play: !openPaused);
+    PlaybackProfileDiagnostics.instance
+        .logPlayerBackendEvent('mediaKitOpenStart', {
+          'url': _describeUrl(url),
+          'headerKeys': headers.keys.toList()..sort(),
+          'mediaType': mediaType,
+          'container': container,
+          'startPositionMs': startPosition.inMilliseconds,
+          'openPaused': openPaused,
+        });
+    try {
+      await _player.open(media, play: !openPaused);
+      PlaybackProfileDiagnostics.instance.logPlayerBackendEvent(
+        'mediaKitOpenComplete',
+        _playerStateSnapshot(),
+      );
+    } catch (error) {
+      PlaybackProfileDiagnostics.instance.logPlayerBackendEvent(
+        'mediaKitOpenError',
+        {'errorType': error.runtimeType.toString(), ..._playerStateSnapshot()},
+      );
+      rethrow;
+    }
     await _applyLinuxHwdecFallbackIfNeeded(media, openPaused: openPaused);
     if (!_useLibass) {
       _enableNativeSubtitleRendering();
     }
+  }
+
+  Map<String, dynamic> _playerStateSnapshot() => <String, dynamic>{
+    'isPlaying': _player.state.playing,
+    'isBuffering': _player.state.buffering,
+    'positionMs': _player.state.position.inMilliseconds,
+    'durationMs': _player.state.duration.inMilliseconds,
+    'bufferMs': _player.state.buffer.inMilliseconds,
+  };
+
+  Map<String, dynamic> _describeUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      return const <String, dynamic>{'parseable': false};
+    }
+    final queryKeys = uri.queryParametersAll.keys.toList()..sort();
+    final path = uri.path;
+    final dot = path.lastIndexOf('.');
+    final extension = dot >= 0 && dot < path.length - 1
+        ? path.substring(dot + 1).toLowerCase()
+        : '';
+    return <String, dynamic>{
+      'parseable': true,
+      'scheme': uri.scheme,
+      'host': uri.host,
+      'port': uri.hasPort ? uri.port : null,
+      'path': path,
+      'extension': extension,
+      'queryKeys': queryKeys,
+      'hasApiKey': queryKeys.any((key) => key.toLowerCase() == 'api_key'),
+      'hasToken': queryKeys.any((key) => key.toLowerCase().contains('token')),
+    };
   }
 
   Future<void> _applyLinuxHwdecFallbackIfNeeded(
@@ -598,8 +663,8 @@ class MediaKitPlayerBackend implements PlayerBackend {
         dtsCorePassthroughEnabled: _prefs.resolveDtsCorePassthroughEnabled(),
         dtsHdPassthroughEnabled: _prefs.resolveDtsHdPassthroughEnabled(),
         trueHdPassthroughEnabled: _prefs.resolveTrueHdPassthroughEnabled(),
-        trueHdAtmosPassthroughEnabled:
-            _prefs.resolveTrueHdAtmosPassthroughEnabled(),
+        trueHdAtmosPassthroughEnabled: _prefs
+            .resolveTrueHdAtmosPassthroughEnabled(),
         includeAudioExclusive: PlatformDetection.isDesktop,
       );
 
