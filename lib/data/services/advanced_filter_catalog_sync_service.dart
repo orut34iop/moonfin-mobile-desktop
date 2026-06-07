@@ -268,6 +268,10 @@ class AdvancedFilterCatalogSyncService {
   Future<List<AggregatedItem>> _fetchFullCatalog({
     AdvancedFilterCatalogProgress? onProgress,
   }) async {
+    if (_client.serverType == ServerType.emby) {
+      return _fetchFullCatalogByEmbyLibraries(onProgress: onProgress);
+    }
+
     final items = <AggregatedItem>[];
     var startIndex = 0;
     int? total;
@@ -308,6 +312,114 @@ class AdvancedFilterCatalogSyncService {
     return items;
   }
 
+  Future<List<AggregatedItem>> _fetchFullCatalogByEmbyLibraries({
+    AdvancedFilterCatalogProgress? onProgress,
+  }) async {
+    final libraries = await _loadEmbyMediaLibraries();
+    if (libraries.isEmpty) {
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][sync] fullRefresh:embyLibraries empty=true fallbackGlobal=true',
+      );
+      return _fetchFullCatalogGlobally(onProgress: onProgress);
+    }
+
+    final byId = <String, AggregatedItem>{};
+    var loaded = 0;
+    for (final library in libraries) {
+      var startIndex = 0;
+      int? total;
+
+      while (true) {
+        final pageWatch = Stopwatch()..start();
+        final response = await _client.itemsApi.getItems(
+          parentId: library.id,
+          includeItemTypes: AdvancedFilterCatalogConstants.mediaTypes,
+          recursive: true,
+          fields: AdvancedFilterCatalogConstants.itemFields,
+          sortBy: 'SortName',
+          sortOrder: 'Ascending',
+          startIndex: startIndex,
+          limit: AdvancedFilterCatalogConstants.pageSize,
+          enableTotalRecordCount: true,
+          enableImageTypes: 'Primary,Backdrop,Thumb',
+        );
+
+        total ??= _readTotal(response['TotalRecordCount']);
+        final pageItems = response['Items'] as List? ?? const [];
+        pageWatch.stop();
+        if (pageItems.isEmpty) break;
+
+        final parsed = _parseItems(
+          pageItems,
+          libraryId: library.id,
+          libraryName: library.name,
+        );
+        for (final item in parsed) {
+          byId[item.id] = item;
+        }
+        startIndex += pageItems.length;
+        loaded += pageItems.length;
+        AdvancedFilterPerfLogger.write(
+          '[AdvancedFilterPerf][sync] fullRefresh:embyLibraryPage '
+          'library="${library.name}" libraryId=${library.id} '
+          'pageMs=${pageWatch.elapsedMilliseconds} libraryLoaded=$startIndex '
+          'pageItems=${pageItems.length} libraryTotal=$total loaded=$loaded',
+        );
+        onProgress?.call(loaded, null);
+
+        if (pageItems.length < AdvancedFilterCatalogConstants.pageSize) break;
+        if (total != null && startIndex >= total) break;
+      }
+    }
+
+    final items = byId.values.toList()
+      ..sort((a, b) => _compareText(a.name, b.name));
+    return items;
+  }
+
+  Future<List<AggregatedItem>> _fetchFullCatalogGlobally({
+    AdvancedFilterCatalogProgress? onProgress,
+  }) async {
+    final items = <AggregatedItem>[];
+    var startIndex = 0;
+    int? total;
+
+    while (true) {
+      final pageWatch = Stopwatch()..start();
+      final response = await _client.itemsApi.getItems(
+        includeItemTypes: AdvancedFilterCatalogConstants.mediaTypes,
+        recursive: true,
+        fields: AdvancedFilterCatalogConstants.itemFields,
+        sortBy: 'SortName',
+        sortOrder: 'Ascending',
+        startIndex: startIndex,
+        limit: AdvancedFilterCatalogConstants.pageSize,
+        enableTotalRecordCount: true,
+        enableImageTypes: 'Primary,Backdrop,Thumb',
+      );
+
+      total ??= _readTotal(response['TotalRecordCount']);
+      final pageItems = response['Items'] as List? ?? const [];
+      pageWatch.stop();
+      if (pageItems.isEmpty) break;
+
+      items.addAll(_parseItems(pageItems));
+      startIndex += pageItems.length;
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][sync] fullRefresh:fallbackPage '
+        'pageMs=${pageWatch.elapsedMilliseconds} loaded=$startIndex '
+        'pageItems=${pageItems.length} total=$total',
+      );
+      onProgress?.call(startIndex, total);
+
+      if (pageItems.length < AdvancedFilterCatalogConstants.pageSize) break;
+      if (total != null && startIndex >= total) break;
+    }
+
+    items.sort((a, b) => _compareText(a.name, b.name));
+    return items;
+  }
+
   Future<List<AggregatedItem>> _fetchItemsByIds(List<String> itemIds) async {
     final items = <AggregatedItem>[];
 
@@ -335,11 +447,21 @@ class AdvancedFilterCatalogSyncService {
     return items;
   }
 
-  List<AggregatedItem> _parseItems(List rawItems) {
+  List<AggregatedItem> _parseItems(
+    List rawItems, {
+    String? libraryId,
+    String? libraryName,
+  }) {
     final items = <AggregatedItem>[];
     for (final item in rawItems) {
       if (item is! Map) continue;
       final data = Map<String, dynamic>.from(item);
+      if (libraryId != null && libraryId.isNotEmpty) {
+        data[AdvancedFilterCatalogConstants.embyLibraryIdField] = libraryId;
+      }
+      if (libraryName != null && libraryName.isNotEmpty) {
+        data[AdvancedFilterCatalogConstants.embyLibraryNameField] = libraryName;
+      }
       final id = data['Id'] as String?;
       final type = data['Type'] as String?;
       if (id == null || id.isEmpty) continue;
@@ -353,6 +475,39 @@ class AdvancedFilterCatalogSyncService {
       );
     }
     return items;
+  }
+
+  Future<List<_EmbyLibrary>> _loadEmbyMediaLibraries() async {
+    try {
+      final response = await _client.userViewsApi.getUserViews();
+      final rawViews = response['Items'] as List? ?? const [];
+      final libraries = <_EmbyLibrary>[];
+      for (final rawView in rawViews) {
+        if (rawView is! Map) continue;
+        final data = Map<String, dynamic>.from(rawView);
+        final id = (data['Id'] as String?)?.trim();
+        final name = (data['Name'] as String?)?.trim();
+        if (id == null || id.isEmpty || name == null || name.isEmpty) continue;
+
+        final collectionType = (data['CollectionType'] as String?)
+            ?.trim()
+            .toLowerCase();
+        if (collectionType == 'playlists' ||
+            collectionType == 'boxsets' ||
+            collectionType == 'livetv') {
+          continue;
+        }
+
+        libraries.add(_EmbyLibrary(id: id, name: name));
+      }
+      libraries.sort((a, b) => _compareText(a.name, b.name));
+      return libraries;
+    } catch (error) {
+      AdvancedFilterPerfLogger.write(
+        '[AdvancedFilterPerf][sync] loadEmbyLibraries:error $error',
+      );
+      return const [];
+    }
   }
 
   int? _readTotal(dynamic value) {
@@ -380,4 +535,11 @@ class AdvancedFilterCatalogSyncService {
     if (lower != 0) return lower;
     return a.compareTo(b);
   }
+}
+
+class _EmbyLibrary {
+  final String id;
+  final String name;
+
+  const _EmbyLibrary({required this.id, required this.name});
 }

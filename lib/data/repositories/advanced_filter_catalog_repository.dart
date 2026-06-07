@@ -18,7 +18,7 @@ class AdvancedFilterCatalogSnapshot {
 }
 
 class AdvancedFilterCatalogRepository {
-  static const cacheVersion = 1;
+  static const cacheVersion = 3;
   static const defaultMaxAge = Duration(hours: 24);
 
   final OfflineDatabase _db;

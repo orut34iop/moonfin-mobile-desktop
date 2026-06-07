@@ -3238,6 +3238,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get advancedFilterByGenre => '按流派';
 
   @override
+  String get advancedFilterByLibrary => '媒体库';
+
+  @override
   String get advancedFilterByRegion => '按地区';
 
   @override
@@ -10081,6 +10084,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get advancedFilterByGenre => '按流派';
+
+  @override
+  String get advancedFilterByLibrary => '媒体库';
 
   @override
   String get advancedFilterByRegion => '按地区';

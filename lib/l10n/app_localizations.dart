@@ -6101,6 +6101,12 @@ abstract class AppLocalizations {
   /// **'By Genre'**
   String get advancedFilterByGenre;
 
+  /// Advanced filter row label for Emby media libraries
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get advancedFilterByLibrary;
+
   /// Advanced filter row label for production locations
   ///
   /// In en, this message translates to:

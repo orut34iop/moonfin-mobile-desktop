@@ -185,7 +185,7 @@ class _AdvancedFilterScreenState extends State<AdvancedFilterScreen> {
   }
 }
 
-enum _FilterRowKey { type, genre, region, year }
+enum _FilterRowKey { type, library, genre, region, year }
 
 class _FilterPanel extends StatelessWidget {
   final AdvancedFilterViewModel vm;
@@ -299,6 +299,25 @@ class _FilterPanel extends StatelessWidget {
                 expanded: expandedRows.contains(_FilterRowKey.type),
                 onToggleExpanded: () => onToggleExpandedRow(_FilterRowKey.type),
               ),
+              if (vm.showLibraryFilter && vm.libraries.isNotEmpty)
+                _FilterRow(
+                  rowKey: _FilterRowKey.library,
+                  label: l10n.advancedFilterByLibrary,
+                  options: vm.libraries
+                      .map(
+                        (library) => _FilterOption(
+                          value: library.id,
+                          label: library.name,
+                        ),
+                      )
+                      .toList(growable: false),
+                  selectedValues: vm.selectedLibraries,
+                  onToggle: vm.toggleLibrary,
+                  onClear: vm.clearLibraries,
+                  expanded: expandedRows.contains(_FilterRowKey.library),
+                  onToggleExpanded: () =>
+                      onToggleExpandedRow(_FilterRowKey.library),
+                ),
               _FilterRow(
                 rowKey: _FilterRowKey.genre,
                 label: l10n.advancedFilterByGenre,

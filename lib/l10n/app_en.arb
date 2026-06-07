@@ -4612,6 +4612,10 @@
   "@advancedFilterByGenre": {
     "description": "Advanced filter row label for genres"
   },
+  "advancedFilterByLibrary": "Library",
+  "@advancedFilterByLibrary": {
+    "description": "Advanced filter row label for Emby media libraries"
+  },
   "advancedFilterByRegion": "By Region",
   "@advancedFilterByRegion": {
     "description": "Advanced filter row label for production locations"

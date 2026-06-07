@@ -50,10 +50,18 @@ class AdvancedFilterInitialSelection {
   }
 }
 
+@immutable
+class AdvancedFilterLibraryOption {
+  final String id;
+  final String name;
+
+  const AdvancedFilterLibraryOption({required this.id, required this.name});
+}
+
 class AdvancedFilterViewModel extends ChangeNotifier {
   static const movieType = AdvancedFilterCatalogConstants.movieType;
   static const seriesType = AdvancedFilterCatalogConstants.seriesType;
-  static const _cacheVersion = 1;
+  static const _cacheVersion = 3;
 
   final MediaServerClient _client;
   final UserPreferences _prefs;
@@ -139,6 +147,10 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   List<String> _regions = const [];
   List<String> get regions => _regions;
 
+  List<AdvancedFilterLibraryOption> _catalogLibraries = const [];
+  List<AdvancedFilterLibraryOption> _libraries = const [];
+  List<AdvancedFilterLibraryOption> get libraries => _libraries;
+
   List<String> _catalogYears = const [];
   List<String> _years = const [];
   List<String> get years => _years;
@@ -156,6 +168,9 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   Set<String> _selectedRegions = <String>{};
   Set<String> get selectedRegions => _selectedRegions;
 
+  Set<String> _selectedLibraries = <String>{};
+  Set<String> get selectedLibraries => _selectedLibraries;
+
   Set<String> _selectedYears = <String>{};
   Set<String> get selectedYears => _selectedYears;
 
@@ -169,7 +184,10 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       _selectedTypes.isNotEmpty ||
       _selectedGenres.isNotEmpty ||
       _selectedRegions.isNotEmpty ||
+      _selectedLibraries.isNotEmpty ||
       _selectedYears.isNotEmpty;
+
+  bool get showLibraryFilter => _client.serverType == ServerType.emby;
 
   String get _preferenceScopeKey {
     final userId = _client.userId?.trim();
@@ -198,7 +216,8 @@ class AdvancedFilterViewModel extends ChangeNotifier {
   String _stateSummary() {
     return 'state=${_state.name} catalog=${_catalogItems.length} '
         'results=${_results.length} genres=${_genres.length} '
-        'regions=${_regions.length} years=${_years.length} '
+        'regions=${_regions.length} libraries=${_libraries.length} '
+        'years=${_years.length} '
         'sort=${_sortField.name}:${_sortAscending ? 'asc' : 'desc'}';
   }
 
@@ -206,6 +225,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     return 'selectedTypes=${_selectedTypes.length} '
         'selectedGenres=${_selectedGenres.length} '
         'selectedRegions=${_selectedRegions.length} '
+        'selectedLibraries=${_selectedLibraries.length} '
         'selectedYears=${_selectedYears.length}';
   }
 
@@ -254,7 +274,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       );
       if (cachedSnapshot != null) {
         _catalogSyncedAt = cachedSnapshot.syncedAt;
-        _useCatalogItems(
+        await _useCatalogItems(
           cachedSnapshot.items,
           reason: 'load-cache',
           traceId: traceId,
@@ -320,6 +340,12 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     () => _toggle(_selectedRegions, value),
   );
 
+  Future<void> toggleLibrary(String value) => _updateFilters(
+    'toggleLibrary',
+    value,
+    () => _toggle(_selectedLibraries, value),
+  );
+
   Future<void> toggleYear(String value) => _updateFilters(
     'toggleYear',
     value,
@@ -334,6 +360,9 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   Future<void> clearRegions() =>
       _updateFilters('clearRegions', 'all', _selectedRegions.clear);
+
+  Future<void> clearLibraries() =>
+      _updateFilters('clearLibraries', 'all', _selectedLibraries.clear);
 
   Future<void> clearYears() =>
       _updateFilters('clearYears', 'all', _selectedYears.clear);
@@ -384,6 +413,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _selectedTypes = <String>{};
     _selectedGenres = <String>{};
     _selectedRegions = <String>{};
+    _selectedLibraries = <String>{};
     _selectedYears = <String>{};
     _results = _filterItems(reason: 'clearAll', traceId: traceId);
     _refreshVisibleFilterOptions(reason: 'clearAll', traceId: traceId);
@@ -436,6 +466,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _selectedRegions = _prefs
         .get(UserPreferences.advancedFilterRegions(_preferenceScopeKey))
         .toSet();
+    _selectedLibraries = showLibraryFilter
+        ? _prefs
+              .get(UserPreferences.advancedFilterLibraries(_preferenceScopeKey))
+              .toSet()
+        : <String>{};
     _selectedYears = _prefs
         .get(UserPreferences.advancedFilterYears(_preferenceScopeKey))
         .toSet();
@@ -458,6 +493,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _selectedTypes = <String>{};
     _selectedGenres = selection.normalizedGenres;
     _selectedRegions = <String>{};
+    _selectedLibraries = <String>{};
     _selectedYears = years.take(1).toSet();
     _hasApplied = true;
     return true;
@@ -467,6 +503,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     final orderedTypes = _selectedTypes.toList()..sort(_typeSort);
     final orderedGenres = _selectedGenres.toList()..sort(_compareText);
     final orderedRegions = _selectedRegions.toList()..sort(_compareText);
+    final orderedLibraries = _selectedLibraries.toList()..sort(_compareText);
     final orderedYears = _selectedYears.toList()
       ..sort((a, b) => b.compareTo(a));
 
@@ -482,6 +519,10 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       _prefs.set(
         UserPreferences.advancedFilterRegions(_preferenceScopeKey),
         orderedRegions,
+      ),
+      _prefs.set(
+        UserPreferences.advancedFilterLibraries(_preferenceScopeKey),
+        orderedLibraries,
       ),
       _prefs.set(
         UserPreferences.advancedFilterYears(_preferenceScopeKey),
@@ -659,7 +700,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
         'items=${items.length}',
       );
       _catalogSyncedAt = DateTime.now().toUtc();
-      _useCatalogItems(
+      await _useCatalogItems(
         items,
         reason: background ? 'refresh-background' : 'refresh-foreground',
         traceId: traceId,
@@ -692,11 +733,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _useCatalogItems(
+  Future<void> _useCatalogItems(
     List<AggregatedItem> items, {
     required String reason,
     required int traceId,
-  }) {
+  }) async {
     final totalWatch = Stopwatch()..start();
     _catalogItems = items;
     final genresWatch = Stopwatch()..start();
@@ -705,6 +746,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     final regionsWatch = Stopwatch()..start();
     _catalogRegions = _collectRegions(items);
     regionsWatch.stop();
+    final librariesWatch = Stopwatch()..start();
+    _catalogLibraries = showLibraryFilter
+        ? await _loadEmbyLibrariesForItems(items, traceId: traceId)
+        : const [];
+    librariesWatch.stop();
     final yearsWatch = Stopwatch()..start();
     _catalogYears = _collectYears(items);
     yearsWatch.stop();
@@ -727,9 +773,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       traceId,
       'useCatalogItems:$reason totalMs=${totalWatch.elapsedMilliseconds} '
       'items=${items.length} genres=${_catalogGenres.length} '
-      'regions=${_catalogRegions.length} years=${_catalogYears.length} '
+      'regions=${_catalogRegions.length} libraries=${_catalogLibraries.length} '
+      'years=${_catalogYears.length} '
       'collectGenresMs=${genresWatch.elapsedMilliseconds} '
       'collectRegionsMs=${regionsWatch.elapsedMilliseconds} '
+      'collectLibrariesMs=${librariesWatch.elapsedMilliseconds} '
       'collectYearsMs=${yearsWatch.elapsedMilliseconds} '
       'dropUnavailableMs=${dropWatch.elapsedMilliseconds} '
       'refreshOptionsMs=${optionsWatch.elapsedMilliseconds} '
@@ -924,7 +972,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     );
 
     _catalogSyncedAt = snapshot.syncedAt;
-    _useCatalogItems(
+    await _useCatalogItems(
       snapshot.items,
       reason: 'external-catalog-change',
       traceId: traceId,
@@ -941,6 +989,7 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     var typePassed = 0;
     var genrePassed = 0;
     var regionPassed = 0;
+    var libraryPassed = 0;
     var yearPassed = 0;
     final filtered = <AggregatedItem>[];
 
@@ -960,6 +1009,13 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       if (!matchesRegion) continue;
       regionPassed++;
 
+      final matchesLibrary = _matchesAnyValue(
+        _itemLibraryId(item),
+        _selectedLibraries,
+      );
+      if (!matchesLibrary) continue;
+      libraryPassed++;
+
       final year = item.productionYear?.toString();
       final matchesYear = _matchesSingleValue(year, _selectedYears);
       if (!matchesYear) continue;
@@ -972,9 +1028,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
       'filter:$reason scanMs=${scanWatch.elapsedMilliseconds} '
       'catalog=${_catalogItems.length} typePassed=$typePassed '
       'genrePassed=$genrePassed regionPassed=$regionPassed '
-      'yearPassed=$yearPassed selectedTypes=${_selectedTypes.length} '
+      'libraryPassed=$libraryPassed yearPassed=$yearPassed '
+      'selectedTypes=${_selectedTypes.length} '
       'selectedGenres=${_selectedGenres.length} '
       'selectedRegions=${_selectedRegions.length} '
+      'selectedLibraries=${_selectedLibraries.length} '
       'selectedYears=${_selectedYears.length}',
     );
 
@@ -1013,6 +1071,14 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _selectedTypes.removeWhere((type) => !_validType(type));
     _selectedGenres.removeWhere((genre) => !_catalogGenres.contains(genre));
     _selectedRegions.removeWhere((region) => !_catalogRegions.contains(region));
+    if (showLibraryFilter) {
+      final libraryIds = _catalogLibraries.map((library) => library.id).toSet();
+      _selectedLibraries.removeWhere(
+        (libraryId) => !libraryIds.contains(libraryId),
+      );
+    } else {
+      _selectedLibraries.clear();
+    }
     _selectedYears.removeWhere((year) => !_catalogYears.contains(year));
   }
 
@@ -1024,12 +1090,16 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     _types = _collectTypes(_results, include: _selectedTypes);
     _genres = _collectGenres(_results, include: _selectedGenres);
     _regions = _collectRegions(_results, include: _selectedRegions);
+    _libraries = showLibraryFilter
+        ? _collectLibraries(_results, include: _selectedLibraries)
+        : const [];
     _years = _collectYears(_results, include: _selectedYears);
     optionsWatch.stop();
     _logPerf(
       traceId,
       'filterOptions:$reason ms=${optionsWatch.elapsedMilliseconds} '
       'types=${_types.length} genres=${_genres.length} '
+      'libraries=${_libraries.length} '
       'regions=${_regions.length} years=${_years.length}',
     );
   }
@@ -1080,6 +1150,26 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     return values.toList()..sort(_compareText);
   }
 
+  List<AdvancedFilterLibraryOption> _collectLibraries(
+    List<AggregatedItem> items, {
+    Set<String> include = const <String>{},
+  }) {
+    final visibleIds = include
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    for (final item in items) {
+      final libraryId = _itemLibraryId(item);
+      if (libraryId != null && libraryId.isNotEmpty) {
+        visibleIds.add(libraryId);
+      }
+    }
+
+    return _catalogLibraries
+        .where((library) => visibleIds.contains(library.id))
+        .toList(growable: false);
+  }
+
   List<String> _collectYears(
     List<AggregatedItem> items, {
     Set<String> include = const <String>{},
@@ -1117,6 +1207,63 @@ class AdvancedFilterViewModel extends ChangeNotifier {
 
   bool _validType(String value) => value == movieType || value == seriesType;
 
+  Future<List<AdvancedFilterLibraryOption>> _loadEmbyLibrariesForItems(
+    List<AggregatedItem> items, {
+    required int traceId,
+  }) async {
+    final parentIds = <String>{};
+    for (final item in items) {
+      final libraryId = _itemLibraryId(item);
+      if (libraryId != null && libraryId.isNotEmpty) {
+        parentIds.add(libraryId);
+      }
+    }
+
+    try {
+      final response = await _client.userViewsApi.getUserViews();
+      final rawViews = response['Items'] as List? ?? const [];
+      final libraries = <AdvancedFilterLibraryOption>[];
+      for (final rawView in rawViews) {
+        if (rawView is! Map) continue;
+        final data = Map<String, dynamic>.from(rawView);
+        final id = (data['Id'] as String?)?.trim();
+        final name = (data['Name'] as String?)?.trim();
+        if (id == null || id.isEmpty || name == null || name.isEmpty) continue;
+        if (parentIds.isNotEmpty && !parentIds.contains(id)) continue;
+        final collectionType = (data['CollectionType'] as String?)
+            ?.trim()
+            .toLowerCase();
+        if (collectionType == 'playlists' ||
+            collectionType == 'boxsets' ||
+            collectionType == 'livetv') {
+          continue;
+        }
+        libraries.add(AdvancedFilterLibraryOption(id: id, name: name));
+      }
+      libraries.sort((a, b) => _compareText(a.name, b.name));
+      return libraries;
+    } catch (error) {
+      _logPerf(traceId, 'loadEmbyLibraries:error $error');
+      return const [];
+    }
+  }
+
+  String? _itemLibraryId(AggregatedItem item) {
+    final annotated =
+        item.rawData[AdvancedFilterCatalogConstants.embyLibraryIdField]
+            as String?;
+    final annotatedId = annotated?.trim();
+    if (annotatedId != null && annotatedId.isNotEmpty) {
+      return annotatedId;
+    }
+
+    final parentId = item.parentId?.trim();
+    if (parentId != null && parentId.isNotEmpty) {
+      return parentId;
+    }
+    return null;
+  }
+
   AdvancedFilterSortField _normalizeSortField(String value) {
     for (final field in AdvancedFilterSortField.values) {
       if (field.name == value) return field;
@@ -1142,6 +1289,11 @@ class AdvancedFilterViewModel extends ChangeNotifier {
     return selectedValues.length == 1 &&
         value != null &&
         selectedValues.contains(value);
+  }
+
+  bool _matchesAnyValue(String? value, Set<String> selectedValues) {
+    if (selectedValues.isEmpty) return true;
+    return value != null && selectedValues.contains(value);
   }
 
   int _typeSort(String a, String b) {

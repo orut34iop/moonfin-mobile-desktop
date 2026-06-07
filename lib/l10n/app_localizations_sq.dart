@@ -3368,6 +3368,9 @@ class AppLocalizationsSq extends AppLocalizations {
   String get advancedFilterByGenre => 'By Genre';
 
   @override
+  String get advancedFilterByLibrary => 'Library';
+
+  @override
   String get advancedFilterByRegion => 'By Region';
 
   @override

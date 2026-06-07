@@ -913,6 +913,12 @@ class UserPreferences extends ChangeNotifier {
         defaultValue: const <String>[],
       );
 
+  static Preference<List<String>> advancedFilterLibraries(String serverId) =>
+      Preference(
+        key: 'advanced_filter_libraries_${_advancedFilterKeySuffix(serverId)}',
+        defaultValue: const <String>[],
+      );
+
   static Preference<List<String>> advancedFilterYears(String serverId) =>
       Preference(
         key: 'advanced_filter_years_${_advancedFilterKeySuffix(serverId)}',

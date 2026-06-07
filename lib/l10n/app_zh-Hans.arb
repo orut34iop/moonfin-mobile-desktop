@@ -5595,6 +5595,7 @@
   "advancedFilter": "高级筛选",
   "advancedFilterByType": "按类型",
   "advancedFilterByGenre": "按流派",
+  "advancedFilterByLibrary": "媒体库",
   "advancedFilterByRegion": "按地区",
   "advancedFilterByYear": "按年份",
   "advancedFilterMovie": "电影",
