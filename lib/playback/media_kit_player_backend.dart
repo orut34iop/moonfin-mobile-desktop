@@ -201,6 +201,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
       StreamController<Duration>.broadcast();
   final List<StreamSubscription<dynamic>> _nativeBufferSubscriptions = [];
   Timer? _streamingCacheDiagnosticsTimer;
+  int _streamingCacheSeekSequence = 0;
   bool _disposed = false;
   static final Map<String, _ParsedMpvConfCacheEntry> _parsedMpvConfCache =
       <String, _ParsedMpvConfCacheEntry>{};
@@ -1118,7 +1119,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
     } catch (_) {}
   }
 
-  Future<void> _logStreamingCacheSeek(Duration target) async {
+  Future<void> _logStreamingCacheSeek(Duration target, int seekSequence) async {
     if (!_usesNativeDemuxerCacheTime) {
       return;
     }
@@ -1137,6 +1138,9 @@ class MediaKitPlayerBackend implements PlayerBackend {
 
       PlaybackProfileDiagnostics.instance
           .logPlayerBackendEvent('mediaKitStreamingCacheSeek', {
+            'seekSequence': seekSequence,
+            'latestSeekSequence': _streamingCacheSeekSequence,
+            'isLatestSeek': seekSequence == _streamingCacheSeekSequence,
             'mode': mode.name,
             'targetPositionMs': target.inMilliseconds,
             'positionMs': currentPosition.inMilliseconds,
@@ -1156,6 +1160,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
   Future<void> _logStreamingCacheSeekResult(
     Duration target,
     DateTime requestedAt,
+    int seekSequence,
   ) async {
     if (!_usesNativeDemuxerCacheTime) {
       return;
@@ -1169,8 +1174,15 @@ class MediaKitPlayerBackend implements PlayerBackend {
 
       var sawBuffering = _player.state.buffering;
       var recovered = false;
+      var supersededBySeek = false;
+      int? supersededBySeekSequence;
       final deadline = DateTime.now().add(const Duration(seconds: 8));
       while (!_disposed && DateTime.now().isBefore(deadline)) {
+        if (seekSequence != _streamingCacheSeekSequence) {
+          supersededBySeek = true;
+          supersededBySeekSequence = _streamingCacheSeekSequence;
+          break;
+        }
         sawBuffering = sawBuffering || _player.state.buffering;
         final targetReached =
             _durationDistance(_player.state.position, target) <=
@@ -1184,26 +1196,41 @@ class MediaKitPlayerBackend implements PlayerBackend {
         await Future<void>.delayed(const Duration(milliseconds: 150));
       }
 
+      final isLatestSeek = seekSequence == _streamingCacheSeekSequence;
+      if (!isLatestSeek) {
+        supersededBySeek = true;
+        supersededBySeekSequence ??= _streamingCacheSeekSequence;
+      }
       final bufferedPosition = _effectiveBufferPositionFromState();
       final guessedBufferedPosition = _guessedNativeBufferedPositionFromState();
-      PlaybackProfileDiagnostics.instance
-          .logPlayerBackendEvent('mediaKitStreamingCacheSeekResult', {
-            'mode': mode.name,
-            'targetPositionMs': target.inMilliseconds,
-            'finalPositionMs': _player.state.position.inMilliseconds,
-            'durationMs': _player.state.duration.inMilliseconds,
-            'elapsedMs': DateTime.now().difference(requestedAt).inMilliseconds,
-            'recoveredWithoutTimeout': recovered,
-            'sawBufferingAfterSeek': sawBuffering,
-            'isPlaying': _player.state.playing,
-            'isBuffering': _player.state.buffering,
-            'rawDemuxerCacheTimeMs': _rawNativeDemuxerCacheTime.inMilliseconds,
-            'bufferedPositionMs': bufferedPosition.inMilliseconds,
-            'guessedBufferedPositionMs': guessedBufferedPosition.inMilliseconds,
-            'seekableRangeCount': _nativeSeekableRanges.length,
-            'fileCacheBytes': _nativeFileCacheBytes,
-            'forwardCacheBytes': _nativeForwardCacheBytes,
-          });
+      final event = <String, Object?>{
+        'seekSequence': seekSequence,
+        'latestSeekSequence': _streamingCacheSeekSequence,
+        'isLatestSeek': isLatestSeek,
+        'supersededBySeek': supersededBySeek,
+        'mode': mode.name,
+        'targetPositionMs': target.inMilliseconds,
+        'finalPositionMs': _player.state.position.inMilliseconds,
+        'durationMs': _player.state.duration.inMilliseconds,
+        'elapsedMs': DateTime.now().difference(requestedAt).inMilliseconds,
+        'recoveredWithoutTimeout': recovered,
+        'sawBufferingAfterSeek': sawBuffering,
+        'isPlaying': _player.state.playing,
+        'isBuffering': _player.state.buffering,
+        'rawDemuxerCacheTimeMs': _rawNativeDemuxerCacheTime.inMilliseconds,
+        'bufferedPositionMs': bufferedPosition.inMilliseconds,
+        'guessedBufferedPositionMs': guessedBufferedPosition.inMilliseconds,
+        'seekableRangeCount': _nativeSeekableRanges.length,
+        'fileCacheBytes': _nativeFileCacheBytes,
+        'forwardCacheBytes': _nativeForwardCacheBytes,
+      };
+      if (supersededBySeekSequence != null) {
+        event['supersededBySeekSequence'] = supersededBySeekSequence;
+      }
+      PlaybackProfileDiagnostics.instance.logPlayerBackendEvent(
+        'mediaKitStreamingCacheSeekResult',
+        event,
+      );
     } catch (_) {}
   }
 
@@ -1627,9 +1654,12 @@ class MediaKitPlayerBackend implements PlayerBackend {
   @override
   Future<void> seekTo(Duration position) async {
     final requestedAt = DateTime.now();
-    unawaited(_logStreamingCacheSeek(position));
+    final seekSequence = ++_streamingCacheSeekSequence;
+    unawaited(_logStreamingCacheSeek(position, seekSequence));
     await _player.seek(position);
-    unawaited(_logStreamingCacheSeekResult(position, requestedAt));
+    unawaited(
+      _logStreamingCacheSeekResult(position, requestedAt, seekSequence),
+    );
   }
 
   @override

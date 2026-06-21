@@ -26,6 +26,26 @@ const _password = String.fromEnvironment(
   'MOONFIN_TEST_JELLYFIN_PASSWORD',
   defaultValue: '',
 );
+const _preferredEpisodeId = String.fromEnvironment(
+  'MOONFIN_TEST_JELLYFIN_ITEM_ID',
+  defaultValue: '',
+);
+const _smokeSeed = int.fromEnvironment(
+  'MOONFIN_STREAMING_CACHE_SMOKE_SEED',
+  defaultValue: 0,
+);
+const _cachedSeekAttemptCount = int.fromEnvironment(
+  'MOONFIN_STREAMING_CACHE_CACHED_SEEK_ATTEMPTS',
+  defaultValue: 6,
+);
+const _cachedSeekMaxRecoveryMs = int.fromEnvironment(
+  'MOONFIN_STREAMING_CACHE_CACHED_SEEK_MAX_MS',
+  defaultValue: 2500,
+);
+const _cachedSeekP90MaxRecoveryMs = int.fromEnvironment(
+  'MOONFIN_STREAMING_CACHE_CACHED_SEEK_P90_MAX_MS',
+  defaultValue: 2200,
+);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,14 +96,20 @@ Future<void> _runSmoke({
     );
     final session = await jellyfin.authenticate(_username, _password);
     final episodes = await jellyfin.fetchEpisodes(session);
-    if (episodes.length < 3) {
+    if (_preferredEpisodeId.isEmpty && episodes.length < 3) {
       throw StateError(
         'The Jellyfin smoke test needs at least 3 episodes, found ${episodes.length}.',
       );
     }
 
-    final seed = DateTime.now().millisecondsSinceEpoch;
-    final selected = _pickRandomEpisodes(episodes, seed: seed);
+    final seed = _smokeSeed == 0
+        ? DateTime.now().millisecondsSinceEpoch
+        : _smokeSeed;
+    final selected = _selectSmokeEpisodes(
+      episodes,
+      seed: seed,
+      preferredEpisodeId: _preferredEpisodeId,
+    );
     debugPrint(
       'Streaming cache smoke seed=$seed selected=${selected.map((e) => e.name).join(' | ')}',
     );
@@ -114,10 +140,23 @@ Future<void> _runSmoke({
   }
 }
 
-List<_Episode> _pickRandomEpisodes(
+List<_Episode> _selectSmokeEpisodes(
   List<_Episode> episodes, {
   required int seed,
+  required String preferredEpisodeId,
 }) {
+  if (preferredEpisodeId.isNotEmpty) {
+    final matches = episodes
+        .where((episode) => episode.id == preferredEpisodeId)
+        .toList(growable: false);
+    if (matches.isEmpty) {
+      throw StateError(
+        'MOONFIN_TEST_JELLYFIN_ITEM_ID=$preferredEpisodeId was not found.',
+      );
+    }
+    return matches;
+  }
+
   final candidates = episodes
       .where(
         (episode) =>
@@ -267,23 +306,6 @@ Future<void> _expectCacheHitEvidence({
   }
   final mpvProperties = await _readNativeMpvProperties(backend);
 
-  final position = backend.position;
-  final bufferedPosition = backend.buffer;
-  final target = _cachedSeekTarget(
-    position: position,
-    bufferedPosition: bufferedPosition,
-    duration: backend.duration,
-  );
-  final targetWithinForwardCache =
-      target > position && target <= bufferedPosition;
-  if (!targetWithinForwardCache) {
-    throw StateError(
-      'Unable to choose a seek target inside the forward cache for '
-      '"${episode.name}": target=${target.inMilliseconds}ms, '
-      '${_playbackEvidence(backend)}.',
-    );
-  }
-
   uiController.update(
     _SmokePlaybackSnapshot.fromBackend(
       backend,
@@ -301,40 +323,99 @@ Future<void> _expectCacheHitEvidence({
     );
   }
 
-  debugPrint(
-    'Streaming cache smoke cached drag/seek "${episode.name}" '
-    'mode=${mode.name} targetMs=${target.inMilliseconds} '
-    'bufferedPositionMs=${bufferedPosition.inMilliseconds}',
-  );
-  final seekStartedAt = DateTime.now();
-  await backend.seekTo(target);
-  final seeked = await _waitUntil(() {
-    uiController.update(
-      _SmokePlaybackSnapshot.fromBackend(
-        backend,
-        episodeName: episode.name,
-        mode: mode,
-      ),
+  final seekResults = <_CachedSeekSmokeResult>[];
+  final attemptCount = max(1, _cachedSeekAttemptCount);
+  for (var attempt = 0; attempt < attemptCount; attempt++) {
+    final ready = await _waitUntil(() {
+      uiController.update(
+        _SmokePlaybackSnapshot.fromBackend(
+          backend,
+          episodeName: episode.name,
+          mode: mode,
+        ),
+      );
+      return backend.buffer >= backend.position + requiredAhead();
+    }, timeout: const Duration(seconds: 90));
+    if (!ready) {
+      throw StateError(
+        'Episode "${episode.name}" did not rebuild enough forward cache before '
+        'cached seek attempt ${attempt + 1}/$attemptCount: '
+        '${_playbackEvidence(backend)}.',
+      );
+    }
+
+    final position = backend.position;
+    final bufferedPosition = backend.buffer;
+    final target = _cachedSeekTarget(
+      position: position,
+      bufferedPosition: bufferedPosition,
+      duration: backend.duration,
     );
-    return backend.position >= target - const Duration(milliseconds: 750) &&
-        !backend.isBuffering &&
-        backend.isPlaying;
-  }, timeout: const Duration(seconds: 20));
-  final seekRecoveryMs = DateTime.now()
-      .difference(seekStartedAt)
-      .inMilliseconds;
-  if (!seeked) {
-    throw StateError(
-      'Episode "${episode.name}" did not reach cached seek target with cache '
-      'mode ${mode.name}: target=${target.inMilliseconds}ms, '
-      '${_playbackEvidence(backend)}.',
+    final targetWithinForwardCache =
+        target > position && target <= bufferedPosition;
+    if (!targetWithinForwardCache) {
+      throw StateError(
+        'Unable to choose a seek target inside the forward cache for '
+        '"${episode.name}" on cached seek attempt ${attempt + 1}/$attemptCount: '
+        'target=${target.inMilliseconds}ms, ${_playbackEvidence(backend)}.',
+      );
+    }
+
+    debugPrint(
+      'Streaming cache smoke cached drag/seek "${episode.name}" '
+      'mode=${mode.name} attempt=${attempt + 1}/$attemptCount '
+      'targetMs=${target.inMilliseconds} '
+      'positionMs=${position.inMilliseconds} '
+      'bufferedPositionMs=${bufferedPosition.inMilliseconds}',
     );
+    final seekStartedAt = DateTime.now();
+    await backend.seekTo(target);
+    final seeked = await _waitUntil(() {
+      uiController.update(
+        _SmokePlaybackSnapshot.fromBackend(
+          backend,
+          episodeName: episode.name,
+          mode: mode,
+        ),
+      );
+      return backend.position >= target - const Duration(milliseconds: 750) &&
+          !backend.isBuffering &&
+          backend.isPlaying;
+    }, timeout: const Duration(seconds: 20));
+    final seekRecoveryMs = DateTime.now()
+        .difference(seekStartedAt)
+        .inMilliseconds;
+    final result = _CachedSeekSmokeResult(
+      attempt: attempt + 1,
+      position: position,
+      bufferedPosition: bufferedPosition,
+      target: target,
+      seekRecoveryMs: seekRecoveryMs,
+    );
+    seekResults.add(result);
+    if (!seeked) {
+      throw StateError(
+        'Episode "${episode.name}" did not reach cached seek target with cache '
+        'mode ${mode.name}: ${result.summary}, ${_playbackEvidence(backend)}.',
+      );
+    }
   }
-  if (seekRecoveryMs > 2500) {
+
+  final slowResults = seekResults
+      .where((result) => result.seekRecoveryMs > _cachedSeekMaxRecoveryMs)
+      .toList(growable: false);
+  final p90RecoveryMs = _percentileNearest(
+    seekResults.map((result) => result.seekRecoveryMs).toList(growable: false),
+    0.90,
+  );
+  if (slowResults.isNotEmpty || p90RecoveryMs > _cachedSeekP90MaxRecoveryMs) {
     throw StateError(
-      'Episode "${episode.name}" recovered too slowly after cached seek: '
-      'seekRecoveryMs=$seekRecoveryMs, target=${target.inMilliseconds}ms, '
-      '${_playbackEvidence(backend)}.',
+      'Episode "${episode.name}" recovered too slowly after repeated cached '
+      'seeks: p90Ms=$p90RecoveryMs, '
+      'maxAllowedMs=$_cachedSeekMaxRecoveryMs, '
+      'p90AllowedMs=$_cachedSeekP90MaxRecoveryMs, '
+      'slow=${slowResults.map((result) => result.summary).toList()}, '
+      'all=${seekResults.map((result) => result.summary).toList()}.',
     );
   }
 
@@ -346,14 +427,20 @@ Future<void> _expectCacheHitEvidence({
       'mpvProperties=$mpvProperties, ${_playbackEvidence(backend)}.',
     );
   }
+  if (!diskEvidence.hasEvidence) {
+    throw StateError(
+      'Episode "${episode.name}" did not expose disk cache evidence with cache '
+      'mode ${mode.name}: ${diskEvidence.summary}, '
+      'mpvProperties=$mpvProperties, ${_playbackEvidence(backend)}.',
+    );
+  }
 
   debugPrint(
     'STREAMING_CACHE_SMOKE_CACHE_HIT mode=${mode.name} '
-    'episode="${episode.name}" positionMs=${position.inMilliseconds} '
-    'bufferedPositionMs=${bufferedPosition.inMilliseconds} '
-    'targetMs=${target.inMilliseconds} '
-    'targetWithinForwardCache=$targetWithinForwardCache '
-    'seekRecoveryMs=$seekRecoveryMs '
+    'episode="${episode.name}" attempts=${seekResults.length} '
+    'seekRecoveryP90Ms=$p90RecoveryMs '
+    'seekRecoveryMaxMs=${seekResults.map((r) => r.seekRecoveryMs).reduce(max)} '
+    'seekResults=${seekResults.map((result) => result.summary).toList()} '
     'cacheDirBytes=${diskEvidence.visibleBytes} '
     'cacheDir="${diskEvidence.cacheDir}" '
     'openCacheFileCount=${diskEvidence.openCacheFileCount} '
@@ -387,6 +474,20 @@ Duration _cachedSeekTarget({
     target = duration - const Duration(seconds: 1);
   }
   return target;
+}
+
+int _percentileNearest(List<int> values, double percentile) {
+  if (values.isEmpty) {
+    return 0;
+  }
+  final sorted = List<int>.from(values)..sort();
+  final index = ((sorted.length - 1) * percentile).round();
+  final clampedIndex = index < 0
+      ? 0
+      : index >= sorted.length
+      ? sorted.length - 1
+      : index;
+  return sorted[clampedIndex];
 }
 
 Duration _visibleCacheAheadThreshold(Duration duration) {
@@ -663,6 +764,29 @@ class _SeekbarVisualEvidence {
   String get summary =>
       'path="$path", bufferedPixelCount=$bufferedPixelCount, '
       'hasBufferedSegment=$hasBufferedSegment';
+}
+
+class _CachedSeekSmokeResult {
+  const _CachedSeekSmokeResult({
+    required this.attempt,
+    required this.position,
+    required this.bufferedPosition,
+    required this.target,
+    required this.seekRecoveryMs,
+  });
+
+  final int attempt;
+  final Duration position;
+  final Duration bufferedPosition;
+  final Duration target;
+  final int seekRecoveryMs;
+
+  String get summary =>
+      'attempt=$attempt positionMs=${position.inMilliseconds} '
+      'targetMs=${target.inMilliseconds} '
+      'bufferedPositionMs=${bufferedPosition.inMilliseconds} '
+      'cacheMarginMs=${(bufferedPosition - target).inMilliseconds} '
+      'seekRecoveryMs=$seekRecoveryMs';
 }
 
 class _StreamingCacheDiskEvidence {
