@@ -159,7 +159,7 @@ void main() {
       expect(props['cache'], equals('auto'));
       expect(props['cache-on-disk'], equals('yes'));
       expect(props['demuxer-max-bytes'], equals('512MiB'));
-      expect(props['demuxer-cache-unlink-files'], equals('immediate'));
+      expect(props['demuxer-cache-unlink-files'], equals('no'));
     });
 
     test('maps only SSD size to mpv cache budgets', () {
@@ -174,6 +174,7 @@ void main() {
       expect(props['demuxer-max-bytes'], equals('8192MiB'));
       expect(props['demuxer-max-back-bytes'], equals('2048MiB'));
       expect(props['demuxer-seekable-cache'], equals('yes'));
+      expect(props['demuxer-cache-unlink-files'], equals('no'));
     });
 
     test('clamps only SSD size to supported 2GB to 16GB range', () {
@@ -195,6 +196,36 @@ void main() {
       );
       expect(low['demuxer-max-bytes'], equals('2048MiB'));
       expect(high['demuxer-max-bytes'], equals('16384MiB'));
+    });
+
+    test('maps native demuxer cache time to absolute buffered position', () {
+      final buffered = MediaKitPlayerBackend.normalizeNativeBufferedPosition(
+        position: const Duration(seconds: 60),
+        demuxerCacheTime: const Duration(seconds: 30),
+        duration: const Duration(minutes: 10),
+      );
+
+      expect(buffered, equals(const Duration(seconds: 90)));
+    });
+
+    test('clamps native buffered position to duration', () {
+      final buffered = MediaKitPlayerBackend.normalizeNativeBufferedPosition(
+        position: const Duration(seconds: 60),
+        demuxerCacheTime: const Duration(seconds: 90),
+        duration: const Duration(seconds: 120),
+      );
+
+      expect(buffered, equals(const Duration(seconds: 120)));
+    });
+
+    test('does not expose native buffered position without cache ahead', () {
+      final buffered = MediaKitPlayerBackend.normalizeNativeBufferedPosition(
+        position: const Duration(seconds: 60),
+        demuxerCacheTime: Duration.zero,
+        duration: const Duration(minutes: 10),
+      );
+
+      expect(buffered, equals(Duration.zero));
     });
   });
 }

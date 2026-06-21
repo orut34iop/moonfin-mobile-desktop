@@ -175,6 +175,9 @@ class MediaKitPlayerBackend implements PlayerBackend {
   static const int _streamingCacheMinSizeGb = 2;
   static const int _streamingCacheMaxSizeGb = 16;
   static const int _mibPerGib = 1024;
+  static const Duration _streamingCacheDiagnosticsInterval = Duration(
+    seconds: 5,
+  );
   @visibleForTesting
   static Directory? debugStreamingCacheDirectory;
   final Player _player;
@@ -187,6 +190,13 @@ class MediaKitPlayerBackend implements PlayerBackend {
   Map<String, String>? _appliedAudioPassthroughProperties;
   String? _appliedCustomMpvConfPath;
   DateTime? _appliedCustomMpvConfMtime;
+  Duration _rawNativeDemuxerCacheTime = Duration.zero;
+  Duration _lastNormalizedNativeBuffer = Duration.zero;
+  final StreamController<Duration> _normalizedNativeBufferController =
+      StreamController<Duration>.broadcast();
+  final List<StreamSubscription<dynamic>> _nativeBufferSubscriptions = [];
+  Timer? _streamingCacheDiagnosticsTimer;
+  bool _disposed = false;
   static final Map<String, _ParsedMpvConfCacheEntry> _parsedMpvConfCache =
       <String, _ParsedMpvConfCacheEntry>{};
 
@@ -285,7 +295,9 @@ class MediaKitPlayerBackend implements PlayerBackend {
     this._prefs,
     this._onNativeHandleReady,
     this._hwDecodingEnabled,
-  );
+  ) {
+    _bindNativeBufferNormalization();
+  }
 
   factory MediaKitPlayerBackend(
     UserPreferences prefs, {
@@ -476,6 +488,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
     final mediaType = payload['mediaType']?.toString();
     final container = payload['container']?.toString();
 
+    _stopStreamingCacheStatusDiagnostics();
     await _notifyNativeHandleReady();
     await _configureAppleMobileLibassFont();
     await _applyAudioPassthroughOptions();
@@ -503,6 +516,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
         });
     try {
       await _player.open(media, play: !openPaused);
+      _startStreamingCacheStatusDiagnostics();
       PlaybackProfileDiagnostics.instance.logPlayerBackendEvent(
         'mediaKitOpenComplete',
         _playerStateSnapshot(),
@@ -693,7 +707,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
         'demuxer-max-back-bytes': '128MiB',
         'demuxer-donate-buffer': 'yes',
         'demuxer-seekable-cache': 'auto',
-        'demuxer-cache-unlink-files': 'immediate',
+        'demuxer-cache-unlink-files': 'no',
       },
       StreamingCacheMode.onlySsd => <String, String>{
         'cache': 'yes',
@@ -705,9 +719,79 @@ class MediaKitPlayerBackend implements PlayerBackend {
         'demuxer-max-back-bytes': '${backMib}MiB',
         'demuxer-donate-buffer': 'yes',
         'demuxer-seekable-cache': 'yes',
-        'demuxer-cache-unlink-files': 'immediate',
+        'demuxer-cache-unlink-files': 'no',
       },
     };
+  }
+
+  @visibleForTesting
+  static Duration normalizeNativeBufferedPosition({
+    required Duration position,
+    required Duration demuxerCacheTime,
+    required Duration duration,
+  }) {
+    if (demuxerCacheTime <= Duration.zero) {
+      return Duration.zero;
+    }
+
+    final safePosition = position < Duration.zero ? Duration.zero : position;
+    final bufferedPosition = safePosition + demuxerCacheTime;
+    if (duration > Duration.zero && bufferedPosition > duration) {
+      return duration;
+    }
+    return bufferedPosition;
+  }
+
+  bool get _usesNativeDemuxerCacheTime => _player.platform is NativePlayer;
+
+  void _bindNativeBufferNormalization() {
+    if (!_usesNativeDemuxerCacheTime) {
+      return;
+    }
+
+    _rawNativeDemuxerCacheTime = _player.state.buffer;
+    _nativeBufferSubscriptions.addAll([
+      _player.stream.buffer.listen((buffer) {
+        _rawNativeDemuxerCacheTime = buffer;
+        _emitNormalizedNativeBuffer();
+      }),
+      _player.stream.position.listen((_) => _emitNormalizedNativeBuffer()),
+      _player.stream.duration.listen((_) => _emitNormalizedNativeBuffer()),
+    ]);
+  }
+
+  Duration _effectiveBufferPositionFromState() {
+    if (!_usesNativeDemuxerCacheTime) {
+      return _player.state.buffer;
+    }
+    if (_prefs.get(UserPreferences.streamingCacheMode) ==
+        StreamingCacheMode.disabled) {
+      return Duration.zero;
+    }
+
+    final rawCacheTime = _rawNativeDemuxerCacheTime;
+    if (rawCacheTime <= Duration.zero) {
+      return Duration.zero;
+    }
+    return normalizeNativeBufferedPosition(
+      position: _player.state.position,
+      demuxerCacheTime: rawCacheTime,
+      duration: _player.state.duration,
+    );
+  }
+
+  void _emitNormalizedNativeBuffer() {
+    if (!_usesNativeDemuxerCacheTime ||
+        _normalizedNativeBufferController.isClosed) {
+      return;
+    }
+
+    final normalized = _effectiveBufferPositionFromState();
+    if (normalized == _lastNormalizedNativeBuffer) {
+      return;
+    }
+    _lastNormalizedNativeBuffer = normalized;
+    _normalizedNativeBufferController.add(normalized);
   }
 
   Future<Directory> _streamingCacheDirectory({bool create = true}) async {
@@ -724,6 +808,31 @@ class MediaKitPlayerBackend implements PlayerBackend {
       await dir.create(recursive: true);
     }
     return dir;
+  }
+
+  Future<int> _streamingCacheDirectorySizeBytes() async {
+    try {
+      final dir = await _streamingCacheDirectory(create: false);
+      if (!await dir.exists()) {
+        return 0;
+      }
+
+      var total = 0;
+      await for (final entity in dir.list(
+        recursive: true,
+        followLinks: false,
+      )) {
+        if (entity is! File) {
+          continue;
+        }
+        try {
+          total += await entity.length();
+        } catch (_) {}
+      }
+      return total;
+    } catch (_) {
+      return 0;
+    }
   }
 
   Future<void> _deleteStreamingCacheArtifacts() async {
@@ -784,6 +893,95 @@ class MediaKitPlayerBackend implements PlayerBackend {
             ),
             'applied': allApplied,
             'keys': properties.keys.toList()..sort(),
+          });
+    } catch (_) {}
+  }
+
+  void _startStreamingCacheStatusDiagnostics() {
+    _stopStreamingCacheStatusDiagnostics();
+    if (!_usesNativeDemuxerCacheTime) {
+      return;
+    }
+
+    unawaited(_logStreamingCacheStatus());
+    _streamingCacheDiagnosticsTimer = Timer.periodic(
+      _streamingCacheDiagnosticsInterval,
+      (_) {
+        if (_disposed) {
+          return;
+        }
+        if (!_player.state.playing && !_player.state.buffering) {
+          return;
+        }
+        unawaited(_logStreamingCacheStatus());
+      },
+    );
+  }
+
+  void _stopStreamingCacheStatusDiagnostics() {
+    _streamingCacheDiagnosticsTimer?.cancel();
+    _streamingCacheDiagnosticsTimer = null;
+  }
+
+  Future<void> _logStreamingCacheStatus() async {
+    if (!_usesNativeDemuxerCacheTime) {
+      return;
+    }
+
+    try {
+      final mode = _prefs.get(UserPreferences.streamingCacheMode);
+      final properties = streamingCacheMpvPropertiesFromPreferences(
+        mode: mode,
+        sizeGb: _prefs.get(UserPreferences.streamingCacheSizeGb),
+      );
+      final cacheOnDisk = properties['cache-on-disk'] == 'yes';
+      final rawCacheTime = _rawNativeDemuxerCacheTime;
+      final bufferedPosition = _effectiveBufferPositionFromState();
+      final cacheDirBytes = cacheOnDisk
+          ? await _streamingCacheDirectorySizeBytes()
+          : 0;
+
+      PlaybackProfileDiagnostics.instance
+          .logPlayerBackendEvent('mediaKitStreamingCacheStatus', {
+            'mode': mode.name,
+            'positionMs': _player.state.position.inMilliseconds,
+            'durationMs': _player.state.duration.inMilliseconds,
+            'rawDemuxerCacheTimeMs': rawCacheTime.inMilliseconds,
+            'bufferedPositionMs': bufferedPosition.inMilliseconds,
+            'cacheDirBytes': cacheDirBytes,
+            'cacheOnDisk': cacheOnDisk,
+            'isPlaying': _player.state.playing,
+            'isBuffering': _player.state.buffering,
+          });
+    } catch (_) {}
+  }
+
+  Future<void> _logStreamingCacheSeek(Duration target) async {
+    if (!_usesNativeDemuxerCacheTime) {
+      return;
+    }
+
+    try {
+      final mode = _prefs.get(UserPreferences.streamingCacheMode);
+      if (mode == StreamingCacheMode.disabled) {
+        return;
+      }
+      final currentPosition = _player.state.position;
+      final bufferedPosition = _effectiveBufferPositionFromState();
+      final targetWithinForwardCache =
+          target > currentPosition && target <= bufferedPosition;
+      final cacheDirBytes = await _streamingCacheDirectorySizeBytes();
+
+      PlaybackProfileDiagnostics.instance
+          .logPlayerBackendEvent('mediaKitStreamingCacheSeek', {
+            'mode': mode.name,
+            'targetPositionMs': target.inMilliseconds,
+            'positionMs': currentPosition.inMilliseconds,
+            'durationMs': _player.state.duration.inMilliseconds,
+            'rawDemuxerCacheTimeMs': _rawNativeDemuxerCacheTime.inMilliseconds,
+            'bufferedPositionMs': bufferedPosition.inMilliseconds,
+            'targetWithinForwardCache': targetWithinForwardCache,
+            'cacheDirBytes': cacheDirBytes,
           });
     } catch (_) {}
   }
@@ -1185,7 +1383,10 @@ class MediaKitPlayerBackend implements PlayerBackend {
 
   @override
   Future<void> stop() async {
+    _stopStreamingCacheStatusDiagnostics();
     await _player.stop();
+    _rawNativeDemuxerCacheTime = Duration.zero;
+    _emitNormalizedNativeBuffer();
     await _deleteStreamingCacheArtifacts();
   }
 
@@ -1198,6 +1399,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
 
   @override
   Future<void> seekTo(Duration position) async {
+    unawaited(_logStreamingCacheSeek(position));
     await _player.seek(position);
   }
 
@@ -1208,7 +1410,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
   Duration get duration => _player.state.duration;
 
   @override
-  Duration get buffer => _player.state.buffer;
+  Duration get buffer => _effectiveBufferPositionFromState();
 
   @override
   bool get isPlaying => _player.state.playing;
@@ -1226,7 +1428,9 @@ class MediaKitPlayerBackend implements PlayerBackend {
   Stream<Duration> get durationStream => _player.stream.duration;
 
   @override
-  Stream<Duration> get bufferStream => _player.stream.buffer;
+  Stream<Duration> get bufferStream => _usesNativeDemuxerCacheTime
+      ? _normalizedNativeBufferController.stream
+      : _player.stream.buffer;
 
   @override
   Stream<bool> get playingStream => _player.stream.playing;
@@ -1495,6 +1699,12 @@ class MediaKitPlayerBackend implements PlayerBackend {
 
   @override
   void dispose() {
+    _disposed = true;
+    _stopStreamingCacheStatusDiagnostics();
+    for (final subscription in _nativeBufferSubscriptions) {
+      unawaited(subscription.cancel());
+    }
+    unawaited(_normalizedNativeBufferController.close());
     unawaited(_deleteStreamingCacheArtifacts());
     _player.dispose();
   }

@@ -3787,6 +3787,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
                 final double bufferMs = buffer.inMilliseconds
                     .clamp(0, duration.inMilliseconds)
                     .toDouble();
+                final hasVisibleBuffer =
+                    buffer > position + const Duration(seconds: 1);
+                final visibleBufferMs = hasVisibleBuffer
+                    ? bufferMs
+                    : positionMs;
                 final seekPosition = Duration(milliseconds: positionMs.round());
                 final livePosition = _isSeeking ? seekPosition : position;
                 final endsAt = _endsAtLabel(
@@ -3881,8 +3886,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
                               overlayRadius: 14,
                             ),
                             activeTrackColor: AppColorScheme.rangeProgress,
-                            secondaryActiveTrackColor: AppColorScheme.rangeTrack
-                                .withValues(alpha: 0.8),
+                            secondaryActiveTrackColor:
+                                AppColorScheme.seekbarBuffered,
                             inactiveTrackColor: AppColorScheme.rangeTrack,
                             thumbColor:
                                 (PlatformDetection.isTV && _seekbarFocused)
@@ -3894,7 +3899,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
                           ),
                           child: Slider(
                             value: positionMs.clamp(0.0, durationMs),
-                            secondaryTrackValue: bufferMs.clamp(
+                            secondaryTrackValue: visibleBufferMs.clamp(
                               0.0,
                               durationMs,
                             ),
