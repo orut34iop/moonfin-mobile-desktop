@@ -82,8 +82,8 @@ void main() {
 
   group('MediaKitPlayerBackend passthrough property synthesis', () {
     test('builds audio-spdif and audio-exclusive on desktop path', () {
-      final props = MediaKitPlayerBackend
-          .passthroughMpvPropertiesFromPreferences(
+      final props =
+          MediaKitPlayerBackend.passthroughMpvPropertiesFromPreferences(
             audioOutputMode: AudioOutputMode.auto,
             ac3PassthroughEnabled: true,
             eac3PassthroughEnabled: true,
@@ -100,8 +100,8 @@ void main() {
     });
 
     test('disables exclusive when no passthrough codecs remain', () {
-      final props = MediaKitPlayerBackend
-          .passthroughMpvPropertiesFromPreferences(
+      final props =
+          MediaKitPlayerBackend.passthroughMpvPropertiesFromPreferences(
             audioOutputMode: AudioOutputMode.forceStereo,
             ac3PassthroughEnabled: true,
             eac3PassthroughEnabled: true,
@@ -118,8 +118,8 @@ void main() {
     });
 
     test('omits audio-exclusive on non-desktop path', () {
-      final props = MediaKitPlayerBackend
-          .passthroughMpvPropertiesFromPreferences(
+      final props =
+          MediaKitPlayerBackend.passthroughMpvPropertiesFromPreferences(
             audioOutputMode: AudioOutputMode.auto,
             ac3PassthroughEnabled: true,
             eac3PassthroughEnabled: true,
@@ -159,7 +159,7 @@ void main() {
       expect(props['cache'], equals('auto'));
       expect(props['cache-on-disk'], equals('yes'));
       expect(props['demuxer-max-bytes'], equals('512MiB'));
-      expect(props['demuxer-cache-unlink-files'], equals('no'));
+      expect(props['demuxer-cache-unlink-files'], equals('whendone'));
     });
 
     test('maps only SSD size to mpv cache budgets', () {
@@ -174,7 +174,7 @@ void main() {
       expect(props['demuxer-max-bytes'], equals('8192MiB'));
       expect(props['demuxer-max-back-bytes'], equals('2048MiB'));
       expect(props['demuxer-seekable-cache'], equals('yes'));
-      expect(props['demuxer-cache-unlink-files'], equals('no'));
+      expect(props['demuxer-cache-unlink-files'], equals('whendone'));
     });
 
     test('clamps only SSD size to supported 2GB to 16GB range', () {

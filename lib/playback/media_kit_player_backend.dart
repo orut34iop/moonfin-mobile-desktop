@@ -707,7 +707,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
         'demuxer-max-back-bytes': '128MiB',
         'demuxer-donate-buffer': 'yes',
         'demuxer-seekable-cache': 'auto',
-        'demuxer-cache-unlink-files': 'no',
+        'demuxer-cache-unlink-files': 'whendone',
       },
       StreamingCacheMode.onlySsd => <String, String>{
         'cache': 'yes',
@@ -719,7 +719,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
         'demuxer-max-back-bytes': '${backMib}MiB',
         'demuxer-donate-buffer': 'yes',
         'demuxer-seekable-cache': 'yes',
-        'demuxer-cache-unlink-files': 'no',
+        'demuxer-cache-unlink-files': 'whendone',
       },
     };
   }
