@@ -160,6 +160,7 @@ void main() {
       expect(props['cache-on-disk'], equals('yes'));
       expect(props['demuxer-max-bytes'], equals('512MiB'));
       expect(props['demuxer-cache-unlink-files'], equals('whendone'));
+      expect(props['hr-seek-framedrop'], equals('yes'));
     });
 
     test('maps only SSD size to mpv cache budgets', () {
@@ -175,6 +176,7 @@ void main() {
       expect(props['demuxer-max-back-bytes'], equals('2048MiB'));
       expect(props['demuxer-seekable-cache'], equals('yes'));
       expect(props['demuxer-cache-unlink-files'], equals('whendone'));
+      expect(props['hr-seek-framedrop'], equals('yes'));
     });
 
     test('clamps only SSD size to supported 2GB to 16GB range', () {

@@ -284,30 +284,6 @@ Future<void> _expectCacheHitEvidence({
     );
   }
 
-  debugPrint(
-    'Streaming cache smoke cached drag/seek "${episode.name}" '
-    'mode=${mode.name} targetMs=${target.inMilliseconds} '
-    'bufferedPositionMs=${bufferedPosition.inMilliseconds}',
-  );
-  await backend.seekTo(target);
-  final seeked = await _waitUntil(() {
-    uiController.update(
-      _SmokePlaybackSnapshot.fromBackend(
-        backend,
-        episodeName: episode.name,
-        mode: mode,
-      ),
-    );
-    return backend.position >= target - const Duration(milliseconds: 750);
-  }, timeout: const Duration(seconds: 20));
-  if (!seeked) {
-    throw StateError(
-      'Episode "${episode.name}" did not reach cached seek target with cache '
-      'mode ${mode.name}: target=${target.inMilliseconds}ms, '
-      '${_playbackEvidence(backend)}.',
-    );
-  }
-
   uiController.update(
     _SmokePlaybackSnapshot.fromBackend(
       backend,
@@ -322,6 +298,43 @@ Future<void> _expectCacheHitEvidence({
     throw StateError(
       'Seekbar screenshot did not contain the buffered progress segment for '
       '"${episode.name}": ${visual.summary}.',
+    );
+  }
+
+  debugPrint(
+    'Streaming cache smoke cached drag/seek "${episode.name}" '
+    'mode=${mode.name} targetMs=${target.inMilliseconds} '
+    'bufferedPositionMs=${bufferedPosition.inMilliseconds}',
+  );
+  final seekStartedAt = DateTime.now();
+  await backend.seekTo(target);
+  final seeked = await _waitUntil(() {
+    uiController.update(
+      _SmokePlaybackSnapshot.fromBackend(
+        backend,
+        episodeName: episode.name,
+        mode: mode,
+      ),
+    );
+    return backend.position >= target - const Duration(milliseconds: 750) &&
+        !backend.isBuffering &&
+        backend.isPlaying;
+  }, timeout: const Duration(seconds: 20));
+  final seekRecoveryMs = DateTime.now()
+      .difference(seekStartedAt)
+      .inMilliseconds;
+  if (!seeked) {
+    throw StateError(
+      'Episode "${episode.name}" did not reach cached seek target with cache '
+      'mode ${mode.name}: target=${target.inMilliseconds}ms, '
+      '${_playbackEvidence(backend)}.',
+    );
+  }
+  if (seekRecoveryMs > 2500) {
+    throw StateError(
+      'Episode "${episode.name}" recovered too slowly after cached seek: '
+      'seekRecoveryMs=$seekRecoveryMs, target=${target.inMilliseconds}ms, '
+      '${_playbackEvidence(backend)}.',
     );
   }
 
@@ -340,6 +353,7 @@ Future<void> _expectCacheHitEvidence({
     'bufferedPositionMs=${bufferedPosition.inMilliseconds} '
     'targetMs=${target.inMilliseconds} '
     'targetWithinForwardCache=$targetWithinForwardCache '
+    'seekRecoveryMs=$seekRecoveryMs '
     'cacheDirBytes=${diskEvidence.visibleBytes} '
     'cacheDir="${diskEvidence.cacheDir}" '
     'openCacheFileCount=${diskEvidence.openCacheFileCount} '
@@ -365,7 +379,7 @@ Duration _cachedSeekTarget({
 }) {
   final ahead = bufferedPosition - position;
   final jump = ahead > const Duration(seconds: 12)
-      ? const Duration(seconds: 6)
+      ? Duration(microseconds: (ahead.inMicroseconds * 0.75).round())
       : ahead ~/ 2;
   var target = position + jump;
   if (duration > Duration.zero &&

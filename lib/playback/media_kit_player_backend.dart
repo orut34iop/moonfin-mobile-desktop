@@ -714,6 +714,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
         'demuxer-donate-buffer': 'yes',
         'demuxer-seekable-cache': 'auto',
         'demuxer-cache-unlink-files': 'whendone',
+        'hr-seek-framedrop': 'yes',
       },
       StreamingCacheMode.onlySsd => <String, String>{
         'cache': 'yes',
@@ -726,6 +727,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
         'demuxer-donate-buffer': 'yes',
         'demuxer-seekable-cache': 'yes',
         'demuxer-cache-unlink-files': 'whendone',
+        'hr-seek-framedrop': 'yes',
       },
     };
   }
