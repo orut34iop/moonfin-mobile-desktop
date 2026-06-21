@@ -172,6 +172,11 @@ class MediaKitPlayerBackend implements PlayerBackend {
   static const Duration _linuxHwdecFirstFrameTimeout = Duration(
     milliseconds: 1500,
   );
+  static const int _streamingCacheMinSizeGb = 2;
+  static const int _streamingCacheMaxSizeGb = 16;
+  static const int _mibPerGib = 1024;
+  @visibleForTesting
+  static Directory? debugStreamingCacheDirectory;
   final Player _player;
   final VideoController? _videoController;
   final UserPreferences _prefs;
@@ -475,6 +480,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
     await _configureAppleMobileLibassFont();
     await _applyAudioPassthroughOptions();
     await _applyCustomMpvConfIfEnabled();
+    await _applyStreamingCacheOptions();
     await _applyAssOverrideMode();
     final media = headers.isEmpty
         ? Media(url)
@@ -486,6 +492,12 @@ class MediaKitPlayerBackend implements PlayerBackend {
           'headerKeys': headers.keys.toList()..sort(),
           'mediaType': mediaType,
           'container': container,
+          'streamingCacheMode': _prefs
+              .get(UserPreferences.streamingCacheMode)
+              .name,
+          'streamingCacheSizeGb': normalizeStreamingCacheSizeGb(
+            _prefs.get(UserPreferences.streamingCacheSizeGb),
+          ),
           'startPositionMs': startPosition.inMilliseconds,
           'openPaused': openPaused,
         });
@@ -646,6 +658,134 @@ class MediaKitPlayerBackend implements PlayerBackend {
       properties['audio-exclusive'] = codecs.isNotEmpty ? 'yes' : 'no';
     }
     return properties;
+  }
+
+  @visibleForTesting
+  static int normalizeStreamingCacheSizeGb(int sizeGb) {
+    return sizeGb
+        .clamp(_streamingCacheMinSizeGb, _streamingCacheMaxSizeGb)
+        .toInt();
+  }
+
+  @visibleForTesting
+  static Map<String, String> streamingCacheMpvPropertiesFromPreferences({
+    required StreamingCacheMode mode,
+    required int sizeGb,
+  }) {
+    final normalizedSizeGb = normalizeStreamingCacheSizeGb(sizeGb);
+    final forwardMib = normalizedSizeGb * _mibPerGib;
+    final backMib = (forwardMib ~/ 4).clamp(512, 2048).toInt();
+
+    return switch (mode) {
+      StreamingCacheMode.disabled => const <String, String>{
+        'cache': 'no',
+        'cache-on-disk': 'no',
+        'cache-pause': 'no',
+        'demuxer-seekable-cache': 'no',
+      },
+      StreamingCacheMode.auto => const <String, String>{
+        'cache': 'auto',
+        'cache-on-disk': 'yes',
+        'cache-pause': 'yes',
+        'cache-pause-initial': 'no',
+        'cache-secs': '3600',
+        'demuxer-max-bytes': '512MiB',
+        'demuxer-max-back-bytes': '128MiB',
+        'demuxer-donate-buffer': 'yes',
+        'demuxer-seekable-cache': 'auto',
+        'demuxer-cache-unlink-files': 'immediate',
+      },
+      StreamingCacheMode.onlySsd => <String, String>{
+        'cache': 'yes',
+        'cache-on-disk': 'yes',
+        'cache-pause': 'yes',
+        'cache-pause-initial': 'no',
+        'cache-secs': '86400',
+        'demuxer-max-bytes': '${forwardMib}MiB',
+        'demuxer-max-back-bytes': '${backMib}MiB',
+        'demuxer-donate-buffer': 'yes',
+        'demuxer-seekable-cache': 'yes',
+        'demuxer-cache-unlink-files': 'immediate',
+      },
+    };
+  }
+
+  Future<Directory> _streamingCacheDirectory({bool create = true}) async {
+    final debugDir = debugStreamingCacheDirectory;
+    if (debugDir != null) {
+      if (create) {
+        await debugDir.create(recursive: true);
+      }
+      return debugDir;
+    }
+    final base = await getTemporaryDirectory();
+    final dir = Directory('${base.path}/moonfin-streaming-cache');
+    if (create) {
+      await dir.create(recursive: true);
+    }
+    return dir;
+  }
+
+  Future<void> _deleteStreamingCacheArtifacts() async {
+    try {
+      final dir = await _streamingCacheDirectory(create: false);
+      if (await dir.exists()) {
+        await for (final entity in dir.list(followLinks: false)) {
+          await entity.delete(recursive: true);
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _applyStreamingCacheOptions() async {
+    if (_player.platform is! NativePlayer) {
+      return;
+    }
+
+    try {
+      final native = _player.platform as NativePlayer;
+      final properties = Map<String, String>.from(
+        streamingCacheMpvPropertiesFromPreferences(
+          mode: _prefs.get(UserPreferences.streamingCacheMode),
+          sizeGb: _prefs.get(UserPreferences.streamingCacheSizeGb),
+        ),
+      );
+
+      if (properties['cache-on-disk'] == 'yes') {
+        final dir = await _streamingCacheDirectory();
+        properties['demuxer-cache-dir'] = dir.path;
+      }
+
+      var allApplied = true;
+      for (final entry in properties.entries) {
+        final setOk = await _tryNativeSetProperty(
+          native,
+          entry.key,
+          entry.value,
+        );
+        if (setOk) {
+          continue;
+        }
+        final commandOk = await _tryNativeCommand(native, [
+          'set_property',
+          entry.key,
+          entry.value,
+        ]);
+        if (!commandOk) {
+          allApplied = false;
+        }
+      }
+
+      PlaybackProfileDiagnostics.instance
+          .logPlayerBackendEvent('mediaKitStreamingCacheApplied', {
+            'mode': _prefs.get(UserPreferences.streamingCacheMode).name,
+            'sizeGb': normalizeStreamingCacheSizeGb(
+              _prefs.get(UserPreferences.streamingCacheSizeGb),
+            ),
+            'applied': allApplied,
+            'keys': properties.keys.toList()..sort(),
+          });
+    } catch (_) {}
   }
 
   Future<void> _applyAudioPassthroughOptions() async {
@@ -1046,6 +1186,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
   @override
   Future<void> stop() async {
     await _player.stop();
+    await _deleteStreamingCacheArtifacts();
   }
 
   Future<void> setVideoEnabled(bool enabled) async {
@@ -1354,6 +1495,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
 
   @override
   void dispose() {
+    unawaited(_deleteStreamingCacheArtifacts());
     _player.dispose();
   }
 }

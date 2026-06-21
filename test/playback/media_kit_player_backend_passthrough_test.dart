@@ -135,4 +135,66 @@ void main() {
       expect(props.containsKey('audio-exclusive'), isFalse);
     });
   });
+
+  group('MediaKitPlayerBackend streaming cache property synthesis', () {
+    test('disables mpv cache when streaming cache is off', () {
+      final props =
+          MediaKitPlayerBackend.streamingCacheMpvPropertiesFromPreferences(
+            mode: StreamingCacheMode.disabled,
+            sizeGb: 8,
+          );
+
+      expect(props['cache'], equals('no'));
+      expect(props['cache-on-disk'], equals('no'));
+      expect(props['demuxer-seekable-cache'], equals('no'));
+    });
+
+    test('uses conservative read-ahead settings for auto mode', () {
+      final props =
+          MediaKitPlayerBackend.streamingCacheMpvPropertiesFromPreferences(
+            mode: StreamingCacheMode.auto,
+            sizeGb: 8,
+          );
+
+      expect(props['cache'], equals('auto'));
+      expect(props['cache-on-disk'], equals('yes'));
+      expect(props['demuxer-max-bytes'], equals('512MiB'));
+      expect(props['demuxer-cache-unlink-files'], equals('immediate'));
+    });
+
+    test('maps only SSD size to mpv cache budgets', () {
+      final props =
+          MediaKitPlayerBackend.streamingCacheMpvPropertiesFromPreferences(
+            mode: StreamingCacheMode.onlySsd,
+            sizeGb: 8,
+          );
+
+      expect(props['cache'], equals('yes'));
+      expect(props['cache-on-disk'], equals('yes'));
+      expect(props['demuxer-max-bytes'], equals('8192MiB'));
+      expect(props['demuxer-max-back-bytes'], equals('2048MiB'));
+      expect(props['demuxer-seekable-cache'], equals('yes'));
+    });
+
+    test('clamps only SSD size to supported 2GB to 16GB range', () {
+      final low =
+          MediaKitPlayerBackend.streamingCacheMpvPropertiesFromPreferences(
+            mode: StreamingCacheMode.onlySsd,
+            sizeGb: 1,
+          );
+      final high =
+          MediaKitPlayerBackend.streamingCacheMpvPropertiesFromPreferences(
+            mode: StreamingCacheMode.onlySsd,
+            sizeGb: 64,
+          );
+
+      expect(MediaKitPlayerBackend.normalizeStreamingCacheSizeGb(1), equals(2));
+      expect(
+        MediaKitPlayerBackend.normalizeStreamingCacheSizeGb(64),
+        equals(16),
+      );
+      expect(low['demuxer-max-bytes'], equals('2048MiB'));
+      expect(high['demuxer-max-bytes'], equals('16384MiB'));
+    });
+  });
 }

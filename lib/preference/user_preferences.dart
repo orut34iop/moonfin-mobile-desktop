@@ -269,6 +269,17 @@ class UserPreferences extends ChangeNotifier {
     values: MaxVideoResolution.values,
   );
 
+  static final streamingCacheMode = EnumPreference(
+    key: 'pref_streaming_cache_mode',
+    defaultValue: StreamingCacheMode.auto,
+    values: StreamingCacheMode.values,
+  );
+
+  static final streamingCacheSizeGb = Preference(
+    key: 'pref_streaming_cache_size_gb',
+    defaultValue: 8,
+  );
+
   static final mediaQueuingEnabled = Preference(
     key: 'pref_enable_tv_queuing',
     defaultValue: true,

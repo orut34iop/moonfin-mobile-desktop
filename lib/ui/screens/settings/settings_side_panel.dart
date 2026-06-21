@@ -1834,6 +1834,26 @@ class _VideoPlaybackScreen extends StatelessWidget {
               MaxVideoResolution.res2160p => '2160p (4K)',
             },
           ),
+          EnumPreferenceTile<StreamingCacheMode>(
+            preference: UserPreferences.streamingCacheMode,
+            title: 'Streaming Cache',
+            description:
+                'Controls mpv read-ahead caching for network video playback.',
+            icon: Icons.storage,
+            labelOf: (v) => switch (v) {
+              StreamingCacheMode.disabled => l10n.disabled,
+              StreamingCacheMode.auto => l10n.auto,
+              StreamingCacheMode.onlySsd => 'Only SSD',
+            },
+          ),
+          IntPickerPreferenceTile(
+            preference: UserPreferences.streamingCacheSizeGb,
+            title: 'Streaming Cache Size',
+            description:
+                'Used by Only SSD mode. Temporary playback cache only.',
+            icon: Icons.sd_storage,
+            options: {for (var gb = 2; gb <= 16; gb++) gb: '$gb GB'},
+          ),
           EnumPreferenceTile<ZoomMode>(
             preference: UserPreferences.playerZoomMode,
             title: l10n.playerZoomMode,

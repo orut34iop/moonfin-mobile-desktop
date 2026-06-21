@@ -16,6 +16,8 @@ enum PlaybackEnginePreference {
   mpv,
 }
 
+enum StreamingCacheMode { disabled, auto, onlySsd }
+
 enum DolbyVisionFallbackBehavior {
   ask,
   hdr10Fallback,
