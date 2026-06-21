@@ -308,6 +308,13 @@ Future<void> _expectCacheHitEvidence({
     );
   }
 
+  uiController.update(
+    _SmokePlaybackSnapshot.fromBackend(
+      backend,
+      episodeName: episode.name,
+      mode: mode,
+    ),
+  );
   final visual = await uiController.captureSeekbarEvidence(
     label: '${mode.name}-${_safeFilePart(episode.name)}',
   );
@@ -416,6 +423,7 @@ Future<Map<String, String>> _readNativeMpvProperties(
     'cache-on-disk',
     'cache-secs',
     'demuxer-cache-dir',
+    'demuxer-cache-state',
     'demuxer-cache-time',
     'demuxer-cache-unlink-files',
     'demuxer-max-back-bytes',
@@ -535,7 +543,9 @@ class _SmokeUiController {
   Future<_SeekbarVisualEvidence> captureSeekbarEvidence({
     required String label,
   }) async {
+    await WidgetsBinding.instance.endOfFrame;
     await Future<void>.delayed(const Duration(milliseconds: 500));
+    await WidgetsBinding.instance.endOfFrame;
     final boundary =
         repaintKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
     if (boundary == null) {

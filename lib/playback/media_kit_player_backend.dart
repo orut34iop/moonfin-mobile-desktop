@@ -191,6 +191,11 @@ class MediaKitPlayerBackend implements PlayerBackend {
   String? _appliedCustomMpvConfPath;
   DateTime? _appliedCustomMpvConfMtime;
   Duration _rawNativeDemuxerCacheTime = Duration.zero;
+  List<({Duration start, Duration end})> _nativeSeekableRanges = const [];
+  int? _nativeFileCacheBytes;
+  int? _nativeForwardCacheBytes;
+  bool _nativeCacheStateAvailable = false;
+  bool _didObserveNativeCacheState = false;
   Duration _lastNormalizedNativeBuffer = Duration.zero;
   final StreamController<Duration> _normalizedNativeBufferController =
       StreamController<Duration>.broadcast();
@@ -489,6 +494,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
     final container = payload['container']?.toString();
 
     _stopStreamingCacheStatusDiagnostics();
+    _resetNativeCacheState();
     await _notifyNativeHandleReady();
     await _configureAppleMobileLibassFont();
     await _applyAudioPassthroughOptions();
@@ -729,17 +735,112 @@ class MediaKitPlayerBackend implements PlayerBackend {
     required Duration position,
     required Duration demuxerCacheTime,
     required Duration duration,
+    List<({Duration start, Duration end})> seekableRanges = const [],
+    bool trustDemuxerCacheTime = false,
   }) {
-    if (demuxerCacheTime <= Duration.zero) {
+    final safePosition = position < Duration.zero ? Duration.zero : position;
+    final seekableBufferedPosition = bufferedPositionFromSeekableRanges(
+      position: safePosition,
+      duration: duration,
+      seekableRanges: seekableRanges,
+    );
+    if (seekableBufferedPosition > Duration.zero) {
+      return seekableBufferedPosition;
+    }
+
+    if (!trustDemuxerCacheTime || demuxerCacheTime <= Duration.zero) {
       return Duration.zero;
     }
 
-    final safePosition = position < Duration.zero ? Duration.zero : position;
     final bufferedPosition = safePosition + demuxerCacheTime;
     if (duration > Duration.zero && bufferedPosition > duration) {
       return duration;
     }
     return bufferedPosition;
+  }
+
+  @visibleForTesting
+  static Duration bufferedPositionFromSeekableRanges({
+    required Duration position,
+    required Duration duration,
+    required List<({Duration start, Duration end})> seekableRanges,
+  }) {
+    if (seekableRanges.isEmpty) {
+      return Duration.zero;
+    }
+
+    final safePosition = position < Duration.zero ? Duration.zero : position;
+    var bufferedPosition = Duration.zero;
+    for (final range in seekableRanges) {
+      final start = range.start < Duration.zero ? Duration.zero : range.start;
+      final end = range.end < start ? start : range.end;
+      if (safePosition < start || safePosition > end) {
+        continue;
+      }
+      if (end > bufferedPosition) {
+        bufferedPosition = end;
+      }
+    }
+
+    if (duration > Duration.zero && bufferedPosition > duration) {
+      return duration;
+    }
+    return bufferedPosition;
+  }
+
+  @visibleForTesting
+  static List<({Duration start, Duration end})> parseNativeSeekableRanges(
+    String raw,
+  ) {
+    if (raw.trim().isEmpty) {
+      return const [];
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) {
+        return const [];
+      }
+      final ranges = decoded['seekable-ranges'];
+      if (ranges is! List) {
+        return const [];
+      }
+
+      return ranges
+          .whereType<Map>()
+          .map((range) {
+            final start = _durationFromMpvSeconds(range['start']);
+            final end = _durationFromMpvSeconds(range['end']);
+            if (start == null || end == null || end <= start) {
+              return null;
+            }
+            return (start: start, end: end);
+          })
+          .nonNulls
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  static Duration? _durationFromMpvSeconds(Object? value) {
+    final seconds = value is num ? value.toDouble() : double.tryParse('$value');
+    if (seconds == null || !seconds.isFinite || seconds < 0) {
+      return null;
+    }
+    return Duration(
+      microseconds: (seconds * Duration.microsecondsPerSecond).round(),
+    );
+  }
+
+  static int? _intFromMpvNodeValue(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.round();
+    }
+    return int.tryParse('$value');
   }
 
   bool get _usesNativeDemuxerCacheTime => _player.platform is NativePlayer;
@@ -749,6 +850,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
       return;
     }
 
+    unawaited(_observeNativeCacheState());
     _rawNativeDemuxerCacheTime = _player.state.buffer;
     _nativeBufferSubscriptions.addAll([
       _player.stream.buffer.listen((buffer) {
@@ -760,6 +862,50 @@ class MediaKitPlayerBackend implements PlayerBackend {
     ]);
   }
 
+  Future<void> _observeNativeCacheState() async {
+    if (_didObserveNativeCacheState || _player.platform is! NativePlayer) {
+      return;
+    }
+
+    try {
+      final dynamic native = _player.platform;
+      await Future<void>.value(
+        native.observeProperty('demuxer-cache-state', (String raw) async {
+          _updateNativeCacheState(raw);
+        }),
+      );
+      _didObserveNativeCacheState = true;
+    } catch (_) {}
+  }
+
+  void _updateNativeCacheState(String raw) {
+    _nativeCacheStateAvailable = true;
+    _nativeSeekableRanges = parseNativeSeekableRanges(raw);
+    _nativeFileCacheBytes = null;
+    _nativeForwardCacheBytes = null;
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        _nativeFileCacheBytes = _intFromMpvNodeValue(
+          decoded['file-cache-bytes'],
+        );
+        _nativeForwardCacheBytes = _intFromMpvNodeValue(decoded['fw-bytes']);
+      }
+    } catch (_) {}
+
+    _emitNormalizedNativeBuffer();
+  }
+
+  void _resetNativeCacheState() {
+    _rawNativeDemuxerCacheTime = Duration.zero;
+    _nativeSeekableRanges = const [];
+    _nativeFileCacheBytes = null;
+    _nativeForwardCacheBytes = null;
+    _nativeCacheStateAvailable = false;
+    _emitNormalizedNativeBuffer();
+  }
+
   Duration _effectiveBufferPositionFromState() {
     if (!_usesNativeDemuxerCacheTime) {
       return _player.state.buffer;
@@ -769,14 +915,23 @@ class MediaKitPlayerBackend implements PlayerBackend {
       return Duration.zero;
     }
 
-    final rawCacheTime = _rawNativeDemuxerCacheTime;
-    if (rawCacheTime <= Duration.zero) {
+    if (!_nativeCacheStateAvailable) {
       return Duration.zero;
     }
     return normalizeNativeBufferedPosition(
       position: _player.state.position,
-      demuxerCacheTime: rawCacheTime,
+      demuxerCacheTime: _rawNativeDemuxerCacheTime,
       duration: _player.state.duration,
+      seekableRanges: _nativeSeekableRanges,
+    );
+  }
+
+  Duration _guessedNativeBufferedPositionFromState() {
+    return normalizeNativeBufferedPosition(
+      position: _player.state.position,
+      demuxerCacheTime: _rawNativeDemuxerCacheTime,
+      duration: _player.state.duration,
+      trustDemuxerCacheTime: true,
     );
   }
 
@@ -937,6 +1092,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
       final cacheOnDisk = properties['cache-on-disk'] == 'yes';
       final rawCacheTime = _rawNativeDemuxerCacheTime;
       final bufferedPosition = _effectiveBufferPositionFromState();
+      final guessedBufferedPosition = _guessedNativeBufferedPositionFromState();
       final cacheDirBytes = cacheOnDisk
           ? await _streamingCacheDirectorySizeBytes()
           : 0;
@@ -948,6 +1104,10 @@ class MediaKitPlayerBackend implements PlayerBackend {
             'durationMs': _player.state.duration.inMilliseconds,
             'rawDemuxerCacheTimeMs': rawCacheTime.inMilliseconds,
             'bufferedPositionMs': bufferedPosition.inMilliseconds,
+            'guessedBufferedPositionMs': guessedBufferedPosition.inMilliseconds,
+            'seekableRangeCount': _nativeSeekableRanges.length,
+            'fileCacheBytes': _nativeFileCacheBytes,
+            'forwardCacheBytes': _nativeForwardCacheBytes,
             'cacheDirBytes': cacheDirBytes,
             'cacheOnDisk': cacheOnDisk,
             'isPlaying': _player.state.playing,
@@ -968,6 +1128,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
       }
       final currentPosition = _player.state.position;
       final bufferedPosition = _effectiveBufferPositionFromState();
+      final guessedBufferedPosition = _guessedNativeBufferedPositionFromState();
       final targetWithinForwardCache =
           target > currentPosition && target <= bufferedPosition;
       final cacheDirBytes = await _streamingCacheDirectorySizeBytes();
@@ -980,10 +1141,75 @@ class MediaKitPlayerBackend implements PlayerBackend {
             'durationMs': _player.state.duration.inMilliseconds,
             'rawDemuxerCacheTimeMs': _rawNativeDemuxerCacheTime.inMilliseconds,
             'bufferedPositionMs': bufferedPosition.inMilliseconds,
+            'guessedBufferedPositionMs': guessedBufferedPosition.inMilliseconds,
+            'seekableRangeCount': _nativeSeekableRanges.length,
+            'fileCacheBytes': _nativeFileCacheBytes,
+            'forwardCacheBytes': _nativeForwardCacheBytes,
             'targetWithinForwardCache': targetWithinForwardCache,
             'cacheDirBytes': cacheDirBytes,
           });
     } catch (_) {}
+  }
+
+  Future<void> _logStreamingCacheSeekResult(
+    Duration target,
+    DateTime requestedAt,
+  ) async {
+    if (!_usesNativeDemuxerCacheTime) {
+      return;
+    }
+
+    try {
+      final mode = _prefs.get(UserPreferences.streamingCacheMode);
+      if (mode == StreamingCacheMode.disabled) {
+        return;
+      }
+
+      var sawBuffering = _player.state.buffering;
+      var recovered = false;
+      final deadline = DateTime.now().add(const Duration(seconds: 8));
+      while (!_disposed && DateTime.now().isBefore(deadline)) {
+        sawBuffering = sawBuffering || _player.state.buffering;
+        final targetReached =
+            _durationDistance(_player.state.position, target) <=
+            const Duration(milliseconds: 1000);
+        if (targetReached &&
+            !_player.state.buffering &&
+            _player.state.playing) {
+          recovered = true;
+          break;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+      }
+
+      final bufferedPosition = _effectiveBufferPositionFromState();
+      final guessedBufferedPosition = _guessedNativeBufferedPositionFromState();
+      PlaybackProfileDiagnostics.instance
+          .logPlayerBackendEvent('mediaKitStreamingCacheSeekResult', {
+            'mode': mode.name,
+            'targetPositionMs': target.inMilliseconds,
+            'finalPositionMs': _player.state.position.inMilliseconds,
+            'durationMs': _player.state.duration.inMilliseconds,
+            'elapsedMs': DateTime.now().difference(requestedAt).inMilliseconds,
+            'recoveredWithoutTimeout': recovered,
+            'sawBufferingAfterSeek': sawBuffering,
+            'isPlaying': _player.state.playing,
+            'isBuffering': _player.state.buffering,
+            'rawDemuxerCacheTimeMs': _rawNativeDemuxerCacheTime.inMilliseconds,
+            'bufferedPositionMs': bufferedPosition.inMilliseconds,
+            'guessedBufferedPositionMs': guessedBufferedPosition.inMilliseconds,
+            'seekableRangeCount': _nativeSeekableRanges.length,
+            'fileCacheBytes': _nativeFileCacheBytes,
+            'forwardCacheBytes': _nativeForwardCacheBytes,
+          });
+    } catch (_) {}
+  }
+
+  static Duration _durationDistance(Duration a, Duration b) {
+    final diff = a - b;
+    return diff.isNegative
+        ? Duration(microseconds: -diff.inMicroseconds)
+        : diff;
   }
 
   Future<void> _applyAudioPassthroughOptions() async {
@@ -1385,8 +1611,7 @@ class MediaKitPlayerBackend implements PlayerBackend {
   Future<void> stop() async {
     _stopStreamingCacheStatusDiagnostics();
     await _player.stop();
-    _rawNativeDemuxerCacheTime = Duration.zero;
-    _emitNormalizedNativeBuffer();
+    _resetNativeCacheState();
     await _deleteStreamingCacheArtifacts();
   }
 
@@ -1399,8 +1624,10 @@ class MediaKitPlayerBackend implements PlayerBackend {
 
   @override
   Future<void> seekTo(Duration position) async {
+    final requestedAt = DateTime.now();
     unawaited(_logStreamingCacheSeek(position));
     await _player.seek(position);
+    unawaited(_logStreamingCacheSeekResult(position, requestedAt));
   }
 
   @override

@@ -198,34 +198,61 @@ void main() {
       expect(high['demuxer-max-bytes'], equals('16384MiB'));
     });
 
-    test('maps native demuxer cache time to absolute buffered position', () {
+    test('maps native seekable range to absolute buffered position', () {
       final buffered = MediaKitPlayerBackend.normalizeNativeBufferedPosition(
         position: const Duration(seconds: 60),
-        demuxerCacheTime: const Duration(seconds: 30),
+        demuxerCacheTime: const Duration(minutes: 5),
         duration: const Duration(minutes: 10),
-      );
-
-      expect(buffered, equals(const Duration(seconds: 90)));
-    });
-
-    test('clamps native buffered position to duration', () {
-      final buffered = MediaKitPlayerBackend.normalizeNativeBufferedPosition(
-        position: const Duration(seconds: 60),
-        demuxerCacheTime: const Duration(seconds: 90),
-        duration: const Duration(seconds: 120),
+        seekableRanges: const [
+          (start: Duration(seconds: 10), end: Duration(seconds: 120)),
+        ],
       );
 
       expect(buffered, equals(const Duration(seconds: 120)));
     });
 
-    test('does not expose native buffered position without cache ahead', () {
+    test('clamps native seekable range to duration', () {
       final buffered = MediaKitPlayerBackend.normalizeNativeBufferedPosition(
         position: const Duration(seconds: 60),
-        demuxerCacheTime: Duration.zero,
+        demuxerCacheTime: const Duration(minutes: 5),
+        duration: const Duration(seconds: 120),
+        seekableRanges: const [
+          (start: Duration(seconds: 10), end: Duration(seconds: 180)),
+        ],
+      );
+
+      expect(buffered, equals(const Duration(seconds: 120)));
+    });
+
+    test('does not expose native buffered position without seekable range', () {
+      final buffered = MediaKitPlayerBackend.normalizeNativeBufferedPosition(
+        position: const Duration(seconds: 60),
+        demuxerCacheTime: const Duration(minutes: 5),
         duration: const Duration(minutes: 10),
       );
 
       expect(buffered, equals(Duration.zero));
+    });
+
+    test('can explicitly fall back to guessed native demuxer cache time', () {
+      final buffered = MediaKitPlayerBackend.normalizeNativeBufferedPosition(
+        position: const Duration(seconds: 60),
+        demuxerCacheTime: const Duration(seconds: 30),
+        duration: const Duration(minutes: 10),
+        trustDemuxerCacheTime: true,
+      );
+
+      expect(buffered, equals(const Duration(seconds: 90)));
+    });
+
+    test('parses native seekable ranges from mpv cache state JSON', () {
+      final ranges = MediaKitPlayerBackend.parseNativeSeekableRanges(
+        '{"seekable-ranges":[{"start":1.5,"end":42.25},{"start":80,"end":90}]}',
+      );
+
+      expect(ranges, hasLength(2));
+      expect(ranges.first.start, equals(const Duration(milliseconds: 1500)));
+      expect(ranges.first.end, equals(const Duration(milliseconds: 42250)));
     });
   });
 }
