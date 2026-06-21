@@ -1,0 +1,44 @@
+name: Test Quality Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+env:
+  FLUTTER_VERSION: '3.41.2'
+
+jobs:
+  test-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze test surfaces
+        run: >
+          dart analyze
+          test
+          tool
+          docs
+          lib/playback/streaming_cache_diagnostics_summary.dart
+
+      - name: Run tests with coverage
+        run: flutter test --coverage --no-pub
+
+      - name: Enforce coverage baseline
+        run: >
+          dart run tool/test_quality_gate.dart coverage/lcov.info
+          --min-overall=4.0
+          --min-dir=lib/data:10.0
+          --min-dir=lib/playback:15.0
+          --min-dir=lib/ui:1.0
