@@ -1,0 +1,2613 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moonfin UI 页面组件与状态绑定审查</title><style>
+:root{color-scheme:light;--bg:#f5f7fb;--panel:#fff;--panel2:#f9fbff;--text:#172033;--muted:#617086;--line:#d9e0ea;--accent:#ef476f;--blue:#118ab2;--ok:#087f5b;--warn:#9a5a00;--shadow:0 12px 35px rgba(26,35,54,.08)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);line-height:1.55}.layout{display:grid;grid-template-columns:310px minmax(0,1fr);min-height:100vh}aside{position:sticky;top:0;height:100vh;padding:24px 18px;background:#101827;color:#eef4ff;overflow:auto}aside h1{margin:0 0 8px;font-size:22px;line-height:1.2}aside p{margin:0 0 18px;color:#aebbd0;font-size:13px}.search{width:100%;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:10px 12px;background:rgba(255,255,255,.08);color:#fff;outline:none}.search::placeholder{color:#91a0b8}.nav-filter{width:100%;border:0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin-top:8px;background:rgba(255,255,255,.07);color:#e9f0fb;cursor:pointer;text-align:left}.nav-filter:hover,.nav-filter.active{background:rgba(239,71,111,.26)}.nav-filter strong{color:#ffd7e1}.side-links{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12);font-size:13px}.side-links a{color:#cdeaff;display:block;margin:7px 0}main{padding:28px clamp(20px,4vw,52px) 56px;min-width:0}.hero{background:linear-gradient(135deg,#fff,#edf7ff);border:1px solid var(--line);border-radius:12px;padding:26px;box-shadow:var(--shadow)}.hero h1{margin:0 0 10px;font-size:clamp(28px,4vw,44px);letter-spacing:0}.hero p{margin:0;color:var(--muted);max-width:980px}.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:150px}.stat strong{display:block;font-size:24px;color:var(--accent)}.stat span{color:var(--muted);font-size:13px}.section{margin-top:28px}.section h2{margin:0 0 12px;font-size:22px}.note-card,.shell-card,.page-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}.note-card{padding:18px 20px}.note-card ul{margin:8px 0 0;padding-left:20px}.thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}.thumb{display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);color:inherit;text-decoration:none}.thumb img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#111827}.thumb span{display:block;padding:10px 12px;font-weight:700}.pending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}.pending-card{padding:14px;border:1px solid var(--line);border-radius:8px;background:#fff8e8}.pending-card strong{display:block;color:var(--warn)}.pending-card p{margin:6px 0 0;color:#5f4c2b;font-size:13px}.shell-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}.shell-card{padding:18px}.shell-card h3{margin:0 0 8px}.page-card{margin-top:18px;overflow:clip}.card-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:20px 22px 14px;border-bottom:1px solid var(--line);background:var(--panel2)}.card-head h2{margin:0;font-size:24px}.eyebrow{margin:0 0 4px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.badge{display:inline-flex;align-items:center;max-width:460px;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--line);background:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.badge.route{color:var(--blue)}.badge.captured{color:var(--ok);border-color:rgba(8,127,91,.25);background:#eaf8f1}.badge.pending{color:var(--warn);border-color:rgba(161,92,0,.25);background:#fff5df}.meta-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:12px;margin:0;padding:16px 22px;border-bottom:1px solid var(--line)}dt{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}dd{margin:4px 0 0;overflow-wrap:anywhere}code{color:#111827;background:#eef2f7;border:1px solid #dbe3ee;padding:1px 4px;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}.screenshot{margin:0;padding:18px 22px;border-bottom:1px solid var(--line);background:#0f172a}.screenshot img{width:100%;display:block;border-radius:8px;border:1px solid rgba(255,255,255,.16)}.screenshot figcaption{color:#cbd5e1;font-size:13px;margin-top:8px}.detail-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0}.detail-grid section{padding:18px 22px;min-width:0}.detail-grid section+section{border-left:1px solid var(--line)}.detail-grid h3{margin:0 0 10px;font-size:15px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}pre{margin:0;padding:14px;background:#0f172a;color:#e2e8f0;border-radius:8px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.6;white-space:pre}.bindings{margin:0;padding-left:20px}.bindings li{margin:0 0 9px}.hidden{display:none!important}.empty{display:none;margin-top:18px;padding:20px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);text-align:center}.empty.visible{display:block}@media(max-width:980px){.layout{grid-template-columns:1fr}aside{position:relative;height:auto}.detail-grid,.meta-grid{grid-template-columns:1fr}.detail-grid section+section{border-left:0;border-top:1px solid var(--line)}.card-head{flex-direction:column}.badges{justify-content:flex-start}}
+
+</style></head><body><div class="layout"><aside>
+<h1>Moonfin UI 审查</h1>
+<p>页面组件树、状态绑定与截图索引。生成于 2026-06-22。</p>
+<input class="search" id="search" placeholder="搜索 route / component / provider..." aria-label="搜索页面">
+<button class="nav-filter active" data-filter="all"><span>全部页面</span><strong>76</strong></button>
+<button class="nav-filter" data-filter="auth"><span>Auth 登录与账号</span><strong>5</strong></button>
+<button class="nav-filter" data-filter="main"><span>主导航与媒体浏览</span><strong>19</strong></button>
+<button class="nav-filter" data-filter="livetv"><span>Live TV</span><strong>6</strong></button>
+<button class="nav-filter" data-filter="playback"><span>播放与阅读</span><strong>9</strong></button>
+<button class="nav-filter" data-filter="seerr"><span>Seerr / Jellyseerr</span><strong>5</strong></button>
+<button class="nav-filter" data-filter="downloads"><span>下载与离线媒体</span><strong>4</strong></button>
+<button class="nav-filter" data-filter="admin"><span>管理后台</span><strong>28</strong></button>
+<div class="side-links"><a href="#screenshots">截图总览</a><a href="#pending">待补原因</a><a href="#shared-shells">共享 Shell</a><a href="#pages">页面详情</a></div></aside><main>
+<section class="hero"><h1>Moonfin 页面组件与状态绑定审查</h1>
+<p>来源：/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/menu_tree.md。HTML 由 YAML 自动生成，截图文件从 <code>docs/ui/screenshots</code> 读取。</p>
+<div class="stats">
+<div class="stat"><strong>76</strong><span>页面总数</span></div>
+<div class="stat"><strong>41</strong><span>已截图并验证</span></div>
+<div class="stat"><strong>35</strong><span>待补截图</span></div>
+<div class="stat"><strong>3</strong><span>已修正的错误尝试</span></div>
+</div></section>
+<section class="section note-card"><h2>说明</h2><ul>
+<li>树状结构按首屏/截图审查粒度表达，保留 Header、NavigationLayout、TabBar、Grid/List、Card 等可见层级。</li>
+<li>state_bindings 标明 Provider、ViewModel、Repository、Service 或 widget props 的来源。</li>
+<li>placeholder 页面也列出，因为它们是 GoRouter 或菜单树中的顶级 Page Component。</li>
+</ul></section>
+<section class="section" id="screenshots"><h2>截图总览</h2><div class="thumb-grid">
+<a class="thumb" href="screenshots/server_users.png"><img src="screenshots/server_users.png" alt="server_users screenshot"><span>server_users</span></a>
+<a class="thumb" href="screenshots/home.png"><img src="screenshots/home.png" alt="home screenshot"><span>home</span></a>
+<a class="thumb" href="screenshots/search.png"><img src="screenshots/search.png" alt="search screenshot"><span>search</span></a>
+<a class="thumb" href="screenshots/advanced_filter.png"><img src="screenshots/advanced_filter.png" alt="advanced_filter screenshot"><span>advanced_filter</span></a>
+<a class="thumb" href="screenshots/library_browse.png"><img src="screenshots/library_browse.png" alt="library_browse screenshot"><span>library_browse</span></a>
+<a class="thumb" href="screenshots/genre_browse.png"><img src="screenshots/genre_browse.png" alt="genre_browse screenshot"><span>genre_browse</span></a>
+<a class="thumb" href="screenshots/all_genres.png"><img src="screenshots/all_genres.png" alt="all_genres screenshot"><span>all_genres</span></a>
+<a class="thumb" href="screenshots/favorites.png"><img src="screenshots/favorites.png" alt="favorites screenshot"><span>favorites</span></a>
+<a class="thumb" href="screenshots/item_detail.png"><img src="screenshots/item_detail.png" alt="item_detail screenshot"><span>item_detail</span></a>
+<a class="thumb" href="screenshots/video_player.png"><img src="screenshots/video_player.png" alt="video_player screenshot"><span>video_player</span></a>
+<a class="thumb" href="screenshots/settings.png"><img src="screenshots/settings.png" alt="settings screenshot"><span>settings</span></a>
+<a class="thumb" href="screenshots/downloads.png"><img src="screenshots/downloads.png" alt="downloads screenshot"><span>downloads</span></a>
+<a class="thumb" href="screenshots/storage_management.png"><img src="screenshots/storage_management.png" alt="storage_management screenshot"><span>storage_management</span></a>
+<a class="thumb" href="screenshots/admin_dashboard.png"><img src="screenshots/admin_dashboard.png" alt="admin_dashboard screenshot"><span>admin_dashboard</span></a>
+<a class="thumb" href="screenshots/admin_analytics.png"><img src="screenshots/admin_analytics.png" alt="admin_analytics screenshot"><span>admin_analytics</span></a>
+<a class="thumb" href="screenshots/admin_users.png"><img src="screenshots/admin_users.png" alt="admin_users screenshot"><span>admin_users</span></a>
+<a class="thumb" href="screenshots/admin_user_add.png"><img src="screenshots/admin_user_add.png" alt="admin_user_add screenshot"><span>admin_user_add</span></a>
+<a class="thumb" href="screenshots/admin_user_edit.png"><img src="screenshots/admin_user_edit.png" alt="admin_user_edit screenshot"><span>admin_user_edit</span></a>
+<a class="thumb" href="screenshots/admin_libraries.png"><img src="screenshots/admin_libraries.png" alt="admin_libraries screenshot"><span>admin_libraries</span></a>
+<a class="thumb" href="screenshots/admin_library_add.png"><img src="screenshots/admin_library_add.png" alt="admin_library_add screenshot"><span>admin_library_add</span></a>
+<a class="thumb" href="screenshots/admin_library_edit.png"><img src="screenshots/admin_library_edit.png" alt="admin_library_edit screenshot"><span>admin_library_edit</span></a>
+<a class="thumb" href="screenshots/admin_general_settings.png"><img src="screenshots/admin_general_settings.png" alt="admin_general_settings screenshot"><span>admin_general_settings</span></a>
+<a class="thumb" href="screenshots/admin_playback_settings.png"><img src="screenshots/admin_playback_settings.png" alt="admin_playback_settings screenshot"><span>admin_playback_settings</span></a>
+<a class="thumb" href="screenshots/admin_resume_settings.png"><img src="screenshots/admin_resume_settings.png" alt="admin_resume_settings screenshot"><span>admin_resume_settings</span></a>
+<a class="thumb" href="screenshots/admin_streaming_settings.png"><img src="screenshots/admin_streaming_settings.png" alt="admin_streaming_settings screenshot"><span>admin_streaming_settings</span></a>
+<a class="thumb" href="screenshots/admin_trickplay_settings.png"><img src="screenshots/admin_trickplay_settings.png" alt="admin_trickplay_settings screenshot"><span>admin_trickplay_settings</span></a>
+<a class="thumb" href="screenshots/admin_networking_settings.png"><img src="screenshots/admin_networking_settings.png" alt="admin_networking_settings screenshot"><span>admin_networking_settings</span></a>
+<a class="thumb" href="screenshots/admin_branding_settings.png"><img src="screenshots/admin_branding_settings.png" alt="admin_branding_settings screenshot"><span>admin_branding_settings</span></a>
+<a class="thumb" href="screenshots/admin_tasks.png"><img src="screenshots/admin_tasks.png" alt="admin_tasks screenshot"><span>admin_tasks</span></a>
+<a class="thumb" href="screenshots/admin_task_detail.png"><img src="screenshots/admin_task_detail.png" alt="admin_task_detail screenshot"><span>admin_task_detail</span></a>
+<a class="thumb" href="screenshots/admin_plugins.png"><img src="screenshots/admin_plugins.png" alt="admin_plugins screenshot"><span>admin_plugins</span></a>
+<a class="thumb" href="screenshots/admin_plugin_detail.png"><img src="screenshots/admin_plugin_detail.png" alt="admin_plugin_detail screenshot"><span>admin_plugin_detail</span></a>
+<a class="thumb" href="screenshots/admin_repositories.png"><img src="screenshots/admin_repositories.png" alt="admin_repositories screenshot"><span>admin_repositories</span></a>
+<a class="thumb" href="screenshots/admin_activity.png"><img src="screenshots/admin_activity.png" alt="admin_activity screenshot"><span>admin_activity</span></a>
+<a class="thumb" href="screenshots/admin_devices.png"><img src="screenshots/admin_devices.png" alt="admin_devices screenshot"><span>admin_devices</span></a>
+<a class="thumb" href="screenshots/admin_keys.png"><img src="screenshots/admin_keys.png" alt="admin_keys screenshot"><span>admin_keys</span></a>
+<a class="thumb" href="screenshots/admin_backups.png"><img src="screenshots/admin_backups.png" alt="admin_backups screenshot"><span>admin_backups</span></a>
+<a class="thumb" href="screenshots/admin_logs.png"><img src="screenshots/admin_logs.png" alt="admin_logs screenshot"><span>admin_logs</span></a>
+<a class="thumb" href="screenshots/admin_log_viewer.png"><img src="screenshots/admin_log_viewer.png" alt="admin_log_viewer screenshot"><span>admin_log_viewer</span></a>
+<a class="thumb" href="screenshots/admin_live_tv.png"><img src="screenshots/admin_live_tv.png" alt="admin_live_tv screenshot"><span>admin_live_tv</span></a>
+<a class="thumb" href="screenshots/admin_metadata_edit.png"><img src="screenshots/admin_metadata_edit.png" alt="admin_metadata_edit screenshot"><span>admin_metadata_edit</span></a>
+</div></section>
+<section class="section" id="pending"><h2>待补截图</h2><div class="pending-grid">
+<div class="pending-card"><strong>startup</strong><p>认证流程截图需要进入或重置登录/服务器选择上下文；本轮保留现有有效登录态，避免破坏当前测试环境。</p></div>
+<div class="pending-card"><strong>server_select</strong><p>认证流程截图需要进入或重置登录/服务器选择上下文；本轮保留现有有效登录态，避免破坏当前测试环境。</p></div>
+<div class="pending-card"><strong>emby_connect</strong><p>认证流程截图需要进入或重置登录/服务器选择上下文；本轮保留现有有效登录态，避免破坏当前测试环境。</p></div>
+<div class="pending-card"><strong>login</strong><p>认证流程截图需要进入或重置登录/服务器选择上下文；本轮保留现有有效登录态，避免破坏当前测试环境。</p></div>
+<div class="pending-card"><strong>library_genres</strong><p>当前库导航未暴露稳定入口，属于参数化库子页；需要路由深链或专门测试夹具。</p></div>
+<div class="pending-card"><strong>library_letters</strong><p>当前库导航未暴露稳定入口，属于参数化库子页；需要路由深链或专门测试夹具。</p></div>
+<div class="pending-card"><strong>library_suggestions</strong><p>当前库导航未暴露稳定入口，属于参数化库子页；需要路由深链或专门测试夹具。</p></div>
+<div class="pending-card"><strong>folders</strong><p>Folder View 当前未在导航中启用/无稳定测试文件夹入口；需要启用偏好并准备文件夹测试数据。</p></div>
+<div class="pending-card"><strong>folder_browse</strong><p>Folder View 当前未在导航中启用/无稳定测试文件夹入口；需要启用偏好并准备文件夹测试数据。</p></div>
+<div class="pending-card"><strong>collection</strong><p>当前服务器数据未提供可稳定打开的 Collection 测试项。</p></div>
+<div class="pending-card"><strong>music_browse</strong><p>当前服务器未提供可稳定导航的音乐库/音乐收藏测试数据。</p></div>
+<div class="pending-card"><strong>item_list</strong><p>当前媒体样本未暴露可稳定进入的 item list 子页。</p></div>
+<div class="pending-card"><strong>music_favorites</strong><p>当前服务器未提供可稳定导航的音乐库/音乐收藏测试数据。</p></div>
+<div class="pending-card"><strong>live_tv</strong><p>当前服务器未配置 Live TV tuner/channel/guide/recording 数据，用户侧 Live TV 页面无法形成有效截图。</p></div>
+<div class="pending-card"><strong>live_tv_guide</strong><p>当前服务器未配置 Live TV tuner/channel/guide/recording 数据，用户侧 Live TV 页面无法形成有效截图。</p></div>
+<div class="pending-card"><strong>live_tv_schedule</strong><p>当前服务器未配置 Live TV tuner/channel/guide/recording 数据，用户侧 Live TV 页面无法形成有效截图。</p></div>
+<div class="pending-card"><strong>live_tv_recordings</strong><p>当前服务器未配置 Live TV tuner/channel/guide/recording 数据，用户侧 Live TV 页面无法形成有效截图。</p></div>
+<div class="pending-card"><strong>live_tv_series_recordings</strong><p>当前服务器未配置 Live TV tuner/channel/guide/recording 数据，用户侧 Live TV 页面无法形成有效截图。</p></div>
+<div class="pending-card"><strong>live_tv_player</strong><p>当前服务器未配置 Live TV tuner/channel/guide/recording 数据，用户侧 Live TV 页面无法形成有效截图。</p></div>
+<div class="pending-card"><strong>external_player</strong><p>需要特定媒体类型、播放后端、播放状态或 SyncPlay 会话；当前测试数据和手动会话未满足。</p></div>
+<div class="pending-card"><strong>audio_player</strong><p>需要特定媒体类型、播放后端、播放状态或 SyncPlay 会话；当前测试数据和手动会话未满足。</p></div>
+<div class="pending-card"><strong>book_reader</strong><p>需要特定媒体类型、播放后端、播放状态或 SyncPlay 会话；当前测试数据和手动会话未满足。</p></div>
+<div class="pending-card"><strong>photo_player</strong><p>需要特定媒体类型、播放后端、播放状态或 SyncPlay 会话；当前测试数据和手动会话未满足。</p></div>
+<div class="pending-card"><strong>trailer_player</strong><p>需要特定媒体类型、播放后端、播放状态或 SyncPlay 会话；当前测试数据和手动会话未满足。</p></div>
+<div class="pending-card"><strong>next_up</strong><p>需要特定媒体类型、播放后端、播放状态或 SyncPlay 会话；当前测试数据和手动会话未满足。</p></div>
+<div class="pending-card"><strong>still_watching</strong><p>需要特定媒体类型、播放后端、播放状态或 SyncPlay 会话；当前测试数据和手动会话未满足。</p></div>
+<div class="pending-card"><strong>syncplay</strong><p>需要特定媒体类型、播放后端、播放状态或 SyncPlay 会话；当前测试数据和手动会话未满足。</p></div>
+<div class="pending-card"><strong>seerr_discover</strong><p>Seerr/Jellyseerr 集成未在当前服务器插件状态下可用，导航入口不可达。</p></div>
+<div class="pending-card"><strong>seerr_requests</strong><p>Seerr/Jellyseerr 集成未在当前服务器插件状态下可用，导航入口不可达。</p></div>
+<div class="pending-card"><strong>seerr_browse</strong><p>Seerr/Jellyseerr 集成未在当前服务器插件状态下可用，导航入口不可达。</p></div>
+<div class="pending-card"><strong>seerr_media_detail</strong><p>Seerr/Jellyseerr 集成未在当前服务器插件状态下可用，导航入口不可达。</p></div>
+<div class="pending-card"><strong>seerr_person</strong><p>Seerr/Jellyseerr 集成未在当前服务器插件状态下可用，导航入口不可达。</p></div>
+<div class="pending-card"><strong>downloaded_album</strong><p>本地离线媒体库为空，缺少已下载的专辑/剧集/季数据。</p></div>
+<div class="pending-card"><strong>downloaded_series</strong><p>本地离线媒体库为空，缺少已下载的专辑/剧集/季数据。</p></div>
+<div class="pending-card"><strong>downloaded_season</strong><p>本地离线媒体库为空，缺少已下载的专辑/剧集/季数据。</p></div>
+</div></section>
+<section class="section" id="shared-shells"><h2>共享 Shell</h2><div class="shell-grid">
+<article class="shell-card">
+<h3>navigation_layout</h3>
+<p><strong>component:</strong></p>
+<pre>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/widgets/navigation_layout.dart::NavigationLayout</pre>
+<p><strong>bindings:</strong></p>
+<ul>
+<li>activeRoute/showBackButton/showNavigationChrome 由调用页面传入。</li><li>左侧/顶部导航库入口来自 UserViewsRepository 与 UserPreferences 导航设置。</li>
+</ul>
+</article>
+<article class="shell-card">
+<h3>admin_shell</h3>
+<p><strong>route:</strong></p>
+<pre>/admin/*</pre>
+<p><strong>component:</strong></p>
+<pre>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/admin_shell_screen.dart::AdminShellScreen</pre>
+<p><strong>ui_tree:</strong></p>
+<pre>AdminWebSocketHandler
+-&gt; Scaffold
+   -&gt; AppBar(Server Administration, menu/back/home actions)
+   -&gt; Drawer/AdminDrawer 或左侧固定 sidebar
+   -&gt; child admin page
+</pre>
+<p><strong>state_bindings:</strong></p>
+<ul>
+<li>child 来自 ShellRoute 子路由。</li><li>AdminWebSocketHandler 监听 socketHandlerProvider，并 invalidate adminLibrariesProvider/adminTasksProvider/adminInstalledPluginsProvider/adminUsersListProvider 等。</li><li>AdminDrawer 读取 UserPreferences 中的管理菜单顺序/折叠状态。</li>
+</ul>
+</article>
+</div></section>
+<section class="section" id="pages"><h2>页面详情</h2><div class="empty" id="empty">没有匹配的页面。</div>
+<article class="page-card" data-category="auth" data-search="startup / /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/startup_screen.dart::startupscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; gradient container
+      -&gt; center
+         -&gt; fadetransition
+            -&gt; column
+               -&gt; logo image.asset
+               -&gt; circularprogressindicator
+ 启动跳转逻辑读取 sessionrepository、serverrepository、credentialstore、authenticationpreferences、preferencestore。 bootstrapactivesession 来自 router query `bootstrap=1`。">
+<div class="card-head"><div>
+<p class="eyebrow">Auth</p><h2>startup</h2></div><div class="badges">
+<span class="badge route">/</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/startup_screen.dart::StartupScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/startup.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; gradient Container
+      -&gt; Center
+         -&gt; FadeTransition
+            -&gt; Column
+               -&gt; logo Image.asset
+               -&gt; CircularProgressIndicator
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>启动跳转逻辑读取 SessionRepository、ServerRepository、CredentialStore、AuthenticationPreferences、PreferenceStore。</li>
+<li>bootstrapActiveSession 来自 router query `bootstrap=1`。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="auth" data-search="server_select /server-select /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/server_select_screen.dart::serverselectscreen loginscaffold
+-&gt; header logo
+-&gt; column
+   -&gt; saved servers section
+      -&gt; _focusabletile per server
+   -&gt; discovered servers section
+      -&gt; _focusabletile per discovered server / spinner / empty text
+   -&gt; footer actions
+      -&gt; add server button
+      -&gt; emby connect button
+ saved servers 来自 serverrepository.servers。 discovered servers 是页面本地 `_discoveredservers`，由发现流程 setstate 更新。 版本 footer 来自 deviceinfo.appversion。 新增服务器对话框使用 userpreferences 存储手动服务器历史。">
+<div class="card-head"><div>
+<p class="eyebrow">Auth</p><h2>server_select</h2></div><div class="badges">
+<span class="badge route">/server-select</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/server_select_screen.dart::ServerSelectScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/server_select.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>LoginScaffold
+-&gt; header logo
+-&gt; Column
+   -&gt; Saved Servers section
+      -&gt; _FocusableTile per Server
+   -&gt; Discovered Servers section
+      -&gt; _FocusableTile per discovered server / spinner / empty text
+   -&gt; footer actions
+      -&gt; Add Server button
+      -&gt; Emby Connect button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>saved servers 来自 ServerRepository.servers。</li>
+<li>discovered servers 是页面本地 `_discoveredServers`，由发现流程 setState 更新。</li>
+<li>版本 footer 来自 DeviceInfo.appVersion。</li>
+<li>新增服务器对话框使用 UserPreferences 存储手动服务器历史。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="auth" data-search="emby_connect /emby-connect /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/emby_connect_screen.dart::embyconnectscreen loginscaffold
+-&gt; header/logo
+-&gt; credentials/code form
+-&gt; server result list
+-&gt; action buttons and error text
+ 连接流程由 embyconnectrepository 驱动。 用户选定服务器写入 userpreferences/serverrepository 后进入 server/login 流程。 loading/error/server list 为页面本地 state。">
+<div class="card-head"><div>
+<p class="eyebrow">Auth</p><h2>emby_connect</h2></div><div class="badges">
+<span class="badge route">/emby-connect</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/emby_connect_screen.dart::EmbyConnectScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/emby_connect.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>LoginScaffold
+-&gt; header/logo
+-&gt; credentials/code form
+-&gt; server result list
+-&gt; action buttons and error text
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>连接流程由 EmbyConnectRepository 驱动。</li>
+<li>用户选定服务器写入 UserPreferences/ServerRepository 后进入 Server/Login 流程。</li>
+<li>loading/error/server list 为页面本地 State。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="auth" data-search="server_users /server /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/server_screen.dart::serverscreen loginscaffold
+-&gt; logo
+-&gt; server name
+-&gt; &quot;who&#39;s watching&quot; title
+-&gt; optional login disclaimer
+-&gt; user row/avatar tiles
+-&gt; add user / select server buttons
+-&gt; error text
+ serverid prop 来自 query。 服务器详情来自 serverrepository。 用户列表来自 serveruserrepository。 自动登录/鉴权使用 authrepository、sessionrepository、mediaserverclientfactory、authenticationpreferences。">
+<div class="card-head"><div>
+<p class="eyebrow">Auth</p><h2>server_users</h2></div><div class="badges">
+<span class="badge route">/server</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/server_screen.dart::ServerScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/server_users.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/server_users.png" alt="server_users screenshot"><figcaption>screenshots/server_users.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>LoginScaffold
+-&gt; logo
+-&gt; server name
+-&gt; &quot;Who&#39;s Watching&quot; title
+-&gt; optional login disclaimer
+-&gt; user row/avatar tiles
+-&gt; Add User / Select Server buttons
+-&gt; error text
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>serverId prop 来自 query。</li>
+<li>服务器详情来自 ServerRepository。</li>
+<li>用户列表来自 ServerUserRepository。</li>
+<li>自动登录/鉴权使用 AuthRepository、SessionRepository、MediaServerClientFactory、AuthenticationPreferences。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="auth" data-search="login /login /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/login_screen.dart::loginscreen popscope
+-&gt; loginscaffold
+   -&gt; logo
+   -&gt; title/sign-in server subtitle
+   -&gt; quickconnect/password segmented buttons when supported
+   -&gt; quickconnect content or credential form
+   -&gt; tv keyboard footer spacer
+ serverid/prefillusername/haspassword props 来自 query。 登录验证调用 authrepository，成功后写 sessionrepository/userpreferences。 服务器、客户端能力来自 serverrepository 与 mediaserverclientfactory。">
+<div class="card-head"><div>
+<p class="eyebrow">Auth</p><h2>login</h2></div><div class="badges">
+<span class="badge route">/login</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/auth/login_screen.dart::LoginScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/login.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>PopScope
+-&gt; LoginScaffold
+   -&gt; logo
+   -&gt; title/sign-in server subtitle
+   -&gt; QuickConnect/Password segmented buttons when supported
+   -&gt; QuickConnect content OR credential form
+   -&gt; TV keyboard footer spacer
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>serverId/prefillUsername/hasPassword props 来自 query。</li>
+<li>登录验证调用 AuthRepository，成功后写 SessionRepository/UserPreferences。</li>
+<li>服务器、客户端能力来自 ServerRepository 与 MediaServerClientFactory。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="home /home /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/home/home_screen.dart::homescreen responsivelayout
+-&gt; _homeshell
+   -&gt; scaffold
+      -&gt; navigationlayout(activeroute:/home)
+         -&gt; stack
+            -&gt; optional _backdrop
+            -&gt; _gradientscrim
+            -&gt; _contentrows
+               -&gt; optional mediabar
+               -&gt; listview rows
+                  -&gt; libraryrow / livetv row / library buttons row / media row
+                     -&gt; gridbuttoncard or mediacard
+               -&gt; optional infoarea selected item overlay
+            -&gt; optional seasonaleffects
+ homeviewmodel.rows 来自 rowdatasource、multiserverrepository、mediaserverclient 与 activehomesectionconfigs。 mediabarviewmodel.state 绑定到 mediabar。 背景图来自 backgroundservice.backgroundstream/currenturl。 userpreferences 控制 postersize、backdropenabled、watchedindicatorbehavior、focuscolor、seasonaleffect。 routelifecycleobserver/homerefreshbus 触发 homeviewmodel.refresh/load。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>home</h2></div><div class="badges">
+<span class="badge route">/home</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/home/home_screen.dart::HomeScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/home.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/home.png" alt="home screenshot"><figcaption>screenshots/home.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>ResponsiveLayout
+-&gt; _HomeShell
+   -&gt; Scaffold
+      -&gt; NavigationLayout(activeRoute:/home)
+         -&gt; Stack
+            -&gt; optional _Backdrop
+            -&gt; _GradientScrim
+            -&gt; _ContentRows
+               -&gt; optional MediaBar
+               -&gt; ListView rows
+                  -&gt; LibraryRow / LiveTv row / Library buttons row / Media row
+                     -&gt; GridButtonCard or MediaCard
+               -&gt; optional InfoArea selected item overlay
+            -&gt; optional SeasonalEffects
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>HomeViewModel.rows 来自 RowDataSource、MultiServerRepository、MediaServerClient 与 activeHomeSectionConfigs。</li>
+<li>MediaBarViewModel.state 绑定到 MediaBar。</li>
+<li>背景图来自 BackgroundService.backgroundStream/currentUrl。</li>
+<li>UserPreferences 控制 posterSize、backdropEnabled、watchedIndicatorBehavior、focusColor、seasonalEffect。</li>
+<li>RouteLifecycleObserver/homeRefreshBus 触发 HomeViewModel.refresh/load。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="search /search /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/search/search_screen.dart::searchscreen scaffold
+-&gt; navigationlayout(showbackbutton:true)
+   -&gt; safearea
+      -&gt; column
+         -&gt; search input row
+            -&gt; voice activation
+            -&gt; textfield/customtvtextfield
+         -&gt; divider
+         -&gt; expanded focus
+            -&gt; idle/loading/error/results body
+               -&gt; listview
+                  -&gt; libraryrow per searchresultgroup
+                     -&gt; mediacard per aggregateditem
+                  -&gt; optional seerr row
+ searchviewmodel 由 searchrepository、mediaserverclient、scopedlibraryid 构造。 input onchanged 调用 searchdebounced，initialquery 调用 searchimmediate。 results/seerrresults 分别来自 searchrepository.search 与 seerrrepository.search。 recentsearchesstore 和 voicesearchcontroller 管理历史与语音输入。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>search</h2></div><div class="badges">
+<span class="badge route">/search</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/search/search_screen.dart::SearchScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/search.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/search.png" alt="search screenshot"><figcaption>screenshots/search.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>Scaffold
+-&gt; NavigationLayout(showBackButton:true)
+   -&gt; SafeArea
+      -&gt; Column
+         -&gt; search input row
+            -&gt; voice activation
+            -&gt; TextField/CustomTVTextField
+         -&gt; Divider
+         -&gt; Expanded Focus
+            -&gt; idle/loading/error/results body
+               -&gt; ListView
+                  -&gt; LibraryRow per SearchResultGroup
+                     -&gt; MediaCard per AggregatedItem
+                  -&gt; optional Seerr row
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>SearchViewModel 由 SearchRepository、MediaServerClient、scopedLibraryId 构造。</li>
+<li>input onChanged 调用 searchDebounced，initialQuery 调用 searchImmediate。</li>
+<li>results/seerrResults 分别来自 SearchRepository.search 与 SeerrRepository.search。</li>
+<li>RecentSearchesStore 和 VoiceSearchController 管理历史与语音输入。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="advanced_filter /advanced-filter /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/filter/advanced_filter_screen.dart::advancedfilterscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(activeroute:/advanced-filter, showbackbutton:true)
+      -&gt; safearea
+         -&gt; customscrollview
+            -&gt; _filterpanel
+               -&gt; type/library/genre/region/year _filterrow
+            -&gt; body slivers
+               -&gt; loading progress / error / empty
+               -&gt; _resultsheadersliver
+                  -&gt; _resultscount
+                  -&gt; _sortcontrols(segmentedbutton + direction button)
+               -&gt; _resultsgridsliver
+                  -&gt; mediacard grid
+ advancedfilterviewmodel 由 mediaserverclient、userpreferences、advancedfiltercatalogrepository、advancedfiltercatalogsyncservice 构造。 filter rows 绑定 vm.selectedtypes/genres/regions/libraries/years 与 vm.types/genres/regions/libraries/years。 结果 grid 绑定 vm.results；加载进度绑定 vm.loadeditemcount/totalitemcount/loadingprogress。 选择与排序写回 userpreferences，并使用本地 catalog repository 缓存。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>advanced_filter</h2></div><div class="badges">
+<span class="badge route">/advanced-filter</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/filter/advanced_filter_screen.dart::AdvancedFilterScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/advanced_filter.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/advanced_filter.png" alt="advanced_filter screenshot"><figcaption>screenshots/advanced_filter.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(activeRoute:/advanced-filter, showBackButton:true)
+      -&gt; SafeArea
+         -&gt; CustomScrollView
+            -&gt; _FilterPanel
+               -&gt; Type/Library/Genre/Region/Year _FilterRow
+            -&gt; body slivers
+               -&gt; loading progress / error / empty
+               -&gt; _ResultsHeaderSliver
+                  -&gt; _ResultsCount
+                  -&gt; _SortControls(SegmentedButton + direction button)
+               -&gt; _ResultsGridSliver
+                  -&gt; MediaCard grid
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>AdvancedFilterViewModel 由 MediaServerClient、UserPreferences、AdvancedFilterCatalogRepository、AdvancedFilterCatalogSyncService 构造。</li>
+<li>filter rows 绑定 vm.selectedTypes/Genres/Regions/Libraries/Years 与 vm.types/genres/regions/libraries/years。</li>
+<li>结果 grid 绑定 vm.results；加载进度绑定 vm.loadedItemCount/totalItemCount/loadingProgress。</li>
+<li>选择与排序写回 UserPreferences，并使用本地 catalog repository 缓存。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="library_browse /library/:libraryid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_browse_screen.dart::librarybrowsescreen requestinitialfocus
+-&gt; scaffold
+   -&gt; stack
+      -&gt; optional fullscreenbackdropswitcher
+      -&gt; dim/gradient overlay
+      -&gt; column
+         -&gt; _libraryheader
+            -&gt; title/count
+            -&gt; focused item hud/ratings
+            -&gt; sort/settings/book tab/filter controls
+         -&gt; expanded body
+            -&gt; loading/error
+            -&gt; customscrollview
+               -&gt; slivergrid
+                  -&gt; mediacard per item
+               -&gt; optional load-more spinner
+book library variant:
+-&gt; _buildbookexperiencescaffold
+   -&gt; book tabs/status/filter chips
+   -&gt; categorized book/audiobook grids and discovery panels
+ librarybrowseviewmodel 由 libraryid、mediaserverclient、userpreferences、mdblistrepository、genre/includeitemtypes props 构造。 header 绑定 vm.libraryname、vm.totalcount、vm.focuseditem、vm.focusedratings、vm.sortby、vm.filters。 grid 绑定 vm.items；滚动到底调用 vm.loadmore。 sort/filter/image/poster 设置来自 userpreferences 并由 viewmodel setter 持久化。 背景与焦点 item 由 backgroundservice、vm.setfocuseditem、mdblistrepository ratings 共同驱动。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>library_browse</h2></div><div class="badges">
+<span class="badge route">/library/:libraryId</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_browse_screen.dart::LibraryBrowseScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/library_browse.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/library_browse.png" alt="library_browse screenshot"><figcaption>screenshots/library_browse.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; Stack
+      -&gt; optional FullscreenBackdropSwitcher
+      -&gt; dim/gradient overlay
+      -&gt; Column
+         -&gt; _LibraryHeader
+            -&gt; title/count
+            -&gt; focused item HUD/ratings
+            -&gt; sort/settings/book tab/filter controls
+         -&gt; Expanded body
+            -&gt; loading/error
+            -&gt; CustomScrollView
+               -&gt; SliverGrid
+                  -&gt; MediaCard per item
+               -&gt; optional load-more spinner
+Book library variant:
+-&gt; _buildBookExperienceScaffold
+   -&gt; book tabs/status/filter chips
+   -&gt; categorized book/audiobook grids and discovery panels
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>LibraryBrowseViewModel 由 libraryId、MediaServerClient、UserPreferences、MdbListRepository、genre/includeItemTypes props 构造。</li>
+<li>header 绑定 vm.libraryName、vm.totalCount、vm.focusedItem、vm.focusedRatings、vm.sortBy、vm.filters。</li>
+<li>grid 绑定 vm.items；滚动到底调用 vm.loadMore。</li>
+<li>sort/filter/image/poster 设置来自 UserPreferences 并由 ViewModel setter 持久化。</li>
+<li>背景与焦点 item 由 BackgroundService、vm.setFocusedItem、MdbListRepository ratings 共同驱动。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="library_genres /library/:libraryid/genres /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_genres_screen.dart::librarygenresscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; stack
+      -&gt; optional fullscreenbackdropswitcher
+      -&gt; overlay
+      -&gt; column
+         -&gt; _genresheader
+         -&gt; loading/empty
+         -&gt; gridview.builder
+            -&gt; genregridcard per genre
+ libraryid prop 来自嵌套路由。 genres 来自 mediaserverclient.itemsapi.getgenres(parentid: libraryid)。 genre artwork 由 itemsapi.getitems 按 genre 预取。 背景来自 backgroundservice；image type 与 focus expansion 来自 userpreferences。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>library_genres</h2></div><div class="badges">
+<span class="badge route">/library/:libraryId/genres</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_genres_screen.dart::LibraryGenresScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/library_genres.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; Stack
+      -&gt; optional FullscreenBackdropSwitcher
+      -&gt; overlay
+      -&gt; Column
+         -&gt; _GenresHeader
+         -&gt; loading/empty
+         -&gt; GridView.builder
+            -&gt; GenreGridCard per genre
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>libraryId prop 来自嵌套路由。</li>
+<li>genres 来自 MediaServerClient.itemsApi.getGenres(parentId: libraryId)。</li>
+<li>genre artwork 由 itemsApi.getItems 按 genre 预取。</li>
+<li>背景来自 BackgroundService；image type 与 focus expansion 来自 UserPreferences。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="library_letters /library/:libraryid/letters /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_letters_screen.dart::librarylettersscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; appbar(title: browse by letter)
+   -&gt; center placeholder text
+ libraryid prop 暂未用于实际数据查询。 可见文案来自 applocalizations。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>library_letters</h2></div><div class="badges">
+<span class="badge route">/library/:libraryId/letters</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_letters_screen.dart::LibraryLettersScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/library_letters.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; AppBar(title: Browse by Letter)
+   -&gt; Center placeholder text
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>libraryId prop 暂未用于实际数据查询。</li>
+<li>可见文案来自 AppLocalizations。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="library_suggestions /library/:libraryid/suggestions /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_suggestions_screen.dart::librarysuggestionsscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; appbar(title: suggestions)
+   -&gt; center placeholder text
+ libraryid prop 暂未用于实际数据查询。 可见文案来自 applocalizations。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>library_suggestions</h2></div><div class="badges">
+<span class="badge route">/library/:libraryId/suggestions</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_suggestions_screen.dart::LibrarySuggestionsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/library_suggestions.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; AppBar(title: Suggestions)
+   -&gt; Center placeholder text
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>libraryId prop 暂未用于实际数据查询。</li>
+<li>可见文案来自 AppLocalizations。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="genre_browse /genre/:genrename /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_browse_screen.dart::librarybrowsescreen same as library_browse, with overridename/genreid/initial library filter applied.
+ genrename/genreid/libraryid/includeitemtypes 来自 route query/params。 librarybrowseviewmodel.isgenrebrowse 切换为 genre browse 语义。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>genre_browse</h2></div><div class="badges">
+<span class="badge route">/genre/:genreName</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/library_browse_screen.dart::LibraryBrowseScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/genre_browse.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/genre_browse.png" alt="genre_browse screenshot"><figcaption>screenshots/genre_browse.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>Same as library_browse, with overrideName/genreId/initial library filter applied.
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>genreName/genreId/libraryId/includeItemTypes 来自 route query/params。</li>
+<li>LibraryBrowseViewModel.isGenreBrowse 切换为 genre browse 语义。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="all_genres /genres /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/all_genres_screen.dart::allgenresscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; stack
+      -&gt; optional fullscreenbackdropswitcher
+      -&gt; overlay
+      -&gt; column
+         -&gt; header row(home/settings/title)
+         -&gt; expanded
+            -&gt; loading/empty
+            -&gt; gridview.builder
+               -&gt; genregridcard
+ genre list 来自 mediaserverclient.itemsapi.getgenres。 artwork 由 itemsapi.getitems 按 genre 批量填充。 背景来自 backgroundservice；poster/focus 设置来自 userpreferences。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>all_genres</h2></div><div class="badges">
+<span class="badge route">/genres</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/all_genres_screen.dart::AllGenresScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/all_genres.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/all_genres.png" alt="all_genres screenshot"><figcaption>screenshots/all_genres.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; Stack
+      -&gt; optional FullscreenBackdropSwitcher
+      -&gt; overlay
+      -&gt; Column
+         -&gt; header Row(home/settings/title)
+         -&gt; Expanded
+            -&gt; loading/empty
+            -&gt; GridView.builder
+               -&gt; GenreGridCard
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>genre list 来自 MediaServerClient.itemsApi.getGenres。</li>
+<li>artwork 由 itemsApi.getItems 按 genre 批量填充。</li>
+<li>背景来自 BackgroundService；poster/focus 设置来自 UserPreferences。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="favorites /favorites /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/favorites_screen.dart::favoritesscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; stack
+      -&gt; optional fullscreenbackdropswitcher
+      -&gt; overlay
+      -&gt; column
+         -&gt; _favoritesheader(total/focused item/sort/settings)
+         -&gt; expanded
+            -&gt; loading/error/empty
+            -&gt; listview
+               -&gt; libraryrow per favoritetypefilter
+                  -&gt; mediacard per favorited item
+ favoritesviewmodel.rowitems 由 mediaserverclient.itemsapi.getitems(isfavorite:true) 按类型加载。 header ratings 来自 mdblistrepository，并受 userpreferences additional ratings 设置控制。 sort/image/poster 设置来自 userpreferences 并通过 viewmodel setter 持久化。 背景来自 backgroundservice，focus 通过 vm.setfocuseditem 更新。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>favorites</h2></div><div class="badges">
+<span class="badge route">/favorites</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/favorites_screen.dart::FavoritesScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/favorites.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/favorites.png" alt="favorites screenshot"><figcaption>screenshots/favorites.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; Stack
+      -&gt; optional FullscreenBackdropSwitcher
+      -&gt; overlay
+      -&gt; Column
+         -&gt; _FavoritesHeader(total/focused item/sort/settings)
+         -&gt; Expanded
+            -&gt; loading/error/empty
+            -&gt; ListView
+               -&gt; LibraryRow per FavoriteTypeFilter
+                  -&gt; MediaCard per favorited item
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>FavoritesViewModel.rowItems 由 MediaServerClient.itemsApi.getItems(isFavorite:true) 按类型加载。</li>
+<li>header ratings 来自 MdbListRepository，并受 UserPreferences additional ratings 设置控制。</li>
+<li>sort/image/poster 设置来自 UserPreferences 并通过 ViewModel setter 持久化。</li>
+<li>背景来自 BackgroundService，focus 通过 vm.setFocusedItem 更新。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="folders /folders /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/folder_view_screen.dart::folderviewscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(showbackbutton:true)
+      -&gt; safearea
+         -&gt; futurebuilder
+            -&gt; loading/error/empty
+            -&gt; listview.builder
+               -&gt; listtile per aggregatedlibrary
+ futurebuilder future 来自 userviewsrepository.getuserviews()。 listtile subtitle/icon 使用 aggregatedlibrary.collectiontype。 tap 路由到 destinations.folder(lib.id)。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>folders</h2></div><div class="badges">
+<span class="badge route">/folders</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/folder_view_screen.dart::FolderViewScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/folders.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(showBackButton:true)
+      -&gt; SafeArea
+         -&gt; FutureBuilder
+            -&gt; loading/error/empty
+            -&gt; ListView.builder
+               -&gt; ListTile per AggregatedLibrary
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>FutureBuilder future 来自 UserViewsRepository.getUserViews()。</li>
+<li>ListTile subtitle/icon 使用 AggregatedLibrary.collectionType。</li>
+<li>tap 路由到 Destinations.folder(lib.id)。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="folder_browse /folder/:folderid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/folder_browse_screen.dart::folderbrowsescreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(showbackbutton:true)
+      -&gt; safearea
+         -&gt; column
+            -&gt; top spacer
+            -&gt; horizontal breadcrumbs
+            -&gt; divider
+            -&gt; expanded
+               -&gt; loading/error
+               -&gt; grid/list of mediacard items
+ folderbrowseviewmodel(mediaserverclient) loads folderid via itemsapi.getitem/getitems。 breadcrumbs/items/hasmore/error 由 viewmodel 暴露。 滚动到底触发 vm.loadmore；folder item tap 调用 vm.enterfolder。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>folder_browse</h2></div><div class="badges">
+<span class="badge route">/folder/:folderId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/folder_browse_screen.dart::FolderBrowseScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/folder_browse.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(showBackButton:true)
+      -&gt; SafeArea
+         -&gt; Column
+            -&gt; top spacer
+            -&gt; horizontal breadcrumbs
+            -&gt; Divider
+            -&gt; Expanded
+               -&gt; loading/error
+               -&gt; Grid/List of MediaCard items
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>FolderBrowseViewModel(MediaServerClient) loads folderId via itemsApi.getItem/getItems。</li>
+<li>breadcrumbs/items/hasMore/error 由 ViewModel 暴露。</li>
+<li>滚动到底触发 vm.loadMore；folder item tap 调用 vm.enterFolder。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="collection /collection/:collectionid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/collection_screen.dart::collectionscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(showbackbutton:true)
+      -&gt; center placeholder text
+ collectionid prop 目前未接入数据源。 placeholder 文案来自 applocalizations.collectionplaceholder。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>collection</h2></div><div class="badges">
+<span class="badge route">/collection/:collectionId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/collection_screen.dart::CollectionScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/collection.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(showBackButton:true)
+      -&gt; Center placeholder text
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>collectionId prop 目前未接入数据源。</li>
+<li>placeholder 文案来自 AppLocalizations.collectionPlaceholder。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="music_browse /music/:libraryid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/music_browse_screen.dart::musicbrowsescreen requestinitialfocus
+-&gt; scaffold
+   -&gt; stack
+      -&gt; background overlay
+      -&gt; column
+         -&gt; _musicheader(library/focused item)
+         -&gt; loading or refreshindicator
+            -&gt; listview
+               -&gt; _musicviewsrow(albums/album artists/artists/genres)
+               -&gt; _musicitemrow per homerow
+                  -&gt; horizontal listview
+                     -&gt; _musicsquarecard
+ musicbrowseviewmodel 由 rowdatasource、mediaserverclient、libraryid 构造。 rows 来自 latest media、last played audio、favorite albums、playlists、artists、albums 等 rowdatasource 调用。 header focused item 由 card focus 更新；背景来自 backgroundservice。 随机专辑按钮直接调用 mediaserverclient.itemsapi.getitems(sortby:random)。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>music_browse</h2></div><div class="badges">
+<span class="badge route">/music/:libraryId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/browse/music_browse_screen.dart::MusicBrowseScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/music_browse.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; Stack
+      -&gt; background overlay
+      -&gt; Column
+         -&gt; _MusicHeader(library/focused item)
+         -&gt; loading OR RefreshIndicator
+            -&gt; ListView
+               -&gt; _MusicViewsRow(Albums/Album Artists/Artists/Genres)
+               -&gt; _MusicItemRow per HomeRow
+                  -&gt; horizontal ListView
+                     -&gt; _MusicSquareCard
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MusicBrowseViewModel 由 RowDataSource、MediaServerClient、libraryId 构造。</li>
+<li>rows 来自 latest media、last played audio、favorite albums、playlists、artists、albums 等 RowDataSource 调用。</li>
+<li>header focused item 由 card focus 更新；背景来自 BackgroundService。</li>
+<li>随机专辑按钮直接调用 MediaServerClient.itemsApi.getItems(sortBy:Random)。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="item_detail /item/:itemid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/detail/item_detail_screen.dart::itemdetailscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(showbackbutton:true, optional chrome)
+      -&gt; loading/error
+      -&gt; _detailcontent
+         -&gt; stack
+            -&gt; optional backdrop/gradientscrim
+            -&gt; customscrollview
+               -&gt; optional _headersection
+                  -&gt; poster/logo/title/metadata/ratings/overview/actions
+               -&gt; content by item.type
+                  -&gt; series: seasons/episodes/next up/similar/metadata
+                  -&gt; movie/video: action buttons/cast/similar/features/chapters/metadata
+                  -&gt; person: person header/biography/filmography
+                  -&gt; musicartist: artist header/albums/tracks/similar
+                  -&gt; musicalbum/playlist: album header/actions/tracklist
+                  -&gt; boxset: collection rows
+                  -&gt; book/photo variants
+ itemdetailviewmodel(itemid, serverid, mediaserverclient, itemmutationrepository, mdblistrepository)。 primary item 来自 itemsapi.getitem；secondary rows 按 type 调 getseasons/getepisodes/getnextup/getitems/getsimilar 等。 ratings 来自 mdblistrepository；lyrics 来自 lyrics loader；download/favorite actions 使用 downloadservice/itemmutationrepository。 播放 actions 使用 playbackmanager；媒体源选择为页面本地 selectedmediasourceid。 偏好项来自 userpreferences：背景 blur、ratings 显示、navbar/focus、external subtitles 等。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>item_detail</h2></div><div class="badges">
+<span class="badge route">/item/:itemId</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/detail/item_detail_screen.dart::ItemDetailScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/item_detail.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/item_detail.png" alt="item_detail screenshot"><figcaption>screenshots/item_detail.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(showBackButton:true, optional chrome)
+      -&gt; loading/error
+      -&gt; _DetailContent
+         -&gt; Stack
+            -&gt; optional Backdrop/GradientScrim
+            -&gt; CustomScrollView
+               -&gt; optional _HeaderSection
+                  -&gt; poster/logo/title/metadata/ratings/overview/actions
+               -&gt; content by item.type
+                  -&gt; Series: seasons/episodes/next up/similar/metadata
+                  -&gt; Movie/Video: action buttons/cast/similar/features/chapters/metadata
+                  -&gt; Person: person header/biography/filmography
+                  -&gt; MusicArtist: artist header/albums/tracks/similar
+                  -&gt; MusicAlbum/Playlist: album header/actions/TrackList
+                  -&gt; BoxSet: collection rows
+                  -&gt; Book/Photo variants
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ItemDetailViewModel(itemId, serverId, MediaServerClient, ItemMutationRepository, MdbListRepository)。</li>
+<li>primary item 来自 itemsApi.getItem；secondary rows 按 type 调 getSeasons/getEpisodes/getNextUp/getItems/getSimilar 等。</li>
+<li>ratings 来自 MdbListRepository；lyrics 来自 lyrics loader；download/favorite actions 使用 DownloadService/ItemMutationRepository。</li>
+<li>播放 actions 使用 PlaybackManager；媒体源选择为页面本地 selectedMediaSourceId。</li>
+<li>偏好项来自 UserPreferences：背景 blur、ratings 显示、navbar/focus、external subtitles 等。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="item_list /item/:itemid/list /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/detail/item_list_screen.dart::itemlistscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; appbar(title: track list)
+   -&gt; center placeholder text
+ itemid prop 暂未用于实际数据查询。 文案来自 applocalizations。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>item_list</h2></div><div class="badges">
+<span class="badge route">/item/:itemId/list</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/detail/item_list_screen.dart::ItemListScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/item_list.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; AppBar(title: track list)
+   -&gt; Center placeholder text
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>itemId prop 暂未用于实际数据查询。</li>
+<li>文案来自 AppLocalizations。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="music_favorites /music-favorites/:parentid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/detail/music_favorites_screen.dart::musicfavoritesscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(showbackbutton:true)
+      -&gt; center placeholder text
+ parentid prop 暂未用于实际数据查询。 文案来自 applocalizations.favoritetracksplaceholder。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>music_favorites</h2></div><div class="badges">
+<span class="badge route">/music-favorites/:parentId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/detail/music_favorites_screen.dart::MusicFavoritesScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/music_favorites.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(showBackButton:true)
+      -&gt; Center placeholder text
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>parentId prop 暂未用于实际数据查询。</li>
+<li>文案来自 AppLocalizations.favoriteTracksPlaceholder。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="livetv" data-search="live_tv /live-tv /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_screen.dart::livetvscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; gradient decoratedbox
+      -&gt; safearea
+         -&gt; center/constrainedbox
+            -&gt; column
+               -&gt; title/subtitle
+               -&gt; gridview.builder
+                  -&gt; _livetvmenucard(guide/recordings/schedule/series recordings)
+ menu item list 为组件本地静态数据。 tap 使用 gorouter 跳转到 live-tv 子路由。">
+<div class="card-head"><div>
+<p class="eyebrow">Live TV</p><h2>live_tv</h2></div><div class="badges">
+<span class="badge route">/live-tv</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_screen.dart::LiveTvScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/live_tv.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; gradient DecoratedBox
+      -&gt; SafeArea
+         -&gt; Center/ConstrainedBox
+            -&gt; Column
+               -&gt; title/subtitle
+               -&gt; GridView.builder
+                  -&gt; _LiveTvMenuCard(Guide/Recordings/Schedule/Series Recordings)
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>menu item list 为组件本地静态数据。</li>
+<li>tap 使用 GoRouter 跳转到 live-tv 子路由。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="livetv" data-search="live_tv_guide /live-tv/guide /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_guide_screen.dart::livetvguidescreen requestinitialfocus
+-&gt; scaffold black
+   -&gt; safearea/layoutbuilder/padding
+      -&gt; column
+         -&gt; toolbar(back/window/now/date/recordings)
+         -&gt; horizontal filter chips
+         -&gt; body loading/error/empty
+         -&gt; guide grid
+            -&gt; time header horizontalscrollsection
+            -&gt; row
+               -&gt; channel listview
+               -&gt; _guidegridview
+                  -&gt; program rows/cards
+ livetvguideviewmodel(mediaserverclient) loads channels and programs via livetvapi。 filter chips 绑定 vm.filter；channels 使用 vm.filteredchannels。 program rows 由 vm.programsforchannel(channelid) 提供。 favorite/recording actions 调用 userlibraryapi 与 livetvapi，随后 viewmodel notify/reload。">
+<div class="card-head"><div>
+<p class="eyebrow">Live TV</p><h2>live_tv_guide</h2></div><div class="badges">
+<span class="badge route">/live-tv/guide</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_guide_screen.dart::LiveTvGuideScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/live_tv_guide.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold black
+   -&gt; SafeArea/LayoutBuilder/Padding
+      -&gt; Column
+         -&gt; toolbar(back/window/now/date/recordings)
+         -&gt; horizontal filter chips
+         -&gt; body loading/error/empty
+         -&gt; guide grid
+            -&gt; time header HorizontalScrollSection
+            -&gt; Row
+               -&gt; channel ListView
+               -&gt; _GuideGridView
+                  -&gt; program rows/cards
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>LiveTvGuideViewModel(MediaServerClient) loads channels and programs via liveTvApi。</li>
+<li>filter chips 绑定 vm.filter；channels 使用 vm.filteredChannels。</li>
+<li>program rows 由 vm.programsForChannel(channelId) 提供。</li>
+<li>favorite/recording actions 调用 userLibraryApi 与 liveTvApi，随后 ViewModel notify/reload。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="livetv" data-search="live_tv_schedule /live-tv/schedule /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_schedule_screen.dart::livetvschedulescreen requestinitialfocus
+-&gt; scaffold black
+   -&gt; safearea
+      -&gt; column
+         -&gt; livetvsectionheader(title, focuseditemhud)
+         -&gt; loading/error/empty
+         -&gt; listview
+            -&gt; _schedulegrouprow per date
+               -&gt; horizontal listview of _schedulecard
+ scheduleviewmodel(mediaserverclient) loads scheduled timers/groups。 focuseditemhud 绑定 vm.focuseditem。 cancel timer 调 livetvapi.canceltimer 后 vm.load。">
+<div class="card-head"><div>
+<p class="eyebrow">Live TV</p><h2>live_tv_schedule</h2></div><div class="badges">
+<span class="badge route">/live-tv/schedule</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_schedule_screen.dart::LiveTvScheduleScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/live_tv_schedule.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold black
+   -&gt; SafeArea
+      -&gt; Column
+         -&gt; LiveTvSectionHeader(title, FocusedItemHud)
+         -&gt; loading/error/empty
+         -&gt; ListView
+            -&gt; _ScheduleGroupRow per date
+               -&gt; horizontal ListView of _ScheduleCard
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ScheduleViewModel(MediaServerClient) loads scheduled timers/groups。</li>
+<li>FocusedItemHud 绑定 vm.focusedItem。</li>
+<li>cancel timer 调 liveTvApi.cancelTimer 后 vm.load。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="livetv" data-search="live_tv_recordings /live-tv/recordings /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_recordings_screen.dart::livetvrecordingsscreen requestinitialfocus
+-&gt; scaffold black
+   -&gt; safearea
+      -&gt; column
+         -&gt; header row(title + tab pills + back)
+         -&gt; active tab body
+            -&gt; recordings: listview of _recordingrow
+            -&gt; schedule: listview of _recordingrow by date
+            -&gt; series: listview/horizontal rows of _seriestimercard
+ recordingsviewmodel、scheduleviewmodel、seriesrecordingsviewmodel 均由 mediaserverclient 构造。 tab counts 绑定 recent/series/movie/sports/kids recordings、schedule groups、series timers。 cancel/delete actions 调 livetvapi timers 后 reload。">
+<div class="card-head"><div>
+<p class="eyebrow">Live TV</p><h2>live_tv_recordings</h2></div><div class="badges">
+<span class="badge route">/live-tv/recordings</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_recordings_screen.dart::LiveTvRecordingsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/live_tv_recordings.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold black
+   -&gt; SafeArea
+      -&gt; Column
+         -&gt; header Row(title + tab pills + back)
+         -&gt; active tab body
+            -&gt; Recordings: ListView of _RecordingRow
+            -&gt; Schedule: ListView of _RecordingRow by date
+            -&gt; Series: ListView/horizontal rows of _SeriesTimerCard
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>RecordingsViewModel、ScheduleViewModel、SeriesRecordingsViewModel 均由 MediaServerClient 构造。</li>
+<li>tab counts 绑定 recent/series/movie/sports/kids recordings、schedule groups、series timers。</li>
+<li>cancel/delete actions 调 liveTvApi timers 后 reload。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="livetv" data-search="live_tv_series_recordings /live-tv/series-recordings /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_series_recordings_screen.dart::livetvseriesrecordingsscreen requestinitialfocus
+-&gt; scaffold black
+   -&gt; safearea
+      -&gt; column
+         -&gt; livetvsectionheader
+         -&gt; loading/error/empty
+         -&gt; listview/grid of _seriestimercard
+ seriesrecordingsviewmodel(mediaserverclient) loads series timers。 card focus 读取 userpreferences focuscolor/cardfocusexpansion。 delete/cancel actions 通过 livetvapi timer api。">
+<div class="card-head"><div>
+<p class="eyebrow">Live TV</p><h2>live_tv_series_recordings</h2></div><div class="badges">
+<span class="badge route">/live-tv/series-recordings</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_series_recordings_screen.dart::LiveTvSeriesRecordingsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/live_tv_series_recordings.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold black
+   -&gt; SafeArea
+      -&gt; Column
+         -&gt; LiveTvSectionHeader
+         -&gt; loading/error/empty
+         -&gt; ListView/Grid of _SeriesTimerCard
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>SeriesRecordingsViewModel(MediaServerClient) loads series timers。</li>
+<li>card focus 读取 UserPreferences focusColor/cardFocusExpansion。</li>
+<li>delete/cancel actions 通过 liveTvApi timer API。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="livetv" data-search="live_tv_player /live-tv/player /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_player_screen.dart::livetvplayerscreen popscope
+-&gt; scaffold black
+   -&gt; focus/gesturedetector/mouseregion
+      -&gt; stack
+         -&gt; video surface(media3videoview/nativevideoview/video)
+         -&gt; streambuilder buffering indicator
+         -&gt; top overlay
+         -&gt; bottom overlay(channel/program controls)
+ channels/startindex props 来自 route extra。 playbackmanager、mediakitplayerbackend、mediaserverclient、userpreferences 驱动播放与频道切换。 bufferingstream 来自 playerstate。">
+<div class="card-head"><div>
+<p class="eyebrow">Live TV</p><h2>live_tv_player</h2></div><div class="badges">
+<span class="badge route">/live-tv/player</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/livetv/live_tv_player_screen.dart::LiveTvPlayerScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/live_tv_player.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>PopScope
+-&gt; Scaffold black
+   -&gt; Focus/GestureDetector/MouseRegion
+      -&gt; Stack
+         -&gt; video surface(Media3VideoView/NativeVideoView/Video)
+         -&gt; StreamBuilder buffering indicator
+         -&gt; top overlay
+         -&gt; bottom overlay(channel/program controls)
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>channels/startIndex props 来自 route extra。</li>
+<li>PlaybackManager、MediaKitPlayerBackend、MediaServerClient、UserPreferences 驱动播放与频道切换。</li>
+<li>bufferingStream 来自 PlayerState。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="video_player /player/video /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/video_player_screen.dart::videoplayerscreen popscope
+-&gt; scaffold black
+   -&gt; focus/gesturedetector/mouseregion
+      -&gt; stack
+         -&gt; video surface(media3/nativevideoview/media_kit video)
+         -&gt; overlays:
+            -&gt; buffering indicator
+            -&gt; top metadata/actions
+            -&gt; center transport/seek prompts
+            -&gt; bottom controls
+               -&gt; progress area
+                  -&gt; streambuilder(position)
+                  -&gt; streambuilder(duration)
+                  -&gt; streambuilder(buffer)
+                  -&gt; slider(value=positionms, secondarytrackvalue=visiblebufferms)
+               -&gt; buttons/audio/subtitle/quality/cast
+            -&gt; next-up/still-watching/skip prompts
+ playbackmanager.state 提供 positionstream/durationstream/bufferstream/bufferingstream、queue/current item。 mediakitplayerbackend/media3 backend 提供视频 surface。 slider 的 secondarytrackvalue 绑定 playerstate.buffer，只有 buffer &gt; position + 1s 时显示。 userpreferences 控制 skip 长度、hardware decoding、字幕、osd、external player、streaming cache ui 颜色等。 castservice/nativecastchannel/nativedlnachannel/nativeairplaychannel 提供投屏状态和操作。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>video_player</h2></div><div class="badges">
+<span class="badge route">/player/video</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/video_player_screen.dart::VideoPlayerScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/video_player.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/video_player.png" alt="video_player screenshot"><figcaption>screenshots/video_player.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>PopScope
+-&gt; Scaffold black
+   -&gt; Focus/GestureDetector/MouseRegion
+      -&gt; Stack
+         -&gt; video surface(Media3/NativeVideoView/media_kit Video)
+         -&gt; overlays:
+            -&gt; buffering indicator
+            -&gt; top metadata/actions
+            -&gt; center transport/seek prompts
+            -&gt; bottom controls
+               -&gt; progress area
+                  -&gt; StreamBuilder(position)
+                  -&gt; StreamBuilder(duration)
+                  -&gt; StreamBuilder(buffer)
+                  -&gt; Slider(value=positionMs, secondaryTrackValue=visibleBufferMs)
+               -&gt; buttons/audio/subtitle/quality/cast
+            -&gt; next-up/still-watching/skip prompts
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>PlaybackManager.state 提供 positionStream/durationStream/bufferStream/bufferingStream、queue/current item。</li>
+<li>MediaKitPlayerBackend/Media3 backend 提供视频 surface。</li>
+<li>Slider 的 secondaryTrackValue 绑定 PlayerState.buffer，只有 buffer &gt; position + 1s 时显示。</li>
+<li>UserPreferences 控制 skip 长度、hardware decoding、字幕、OSD、external player、streaming cache UI 颜色等。</li>
+<li>CastService/NativeCastChannel/NativeDlnaChannel/NativeAirPlayChannel 提供投屏状态和操作。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="external_player /player/external /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/external_player_host_screen.dart::externalplayerhostscreen stateful handoff screen
+-&gt; scaffold/status content
+-&gt; open external player loop
+-&gt; fallback to internal player/error actions
+ playbackmanager.queueservice.currentitem 决定要外部播放的 item。 userpreferences.externalplayercomponentname 决定固定播放器或系统 chooser。 externalplayerservice、mediastreamresolver、playerservice、playerbackend 生成可交给外部播放器的播放 url/profile。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>external_player</h2></div><div class="badges">
+<span class="badge route">/player/external</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/external_player_host_screen.dart::ExternalPlayerHostScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/external_player.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>Stateful handoff screen
+-&gt; Scaffold/status content
+-&gt; open external player loop
+-&gt; fallback to internal player/error actions
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>PlaybackManager.queueService.currentItem 决定要外部播放的 item。</li>
+<li>UserPreferences.externalPlayerComponentName 决定固定播放器或系统 chooser。</li>
+<li>ExternalPlayerService、MediaStreamResolver、PlayerService、PlayerBackend 生成可交给外部播放器的播放 URL/profile。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="audio_player /player/audio /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/audio_player_screen.dart::audioplayerscreen popscope
+-&gt; scaffold
+   -&gt; stack
+      -&gt; blurred album art/local poster background
+      -&gt; optional hidden media3videoview prewarm
+      -&gt; safearea column
+         -&gt; top bar(collapse/cast/queue/lyrics)
+         -&gt; expanded now playing / lyrics / queue
+         -&gt; favorite row
+         -&gt; progress slider
+         -&gt; transport controls
+ playbackmanager.state 提供 current item、position、duration、queue。 castservice.activekindnotifier 控制 cast buttons。 mediaserverclientfactory/itemmutationrepository 提供 artwork/favorite mutation。 offline playback 使用本地 poster path；在线 artwork 来自 imageapi。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>audio_player</h2></div><div class="badges">
+<span class="badge route">/player/audio</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/audio_player_screen.dart::AudioPlayerScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/audio_player.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>PopScope
+-&gt; Scaffold
+   -&gt; Stack
+      -&gt; blurred album art/local poster background
+      -&gt; optional hidden Media3VideoView prewarm
+      -&gt; SafeArea Column
+         -&gt; top bar(collapse/cast/queue/lyrics)
+         -&gt; Expanded now playing / lyrics / queue
+         -&gt; favorite row
+         -&gt; progress Slider
+         -&gt; transport controls
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>PlaybackManager.state 提供 current item、position、duration、queue。</li>
+<li>CastService.activeKindNotifier 控制 cast buttons。</li>
+<li>MediaServerClientFactory/ItemMutationRepository 提供 artwork/favorite mutation。</li>
+<li>Offline playback 使用本地 poster path；在线 artwork 来自 ImageApi。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="book_reader /player/book/:itemid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/book_reader_screen.dart::bookreaderscreen stateful reader
+-&gt; scaffold
+   -&gt; loading/error/reader mode
+   -&gt; document/comic page area
+   -&gt; overlays/toolbars
+   -&gt; sliders for page/progress/zoom/settings
+   -&gt; chapter/bookmark lists
+ itemid/serverid/openwithexternalreader props 来自 route。 mediaserverclientfactory/mediaserverclient 加载书籍 item、媒体源和图片/文件。 offlinerepository 可读取离线书籍；本地阅读进度/bookmark 为页面状态并持久化。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>book_reader</h2></div><div class="badges">
+<span class="badge route">/player/book/:itemId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/book_reader_screen.dart::BookReaderScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/book_reader.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>Stateful reader
+-&gt; Scaffold
+   -&gt; loading/error/reader mode
+   -&gt; document/comic page area
+   -&gt; overlays/toolbars
+   -&gt; sliders for page/progress/zoom/settings
+   -&gt; chapter/bookmark lists
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>itemId/serverId/openWithExternalReader props 来自 route。</li>
+<li>MediaServerClientFactory/MediaServerClient 加载书籍 item、媒体源和图片/文件。</li>
+<li>OfflineRepository 可读取离线书籍；本地阅读进度/bookmark 为页面状态并持久化。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="photo_player /player/photo/:itemid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/photo_player_screen.dart::photoplayerscreen scaffold black
+-&gt; loading/error
+-&gt; photo view/image
+-&gt; overlay top/back metadata actions
+ itemid prop 来自 route。 mediaserverclient.itemsapi/getitem 与 imageapi 提供照片元数据和图片 url。 zoom/overlay 可见性为页面本地状态。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>photo_player</h2></div><div class="badges">
+<span class="badge route">/player/photo/:itemId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/photo_player_screen.dart::PhotoPlayerScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/photo_player.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>Scaffold black
+-&gt; loading/error
+-&gt; photo view/image
+-&gt; overlay top/back metadata actions
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>itemId prop 来自 route。</li>
+<li>MediaServerClient.itemsApi/getItem 与 imageApi 提供照片元数据和图片 URL。</li>
+<li>zoom/overlay 可见性为页面本地状态。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="trailer_player /player/trailer /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/trailer_player_screen.dart::trailerplayerscreen scaffold black
+-&gt; video surface
+-&gt; buffering/controls overlay
+-&gt; back and progress controls
+ videoid/trailerurl props 来自 route extra/query。 media_kit/player backend 加载 trailerurl；页面本地 state 管理 controls/progress。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>trailer_player</h2></div><div class="badges">
+<span class="badge route">/player/trailer</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/trailer_player_screen.dart::TrailerPlayerScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/trailer_player.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>Scaffold black
+-&gt; video surface
+-&gt; buffering/controls overlay
+-&gt; back and progress controls
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>videoId/trailerUrl props 来自 route extra/query。</li>
+<li>media_kit/player backend 加载 trailerUrl；页面本地 state 管理 controls/progress。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="next_up /player/next-up/:itemid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/next_up_screen.dart::nextupscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; center text(next up)
+ itemid prop 暂未用于实际数据查询。 文案来自 applocalizations.nextup。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>next_up</h2></div><div class="badges">
+<span class="badge route">/player/next-up/:itemId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/next_up_screen.dart::NextUpScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/next_up.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; Center Text(next up)
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>itemId prop 暂未用于实际数据查询。</li>
+<li>文案来自 AppLocalizations.nextUp。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="still_watching /player/still-watching/:itemid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/still_watching_screen.dart::stillwatchingscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; center text(still watching)
+ itemid prop 暂未用于实际数据查询。 文案来自 applocalizations.stillwatching。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>still_watching</h2></div><div class="badges">
+<span class="badge route">/player/still-watching/:itemId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/playback/still_watching_screen.dart::StillWatchingScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/still_watching.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; Center Text(still watching)
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>itemId prop 暂未用于实际数据查询。</li>
+<li>文案来自 AppLocalizations.stillWatching。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="settings /settings /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/settings/settings_side_panel.dart::settingssidepanel requestinitialfocus / clean settings typography
+-&gt; settingspanel root list
+   -&gt; administration entry when isadminprovider true
+   -&gt; account/security category
+   -&gt; personalization category
+   -&gt; dynamic content category
+   -&gt; playback &amp; syncplay category
+   -&gt; integrations category
+   -&gt; about category
+-&gt; nested settingspanel.pushsettingsscreen pages
+   -&gt; preferencetile/switch/list/slider rows
+ isadminprovider 决定管理后台入口是否展示。 大部分设置项通过 preferencebinding 绑定 userpreferences 或 authenticationpreferences。 部分集成页读取 pluginsyncservice、seerrpreferences、homeviewmodel、externalplayerservice。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>settings</h2></div><div class="badges">
+<span class="badge route">/settings</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/settings/settings_side_panel.dart::SettingsSidePanel</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/settings.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/settings.png" alt="settings screenshot"><figcaption>screenshots/settings.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus / clean settings typography
+-&gt; SettingsPanel root list
+   -&gt; Administration entry when isAdminProvider true
+   -&gt; Account/Security category
+   -&gt; Personalization category
+   -&gt; Dynamic Content category
+   -&gt; Playback &amp; SyncPlay category
+   -&gt; Integrations category
+   -&gt; About category
+-&gt; nested SettingsPanel.pushSettingsScreen pages
+   -&gt; PreferenceTile/Switch/List/Slider rows
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>isAdminProvider 决定管理后台入口是否展示。</li>
+<li>大部分设置项通过 PreferenceBinding 绑定 UserPreferences 或 AuthenticationPreferences。</li>
+<li>部分集成页读取 PluginSyncService、SeerrPreferences、HomeViewModel、ExternalPlayerService。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="playback" data-search="syncplay n/a materialpageroute /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/syncplay/syncplay_screen.dart::syncplayscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; appbar(title, refresh)
+   -&gt; body
+      -&gt; disabled/server unsupported message or
+      -&gt; listview
+         -&gt; optional error banner
+         -&gt; active group card or create group section
+         -&gt; available groups section
+ ref.watch(syncplaymanagerprovider) 提供 syncplaymanager。 initstate 后 fetchgroups；buttons 调 manager.create/join/leave/requestsetignorewait/cyclerepeat/toggleshuffle。">
+<div class="card-head"><div>
+<p class="eyebrow">播放</p><h2>syncplay</h2></div><div class="badges">
+<span class="badge route">N/A MaterialPageRoute</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/syncplay/syncplay_screen.dart::SyncPlayScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/syncplay.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; AppBar(title, refresh)
+   -&gt; body
+      -&gt; disabled/server unsupported message OR
+      -&gt; ListView
+         -&gt; optional error banner
+         -&gt; active group card OR create group section
+         -&gt; available groups section
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(syncPlayManagerProvider) 提供 SyncPlayManager。</li>
+<li>initState 后 fetchGroups；buttons 调 manager.create/join/leave/requestSetIgnoreWait/cycleRepeat/toggleShuffle。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="seerr" data-search="seerr_discover /seerr/discover /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_discover_screen.dart::seerrdiscoverscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(showbackbutton:true)
+      -&gt; stack
+         -&gt; optional tmdb backdrop
+         -&gt; gradient scrim
+         -&gt; column
+            -&gt; _infopanel(selected item)
+            -&gt; expanded
+               -&gt; loading/error
+               -&gt; listview rows
+                  -&gt; media row libraryrow + mediacard
+                  -&gt; genre/network/studio/logo rows
+ seerrdiscoverviewmodel 来自 getit async，内部使用 seerrrepository 与 seerrpreferences。 rows/isloading/error 来自 vm；loadmore(rowindex) 扩展 media rows。 selecteditem/backdrop 为页面本地 state，prefs 控制 backdropenabled/focus/card size。">
+<div class="card-head"><div>
+<p class="eyebrow">Seerr</p><h2>seerr_discover</h2></div><div class="badges">
+<span class="badge route">/seerr/discover</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_discover_screen.dart::SeerrDiscoverScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/seerr_discover.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(showBackButton:true)
+      -&gt; Stack
+         -&gt; optional TMDB backdrop
+         -&gt; gradient scrim
+         -&gt; Column
+            -&gt; _InfoPanel(selected item)
+            -&gt; Expanded
+               -&gt; loading/error
+               -&gt; ListView rows
+                  -&gt; media row LibraryRow + MediaCard
+                  -&gt; genre/network/studio/logo rows
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>SeerrDiscoverViewModel 来自 GetIt async，内部使用 SeerrRepository 与 SeerrPreferences。</li>
+<li>rows/isLoading/error 来自 vm；loadMore(rowIndex) 扩展 media rows。</li>
+<li>selectedItem/backdrop 为页面本地 state，prefs 控制 backdropEnabled/focus/card size。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="seerr" data-search="seerr_requests /seerr/requests /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_requests_screen.dart::seerrrequestsscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(showbackbutton:true)
+      -&gt; initializing/loading/error/empty
+      -&gt; refreshindicator
+         -&gt; listview.builder
+            -&gt; _requestcard
+               -&gt; poster/status metadata
+               -&gt; approve/decline actions when allowed
+ seerrrequestsviewmodel(seerrrepository) loads currentuser and request list。 state.requests/currentuser/actioningrequestid 驱动 cards 和 action loading。 approve/decline 调 seerrrepository request action 后 refresh。">
+<div class="card-head"><div>
+<p class="eyebrow">Seerr</p><h2>seerr_requests</h2></div><div class="badges">
+<span class="badge route">/seerr/requests</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_requests_screen.dart::SeerrRequestsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/seerr_requests.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(showBackButton:true)
+      -&gt; initializing/loading/error/empty
+      -&gt; RefreshIndicator
+         -&gt; ListView.builder
+            -&gt; _RequestCard
+               -&gt; poster/status metadata
+               -&gt; approve/decline actions when allowed
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>SeerrRequestsViewModel(SeerrRepository) loads currentUser and request list。</li>
+<li>state.requests/currentUser/actioningRequestId 驱动 cards 和 action loading。</li>
+<li>approve/decline 调 SeerrRepository request action 后 refresh。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="seerr" data-search="seerr_browse /seerr/browse /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_browse_screen.dart::seerrbrowsescreen requestinitialfocus
+-&gt; scaffold
+   -&gt; column
+      -&gt; _seerrbrowseheader(title/focused item/filter/sort/settings)
+      -&gt; expanded
+         -&gt; loading/error/no results
+         -&gt; customscrollview
+            -&gt; slivergrid
+               -&gt; mediacard per seerrdiscoveritem
+            -&gt; load-more spinner
+      -&gt; _seerrbrowsestatusbar
+ seerrbrowseviewmodel(seerrrepository, filter props) exposes state.items/filter/letterfilter/sort。 scroll near bottom 调 vm.loadmore。 header controls 调 vm.setfilter/setletterfilter/setsort。 poster/backdrop/request status 来自 seerrrepository/tmdb fields。">
+<div class="card-head"><div>
+<p class="eyebrow">Seerr</p><h2>seerr_browse</h2></div><div class="badges">
+<span class="badge route">/seerr/browse</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_browse_screen.dart::SeerrBrowseScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/seerr_browse.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; Column
+      -&gt; _SeerrBrowseHeader(title/focused item/filter/sort/settings)
+      -&gt; Expanded
+         -&gt; loading/error/no results
+         -&gt; CustomScrollView
+            -&gt; SliverGrid
+               -&gt; MediaCard per SeerrDiscoverItem
+            -&gt; load-more spinner
+      -&gt; _SeerrBrowseStatusBar
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>SeerrBrowseViewModel(SeerrRepository, filter props) exposes state.items/filter/letterFilter/sort。</li>
+<li>scroll near bottom 调 vm.loadMore。</li>
+<li>header controls 调 vm.setFilter/setLetterFilter/setSort。</li>
+<li>poster/backdrop/request status 来自 SeerrRepository/TMDB fields。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="seerr" data-search="seerr_media_detail /seerr/media/:itemid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_media_detail_screen.dart::seerrmediadetailscreen requestinitialfocus
+-&gt; scaffold black
+   -&gt; navigationlayout(showbackbutton:true)
+      -&gt; loading/error
+      -&gt; stack
+         -&gt; tmdb backdrop
+         -&gt; gradient overlay
+         -&gt; wide scroll or customscrollview
+            -&gt; header
+            -&gt; metadata
+            -&gt; request section
+            -&gt; overview
+            -&gt; cast row
+            -&gt; similar/recommendations rows
+ seerrmediadetailviewmodel(seerrrepository, seerrpreferences) loads movie/tv details by tmdbid/mediatype。 request profile/root/server 默认值来自 seerrpreferences。 已有库匹配会调用 mediaserverclient.itemsapi 按 providerids 查询。">
+<div class="card-head"><div>
+<p class="eyebrow">Seerr</p><h2>seerr_media_detail</h2></div><div class="badges">
+<span class="badge route">/seerr/media/:itemId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_media_detail_screen.dart::SeerrMediaDetailScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/seerr_media_detail.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold black
+   -&gt; NavigationLayout(showBackButton:true)
+      -&gt; loading/error
+      -&gt; Stack
+         -&gt; TMDB backdrop
+         -&gt; gradient overlay
+         -&gt; wide scroll OR CustomScrollView
+            -&gt; header
+            -&gt; metadata
+            -&gt; request section
+            -&gt; overview
+            -&gt; cast row
+            -&gt; similar/recommendations rows
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>SeerrMediaDetailViewModel(SeerrRepository, SeerrPreferences) loads movie/tv details by tmdbId/mediaType。</li>
+<li>request profile/root/server 默认值来自 SeerrPreferences。</li>
+<li>已有库匹配会调用 MediaServerClient.itemsApi 按 ProviderIds 查询。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="seerr" data-search="seerr_person /seerr/person/:personid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_person_screen.dart::seerrpersonscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; navigationlayout(showbackbutton:true)
+      -&gt; loading/error
+      -&gt; customscrollview
+         -&gt; person header(profile, name, known for)
+         -&gt; biography
+         -&gt; filmography/media rows
+ seerrpersonviewmodel(seerrrepository) loads person details by personid。 profile/poster urls 使用 tmdb image base path。 cards 使用 userpreferences postersize/focuscolor/cardfocusexpansion。">
+<div class="card-head"><div>
+<p class="eyebrow">Seerr</p><h2>seerr_person</h2></div><div class="badges">
+<span class="badge route">/seerr/person/:personId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/seerr/seerr_person_screen.dart::SeerrPersonScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/seerr_person.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; NavigationLayout(showBackButton:true)
+      -&gt; loading/error
+      -&gt; CustomScrollView
+         -&gt; person header(profile, name, known for)
+         -&gt; biography
+         -&gt; filmography/media rows
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>SeerrPersonViewModel(SeerrRepository) loads person details by personId。</li>
+<li>profile/poster URLs 使用 TMDB image base path。</li>
+<li>cards 使用 UserPreferences posterSize/focusColor/cardFocusExpansion。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="downloads" data-search="downloads /downloads /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/saved_media_screen.dart::savedmediascreen requestinitialfocus
+-&gt; scaffold
+   -&gt; safearea
+      -&gt; column
+         -&gt; header(back/title/syncindicator/storage/settings)
+         -&gt; filter chips(all/movies/tv/music/books)
+         -&gt; expanded
+            -&gt; empty state or listview
+               -&gt; movies section gridview
+               -&gt; tv shows section gridview
+               -&gt; music albums section gridview
+               -&gt; audiobooks section gridview
+               -&gt; books section gridview
+ ref.watch(downloadedmoviesprovider/downloadedseriesprovider/downloadedaudioprovider/downloadedaudiobooksprovider/downloadedbooksprovider)。 storage text 来自 storageusedprovider。 providers 均由 offlinerepository watch* streams 驱动。 empty state 在线状态来自 isonlineprovider。">
+<div class="card-head"><div>
+<p class="eyebrow">下载</p><h2>downloads</h2></div><div class="badges">
+<span class="badge route">/downloads</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/saved_media_screen.dart::SavedMediaScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/downloads.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/downloads.png" alt="downloads screenshot"><figcaption>screenshots/downloads.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; SafeArea
+      -&gt; Column
+         -&gt; header(back/title/SyncIndicator/storage/settings)
+         -&gt; filter chips(all/movies/tv/music/books)
+         -&gt; Expanded
+            -&gt; empty state OR ListView
+               -&gt; Movies section GridView
+               -&gt; TV Shows section GridView
+               -&gt; Music Albums section GridView
+               -&gt; Audiobooks section GridView
+               -&gt; Books section GridView
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(downloadedMoviesProvider/downloadedSeriesProvider/downloadedAudioProvider/downloadedAudioBooksProvider/downloadedBooksProvider)。</li>
+<li>storage text 来自 storageUsedProvider。</li>
+<li>providers 均由 OfflineRepository watch* streams 驱动。</li>
+<li>empty state 在线状态来自 isOnlineProvider。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="downloads" data-search="downloaded_album /downloads/music/:albumid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/saved_album_screen.dart::savedalbumscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; safearea
+      -&gt; downloadedaudioprovider.when
+         -&gt; header(album name)
+         -&gt; track count/play album row
+         -&gt; listview.separated
+            -&gt; _offlinetracktile
+ tracks 从 downloadedaudioprovider 过滤 albumid。 play actions 调 launchofflineplayback，queue 为 album tracks。">
+<div class="card-head"><div>
+<p class="eyebrow">下载</p><h2>downloaded_album</h2></div><div class="badges">
+<span class="badge route">/downloads/music/:albumId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/saved_album_screen.dart::SavedAlbumScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/downloaded_album.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; SafeArea
+      -&gt; downloadedAudioProvider.when
+         -&gt; Header(album name)
+         -&gt; track count/play album row
+         -&gt; ListView.separated
+            -&gt; _OfflineTrackTile
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>tracks 从 downloadedAudioProvider 过滤 AlbumId。</li>
+<li>play actions 调 launchOfflinePlayback，queue 为 album tracks。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="downloads" data-search="downloaded_series /downloads/series/:seriesid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/saved_series_screen.dart::savedseriesscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; safearea
+      -&gt; downloadeditemprovider(seriesid).when
+         -&gt; customscrollview
+            -&gt; hero/header(backdrop, title, metadata)
+            -&gt; downloaded episodes title
+            -&gt; season list
+ seriesasync 来自 downloadeditemprovider(seriesid)。 episodesasync 来自 downloadedepisodesprovider(seriesid)。 delete/play actions 使用 offlinerepository 与 launchofflineplayback。">
+<div class="card-head"><div>
+<p class="eyebrow">下载</p><h2>downloaded_series</h2></div><div class="badges">
+<span class="badge route">/downloads/series/:seriesId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/saved_series_screen.dart::SavedSeriesScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/downloaded_series.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; SafeArea
+      -&gt; downloadedItemProvider(seriesId).when
+         -&gt; CustomScrollView
+            -&gt; hero/header(backdrop, title, metadata)
+            -&gt; Downloaded Episodes title
+            -&gt; season list
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>seriesAsync 来自 downloadedItemProvider(seriesId)。</li>
+<li>episodesAsync 来自 downloadedEpisodesProvider(seriesId)。</li>
+<li>delete/play actions 使用 OfflineRepository 与 launchOfflinePlayback。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="downloads" data-search="downloaded_season /downloads/series/:seriesid/season/:seasonid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/saved_season_screen.dart::savedseasonscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; safearea
+      -&gt; column
+         -&gt; header(back/title)
+         -&gt; expanded
+            -&gt; downloadedseasonepisodesprovider.when
+               -&gt; listview.builder
+                  -&gt; _episoderow
+ season title 来自 downloadeditemprovider(seasonid)。 episode list 来自 downloadedseasonepisodesprovider(seasonid)。 row actions 调 launchofflineplayback / offlinerepository delete。">
+<div class="card-head"><div>
+<p class="eyebrow">下载</p><h2>downloaded_season</h2></div><div class="badges">
+<span class="badge route">/downloads/series/:seriesId/season/:seasonId</span>
+<span class="badge pending">待补截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/saved_season_screen.dart::SavedSeasonScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/downloaded_season.png</code></dd></div>
+</dl>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; SafeArea
+      -&gt; Column
+         -&gt; header(back/title)
+         -&gt; Expanded
+            -&gt; downloadedSeasonEpisodesProvider.when
+               -&gt; ListView.builder
+                  -&gt; _EpisodeRow
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>season title 来自 downloadedItemProvider(seasonId)。</li>
+<li>episode list 来自 downloadedSeasonEpisodesProvider(seasonId)。</li>
+<li>row actions 调 launchOfflinePlayback / OfflineRepository delete。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="main" data-search="storage_management /downloads/storage /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/storage_management_screen.dart::storagemanagementscreen requestinitialfocus
+-&gt; scaffold
+   -&gt; appbar(title, select/delete actions)
+   -&gt; listview
+      -&gt; _totalstorageheader
+      -&gt; storage breakdown stacked bar
+      -&gt; items-by-size section
+      -&gt; storage limit slider/input
+      -&gt; delete all button
+ storageusedprovider 提供总占用。 userpreferencesprovider 读取/写入 userpreferences.downloadstoragelimitmb。 offlinerepository 与 storagepathservice 加载 breakdown/items；downloadservice 用于清理。">
+<div class="card-head"><div>
+<p class="eyebrow">主界面</p><h2>storage_management</h2></div><div class="badges">
+<span class="badge route">/downloads/storage</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/downloads/storage_management_screen.dart::StorageManagementScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/storage_management.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/storage_management.png" alt="storage_management screenshot"><figcaption>screenshots/storage_management.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>RequestInitialFocus
+-&gt; Scaffold
+   -&gt; AppBar(title, select/delete actions)
+   -&gt; ListView
+      -&gt; _TotalStorageHeader
+      -&gt; storage breakdown stacked bar
+      -&gt; items-by-size section
+      -&gt; storage limit slider/input
+      -&gt; delete all button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>storageUsedProvider 提供总占用。</li>
+<li>userPreferencesProvider 读取/写入 UserPreferences.downloadStorageLimitMb。</li>
+<li>OfflineRepository 与 StoragePathService 加载 breakdown/items；DownloadService 用于清理。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_dashboard /admin /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/admin_dashboard_screen.dart::admindashboardscreen adminshellscreen child
+-&gt; loading/error
+-&gt; refreshindicator
+   -&gt; listview
+      -&gt; optional _adminattentioncard
+      -&gt; _dashboardkpistrip
+      -&gt; serverinfocard
+      -&gt; serveractionscard
+      -&gt; adminmediasummarysection
+      -&gt; serverpathscard
+      -&gt; activesessionscard
+      -&gt; activitylogcard
+ 本地 `_loaddata` 并发读取 systeminfo、storageinfo、activitylog、sessions。 ref.watch(adminmediasummaryprovider) 与 adminnotificationsummaryprovider。 activesessionscard 监听 sockethandler events 并读取 sessionapi。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_dashboard</h2></div><div class="badges">
+<span class="badge route">/admin</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/admin_dashboard_screen.dart::AdminDashboardScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_dashboard.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_dashboard.png" alt="admin_dashboard screenshot"><figcaption>screenshots/admin_dashboard.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; RefreshIndicator
+   -&gt; ListView
+      -&gt; optional _AdminAttentionCard
+      -&gt; _DashboardKpiStrip
+      -&gt; ServerInfoCard
+      -&gt; ServerActionsCard
+      -&gt; AdminMediaSummarySection
+      -&gt; ServerPathsCard
+      -&gt; ActiveSessionsCard
+      -&gt; ActivityLogCard
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>本地 `_loadData` 并发读取 systemInfo、storageInfo、activityLog、sessions。</li>
+<li>ref.watch(adminMediaSummaryProvider) 与 adminNotificationSummaryProvider。</li>
+<li>ActiveSessionsCard 监听 SocketHandler events 并读取 sessionApi。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_analytics /admin/analytics /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/admin_content_analytics_screen.dart::admincontentanalyticsscreen adminshellscreen child
+-&gt; provider loading/error
+-&gt; analytics summary cards
+-&gt; library analytics sections
+-&gt; technical profile charts/lists
+ ref.watch(adminmediaanalyticsprovider)。 provider 依赖 adminlibrariesprovider 与 mediaserverclient.itemsapi 统计 counts/insights。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_analytics</h2></div><div class="badges">
+<span class="badge route">/admin/analytics</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/admin_content_analytics_screen.dart::AdminContentAnalyticsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_analytics.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_analytics.png" alt="admin_analytics screenshot"><figcaption>screenshots/admin_analytics.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; provider loading/error
+-&gt; analytics summary cards
+-&gt; library analytics sections
+-&gt; technical profile charts/lists
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(adminMediaAnalyticsProvider)。</li>
+<li>provider 依赖 adminLibrariesProvider 与 MediaServerClient.itemsApi 统计 counts/insights。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_users /admin/users /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/users/admin_users_screen.dart::adminusersscreen adminshellscreen child
+-&gt; adminuserslistprovider.when
+   -&gt; textfield search
+   -&gt; expanded listview.builder
+      -&gt; card/inkwell user tile
+   -&gt; floatingactionbutton add user
+ ref.watch(adminuserslistprovider) -&gt; mediaserverclient.adminusersapi.getusers。 搜索 query 为页面本地 state。 禁用/删除用户后 ref.invalidate(adminuserslistprovider)。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_users</h2></div><div class="badges">
+<span class="badge route">/admin/users</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/users/admin_users_screen.dart::AdminUsersScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_users.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_users.png" alt="admin_users screenshot"><figcaption>screenshots/admin_users.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; adminUsersListProvider.when
+   -&gt; TextField search
+   -&gt; Expanded ListView.builder
+      -&gt; Card/InkWell user tile
+   -&gt; FloatingActionButton add user
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(adminUsersListProvider) -&gt; MediaServerClient.adminUsersApi.getUsers。</li>
+<li>搜索 query 为页面本地 State。</li>
+<li>禁用/删除用户后 ref.invalidate(adminUsersListProvider)。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_user_add /admin/users/add /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/users/admin_user_add_screen.dart::adminuseraddscreen adminshellscreen child
+-&gt; listview form
+   -&gt; username/password fields
+   -&gt; policy/options
+   -&gt; save button
+ form controllers 为页面本地 state。 create 调 mediaserverclient.adminusersapi，成功 invalidate adminuserslistprovider。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_user_add</h2></div><div class="badges">
+<span class="badge route">/admin/users/add</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/users/admin_user_add_screen.dart::AdminUserAddScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_user_add.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_user_add.png" alt="admin_user_add screenshot"><figcaption>screenshots/admin_user_add.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; ListView form
+   -&gt; username/password fields
+   -&gt; policy/options
+   -&gt; save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>form controllers 为页面本地 State。</li>
+<li>create 调 MediaServerClient.adminUsersApi，成功 invalidate adminUsersListProvider。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_user_edit /admin/users/:userid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/users/admin_user_edit_screen.dart::adminusereditscreen adminshellscreen child
+-&gt; adminuserprovider(userid).when
+-&gt; user form/list sections
+-&gt; access/policy controls
+-&gt; save actions
+ ref.watch(adminuserprovider(userid)) -&gt; adminusersapi.getuserbyid。 保存后调用 adminusersapi 并 invalidate adminuserprovider/adminuserslistprovider。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_user_edit</h2></div><div class="badges">
+<span class="badge route">/admin/users/:userId</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/users/admin_user_edit_screen.dart::AdminUserEditScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_user_edit.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_user_edit.png" alt="admin_user_edit screenshot"><figcaption>screenshots/admin_user_edit.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; adminUserProvider(userId).when
+-&gt; user form/list sections
+-&gt; access/policy controls
+-&gt; save actions
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(adminUserProvider(userId)) -&gt; adminUsersApi.getUserById。</li>
+<li>保存后调用 adminUsersApi 并 invalidate adminUserProvider/adminUsersListProvider。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_libraries /admin/libraries /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/libraries/admin_libraries_screen.dart::adminlibrariesscreen adminshellscreen child
+-&gt; adminlibrariesprovider.when
+   -&gt; stack
+      -&gt; listview library cards/listtiles
+      -&gt; fab add library
+      -&gt; scan all action
+ ref.watch(adminlibrariesprovider) -&gt; adminlibraryapi.getvirtualfolders。 edit/rename/delete/scan actions 调 adminlibraryapi 后 invalidate provider。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_libraries</h2></div><div class="badges">
+<span class="badge route">/admin/libraries</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/libraries/admin_libraries_screen.dart::AdminLibrariesScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_libraries.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_libraries.png" alt="admin_libraries screenshot"><figcaption>screenshots/admin_libraries.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; adminLibrariesProvider.when
+   -&gt; Stack
+      -&gt; ListView library cards/ListTiles
+      -&gt; FAB add library
+      -&gt; scan all action
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(adminLibrariesProvider) -&gt; adminLibraryApi.getVirtualFolders。</li>
+<li>edit/rename/delete/scan actions 调 adminLibraryApi 后 invalidate provider。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_library_add /admin/libraries/add /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/libraries/admin_library_add_screen.dart::adminlibraryaddscreen adminshellscreen child
+-&gt; listview
+   -&gt; type selection gridview.count
+   -&gt; name/path/options form
+   -&gt; save button
+ form fields 为页面本地 state。 保存调用 mediaserverclient.adminlibraryapi.addvirtualfolder 并 invalidate adminlibrariesprovider。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_library_add</h2></div><div class="badges">
+<span class="badge route">/admin/libraries/add</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/libraries/admin_library_add_screen.dart::AdminLibraryAddScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_library_add.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_library_add.png" alt="admin_library_add screenshot"><figcaption>screenshots/admin_library_add.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; ListView
+   -&gt; type selection GridView.count
+   -&gt; name/path/options form
+   -&gt; save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>form fields 为页面本地 State。</li>
+<li>保存调用 MediaServerClient.adminLibraryApi.addVirtualFolder 并 invalidate adminLibrariesProvider。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_library_edit /admin/libraries/:libraryid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/libraries/admin_library_edit_screen.dart::adminlibraryeditscreen adminshellscreen child
+-&gt; loading/error
+-&gt; column
+   -&gt; library title
+   -&gt; tabbar(paths, options)
+   -&gt; tabbarview
+      -&gt; paths listview
+      -&gt; options listview
+ libraryid prop 来自 route。 mediaserverclient.adminlibraryapi 加载/更新 library paths/options。 变更后 ref.invalidate(adminlibrariesprovider)。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_library_edit</h2></div><div class="badges">
+<span class="badge route">/admin/libraries/:libraryId</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/libraries/admin_library_edit_screen.dart::AdminLibraryEditScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_library_edit.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_library_edit.png" alt="admin_library_edit screenshot"><figcaption>screenshots/admin_library_edit.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; Column
+   -&gt; library title
+   -&gt; TabBar(Paths, Options)
+   -&gt; TabBarView
+      -&gt; Paths ListView
+      -&gt; Options ListView
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>libraryId prop 来自 route。</li>
+<li>MediaServerClient.adminLibraryApi 加载/更新 library paths/options。</li>
+<li>变更后 ref.invalidate(adminLibrariesProvider)。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_general_settings /admin/settings /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_general_settings_screen.dart::admingeneralsettingsscreen adminshellscreen child
+-&gt; loading/error
+-&gt; listview
+   -&gt; title/description
+   -&gt; textformfield rows(servername, language, country, paths)
+   -&gt; filesystembrowser for paths
+   -&gt; numeric fields(scan/image/threshold)
+   -&gt; save button
+ mediaserverclient.adminsystemapi.getserverconfiguration/updateserverconfiguration。 filesystembrowser 使用 adminenvironmentapi 浏览服务端文件系统。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_general_settings</h2></div><div class="badges">
+<span class="badge route">/admin/settings</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_general_settings_screen.dart::AdminGeneralSettingsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_general_settings.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_general_settings.png" alt="admin_general_settings screenshot"><figcaption>screenshots/admin_general_settings.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; ListView
+   -&gt; title/description
+   -&gt; TextFormField rows(ServerName, language, country, paths)
+   -&gt; FilesystemBrowser for paths
+   -&gt; numeric fields(scan/image/threshold)
+   -&gt; Save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi.getServerConfiguration/updateServerConfiguration。</li>
+<li>FilesystemBrowser 使用 adminEnvironmentApi 浏览服务端文件系统。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_playback_settings /admin/settings/playback /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_playback_settings_screen.dart::adminplaybacksettingsscreen adminshellscreen child
+-&gt; loading/error
+-&gt; listview
+   -&gt; title/description
+   -&gt; switchlisttile/textformfield rows for transcoding/playback keys
+   -&gt; save button
+ mediaserverclient.adminsystemapi 读取/保存 server config map。 各 field controller 映射 playback/transcoding 相关配置 key。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_playback_settings</h2></div><div class="badges">
+<span class="badge route">/admin/settings/playback</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_playback_settings_screen.dart::AdminPlaybackSettingsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_playback_settings.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_playback_settings.png" alt="admin_playback_settings screenshot"><figcaption>screenshots/admin_playback_settings.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; ListView
+   -&gt; title/description
+   -&gt; SwitchListTile/TextFormField rows for transcoding/playback keys
+   -&gt; Save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi 读取/保存 server config map。</li>
+<li>各 field controller 映射 playback/transcoding 相关配置 key。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_resume_settings /admin/settings/resume /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_resume_settings_screen.dart::adminresumesettingsscreen adminshellscreen child
+-&gt; loading/error
+-&gt; listview
+   -&gt; title/description
+   -&gt; resume threshold slider
+   -&gt; numeric textformfield rows
+   -&gt; save button
+ mediaserverclient.adminsystemapi get/update server config。 slider/textformfield 本地 controller 写回 resume/playback progress 配置 key。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_resume_settings</h2></div><div class="badges">
+<span class="badge route">/admin/settings/resume</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_resume_settings_screen.dart::AdminResumeSettingsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_resume_settings.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_resume_settings.png" alt="admin_resume_settings screenshot"><figcaption>screenshots/admin_resume_settings.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; ListView
+   -&gt; title/description
+   -&gt; resume threshold Slider
+   -&gt; numeric TextFormField rows
+   -&gt; Save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi get/update server config。</li>
+<li>Slider/TextFormField 本地 controller 写回 resume/playback progress 配置 key。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_streaming_settings /admin/settings/streaming /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_streaming_screen.dart::adminstreamingscreen adminshellscreen child
+-&gt; loading/error
+-&gt; listview
+   -&gt; title/description
+   -&gt; remote bitrate textformfield
+   -&gt; save button
+ mediaserverclient.adminsystemapi get/update server config。 remoteclientbitratelimit key 被转换为 mbps 输入显示并保存回 config map。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_streaming_settings</h2></div><div class="badges">
+<span class="badge route">/admin/settings/streaming</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_streaming_screen.dart::AdminStreamingScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_streaming_settings.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_streaming_settings.png" alt="admin_streaming_settings screenshot"><figcaption>screenshots/admin_streaming_settings.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; ListView
+   -&gt; title/description
+   -&gt; Remote bitrate TextFormField
+   -&gt; Save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi get/update server config。</li>
+<li>RemoteClientBitrateLimit key 被转换为 Mbps 输入显示并保存回 config map。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_trickplay_settings /admin/settings/trickplay /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_trickplay_screen.dart::admintrickplayscreen adminshellscreen child
+-&gt; loading/error
+-&gt; listview
+   -&gt; title/description
+   -&gt; switchlisttile rows
+   -&gt; textformfield rows
+   -&gt; slider rows
+   -&gt; save button
+ mediaserverclient.adminsystemapi get/update server config。 控件映射 trickplayoptions 相关 key。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_trickplay_settings</h2></div><div class="badges">
+<span class="badge route">/admin/settings/trickplay</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_trickplay_screen.dart::AdminTrickplayScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_trickplay_settings.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_trickplay_settings.png" alt="admin_trickplay_settings screenshot"><figcaption>screenshots/admin_trickplay_settings.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; ListView
+   -&gt; title/description
+   -&gt; SwitchListTile rows
+   -&gt; TextFormField rows
+   -&gt; Slider rows
+   -&gt; Save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi get/update server config。</li>
+<li>控件映射 TrickplayOptions 相关 key。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_networking_settings /admin/settings/networking /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_networking_screen.dart::adminnetworkingscreen adminshellscreen child
+-&gt; loading/error
+-&gt; listview
+   -&gt; title/description
+   -&gt; network textformfield rows
+   -&gt; switchlisttile rows
+   -&gt; save button
+ mediaserverclient.adminsystemapi get/update server config。 text fields/switch rows 映射 baseurl/publicport/remote access 等 networking keys。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_networking_settings</h2></div><div class="badges">
+<span class="badge route">/admin/settings/networking</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_networking_screen.dart::AdminNetworkingScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_networking_settings.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_networking_settings.png" alt="admin_networking_settings screenshot"><figcaption>screenshots/admin_networking_settings.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; ListView
+   -&gt; title/description
+   -&gt; network TextFormField rows
+   -&gt; SwitchListTile rows
+   -&gt; Save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi get/update server config。</li>
+<li>Text fields/Switch rows 映射 BaseUrl/PublicPort/Remote access 等 networking keys。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_branding_settings /admin/settings/branding /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_branding_screen.dart::adminbrandingscreen adminshellscreen child
+-&gt; loading/error
+-&gt; listview
+   -&gt; title/description
+   -&gt; textformfield rows
+   -&gt; switchlisttile rows
+   -&gt; save button
+ mediaserverclient.adminsystemapi get/update server config。 branding fields 映射 server name/custom css/login disclaimer 等 config keys。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_branding_settings</h2></div><div class="badges">
+<span class="badge route">/admin/settings/branding</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/settings/admin_branding_screen.dart::AdminBrandingScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_branding_settings.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_branding_settings.png" alt="admin_branding_settings screenshot"><figcaption>screenshots/admin_branding_settings.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; ListView
+   -&gt; title/description
+   -&gt; TextFormField rows
+   -&gt; SwitchListTile rows
+   -&gt; Save button
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi get/update server config。</li>
+<li>branding fields 映射 server name/custom CSS/login disclaimer 等 config keys。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_tasks /admin/tasks /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/tasks/admin_tasks_screen.dart::admintasksscreen adminshellscreen child
+-&gt; admintasksprovider.when
+   -&gt; category filterchip horizontal listview
+   -&gt; expanded listview.builder
+      -&gt; _categorysection
+         -&gt; task tiles/start/stop/tap
+ ref.watch(admintasksprovider) -&gt; admintasksapi.gettasks。 timer.periodic 每 5 秒 invalidate provider。 start/stop 调 admintasksapi 后 invalidate provider。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_tasks</h2></div><div class="badges">
+<span class="badge route">/admin/tasks</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/tasks/admin_tasks_screen.dart::AdminTasksScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_tasks.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_tasks.png" alt="admin_tasks screenshot"><figcaption>screenshots/admin_tasks.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; adminTasksProvider.when
+   -&gt; category FilterChip horizontal ListView
+   -&gt; Expanded ListView.builder
+      -&gt; _CategorySection
+         -&gt; task tiles/start/stop/tap
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(adminTasksProvider) -&gt; adminTasksApi.getTasks。</li>
+<li>Timer.periodic 每 5 秒 invalidate provider。</li>
+<li>start/stop 调 adminTasksApi 后 invalidate provider。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_task_detail /admin/tasks/:taskid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/tasks/admin_task_detail_screen.dart::admintaskdetailscreen adminshellscreen child
+-&gt; admintaskprovider(taskid).when
+-&gt; task header/status
+-&gt; detail rows
+-&gt; triggers/history/actions
+ ref.watch(admintaskprovider(taskid)) -&gt; admintasksapi.gettask。 task action buttons call admintasksapi then invalidate task providers。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_task_detail</h2></div><div class="badges">
+<span class="badge route">/admin/tasks/:taskId</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/tasks/admin_task_detail_screen.dart::AdminTaskDetailScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_task_detail.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_task_detail.png" alt="admin_task_detail screenshot"><figcaption>screenshots/admin_task_detail.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; adminTaskProvider(taskId).when
+-&gt; task header/status
+-&gt; detail rows
+-&gt; triggers/history/actions
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(adminTaskProvider(taskId)) -&gt; adminTasksApi.getTask。</li>
+<li>task action buttons call adminTasksApi then invalidate task providers。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_plugins /admin/plugins /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/plugins/admin_plugins_screen.dart::adminpluginsscreen adminshellscreen child
+-&gt; column
+   -&gt; search textfield
+   -&gt; tabbar(installed, catalog)
+   -&gt; tabbarview
+      -&gt; _installedtab
+         -&gt; filters
+         -&gt; listview installed plugin tiles
+      -&gt; _catalogtab
+         -&gt; categories
+         -&gt; listview catalog package tiles
+ installed tab watches admininstalledpluginsprovider and adminavailablepackagesprovider。 catalog tab watches adminavailablepackagesprovider。 toggle/install/uninstall 调 adminpluginsapi 后 invalidate plugin providers。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_plugins</h2></div><div class="badges">
+<span class="badge route">/admin/plugins</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/plugins/admin_plugins_screen.dart::AdminPluginsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_plugins.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_plugins.png" alt="admin_plugins screenshot"><figcaption>screenshots/admin_plugins.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; Column
+   -&gt; search TextField
+   -&gt; TabBar(Installed, Catalog)
+   -&gt; TabBarView
+      -&gt; _InstalledTab
+         -&gt; filters
+         -&gt; ListView installed plugin tiles
+      -&gt; _CatalogTab
+         -&gt; categories
+         -&gt; ListView catalog package tiles
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>Installed tab watches adminInstalledPluginsProvider and adminAvailablePackagesProvider。</li>
+<li>Catalog tab watches adminAvailablePackagesProvider。</li>
+<li>toggle/install/uninstall 调 adminPluginsApi 后 invalidate plugin providers。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_plugin_detail /admin/plugins/:pluginid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/plugins/admin_plugin_detail_screen.dart::adminplugindetailscreen adminshellscreen child
+-&gt; plugin lookup loading/error
+-&gt; detail header
+-&gt; versions/settings/actions sections
+ pluginid prop 来自 route。 读取 admininstalledpluginsprovider/adminavailablepackagesprovider 匹配插件详情。 操作通过 adminpluginsapi。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_plugin_detail</h2></div><div class="badges">
+<span class="badge route">/admin/plugins/:pluginId</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/plugins/admin_plugin_detail_screen.dart::AdminPluginDetailScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_plugin_detail.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_plugin_detail.png" alt="admin_plugin_detail screenshot"><figcaption>screenshots/admin_plugin_detail.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; plugin lookup loading/error
+-&gt; detail header
+-&gt; versions/settings/actions sections
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>pluginId prop 来自 route。</li>
+<li>读取 adminInstalledPluginsProvider/adminAvailablePackagesProvider 匹配插件详情。</li>
+<li>操作通过 adminPluginsApi。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_repositories /admin/repositories /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/plugins/admin_repositories_screen.dart::adminrepositoriesscreen adminshellscreen child
+-&gt; adminrepositoriesprovider.when
+   -&gt; listview.builder repository tiles
+   -&gt; add/edit/delete dialogs
+ ref.watch(adminrepositoriesprovider) -&gt; adminpluginsapi.getrepositories。 crud 调 adminpluginsapi 后 invalidate adminrepositoriesprovider/adminavailablepackagesprovider。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_repositories</h2></div><div class="badges">
+<span class="badge route">/admin/repositories</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/plugins/admin_repositories_screen.dart::AdminRepositoriesScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_repositories.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_repositories.png" alt="admin_repositories screenshot"><figcaption>screenshots/admin_repositories.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; adminRepositoriesProvider.when
+   -&gt; ListView.builder repository tiles
+   -&gt; add/edit/delete dialogs
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(adminRepositoriesProvider) -&gt; adminPluginsApi.getRepositories。</li>
+<li>CRUD 调 adminPluginsApi 后 invalidate adminRepositoriesProvider/adminAvailablePackagesProvider。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_activity /admin/activity /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/activity/admin_activity_screen.dart::adminactivityscreen adminshellscreen child
+-&gt; loading/error
+-&gt; activity filters/search
+-&gt; listview.builder
+   -&gt; date headers
+   -&gt; _activitytile with severity badge
+ mediaserverclient.adminsystemapi.getactivitylog。 sockethandler events trigger refresh。 search/severity filters are page-local state。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_activity</h2></div><div class="badges">
+<span class="badge route">/admin/activity</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/activity/admin_activity_screen.dart::AdminActivityScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_activity.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_activity.png" alt="admin_activity screenshot"><figcaption>screenshots/admin_activity.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; activity filters/search
+-&gt; ListView.builder
+   -&gt; date headers
+   -&gt; _ActivityTile with severity badge
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi.getActivityLog。</li>
+<li>SocketHandler events trigger refresh。</li>
+<li>search/severity filters are page-local State。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_devices /admin/devices /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/devices/admin_devices_screen.dart::admindevicesscreen adminshellscreen child
+-&gt; admindevicesprovider.when
+   -&gt; textfield search
+   -&gt; user filterchip horizontal list
+   -&gt; expanded listview.builder
+      -&gt; card/listtile per device
+ ref.watch(admindevicesprovider) -&gt; admindevicesapi.getdevices。 current device id 来自 mediaserverclient.deviceinfo.id。 delete/revoke actions 调 admindevicesapi 后 invalidate provider。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_devices</h2></div><div class="badges">
+<span class="badge route">/admin/devices</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/devices/admin_devices_screen.dart::AdminDevicesScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_devices.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_devices.png" alt="admin_devices screenshot"><figcaption>screenshots/admin_devices.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; adminDevicesProvider.when
+   -&gt; TextField search
+   -&gt; user FilterChip horizontal list
+   -&gt; Expanded ListView.builder
+      -&gt; Card/ListTile per device
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>ref.watch(adminDevicesProvider) -&gt; adminDevicesApi.getDevices。</li>
+<li>current device id 来自 MediaServerClient.deviceInfo.id。</li>
+<li>delete/revoke actions 调 adminDevicesApi 后 invalidate provider。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_keys /admin/keys /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/keys/admin_api_keys_screen.dart::adminapikeysscreen adminshellscreen child
+-&gt; loading/error
+-&gt; listview api key tiles
+-&gt; create/revoke dialogs/actions
+ mediaserverclient.adminkeysapi 读取和修改 api keys。 list/loading/error 为页面本地 state。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_keys</h2></div><div class="badges">
+<span class="badge route">/admin/keys</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/keys/admin_api_keys_screen.dart::AdminApiKeysScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_keys.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_keys.png" alt="admin_keys screenshot"><figcaption>screenshots/admin_keys.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; ListView API key tiles
+-&gt; create/revoke dialogs/actions
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminKeysApi 读取和修改 API keys。</li>
+<li>list/loading/error 为页面本地 State。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_backups /admin/backups /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/backups/admin_backups_screen.dart::adminbackupsscreen adminshellscreen child
+-&gt; loading/error
+-&gt; backup list
+-&gt; create backup action/dialog
+-&gt; download/delete actions
+ mediaserverclient.adminbackupapi.getbackups/createbackup。 download uses download utility; loading/creating/error 为页面本地 state。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_backups</h2></div><div class="badges">
+<span class="badge route">/admin/backups</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/backups/admin_backups_screen.dart::AdminBackupsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_backups.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_backups.png" alt="admin_backups screenshot"><figcaption>screenshots/admin_backups.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; backup list
+-&gt; create backup action/dialog
+-&gt; download/delete actions
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminBackupApi.getBackups/createBackup。</li>
+<li>download uses download utility; loading/creating/error 为页面本地 State。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_logs /admin/logs /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/logs/admin_logs_screen.dart::adminlogsscreen adminshellscreen child
+-&gt; loading/error/empty
+-&gt; column
+   -&gt; header(title/sort/refresh)
+   -&gt; divider
+   -&gt; expanded listview log files
+ mediaserverclient.adminsystemapi.getlogfiles。 newestfirst/loading/error/logs 为页面本地 state。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_logs</h2></div><div class="badges">
+<span class="badge route">/admin/logs</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/logs/admin_logs_screen.dart::AdminLogsScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_logs.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_logs.png" alt="admin_logs screenshot"><figcaption>screenshots/admin_logs.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error/empty
+-&gt; Column
+   -&gt; header(title/sort/refresh)
+   -&gt; Divider
+   -&gt; Expanded ListView log files
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient.adminSystemApi.getLogFiles。</li>
+<li>newestFirst/loading/error/logs 为页面本地 State。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_log_viewer /admin/logs/:filename /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/logs/admin_log_viewer_screen.dart::adminlogviewerscreen adminshellscreen child
+-&gt; loading/error
+-&gt; log toolbar
+-&gt; scrollable monospace log text
+ filename prop 来自 route。 mediaserverclient.adminsystemapi.getlogfile/downloadlogfile。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_log_viewer</h2></div><div class="badges">
+<span class="badge route">/admin/logs/:fileName</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/logs/admin_log_viewer_screen.dart::AdminLogViewerScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_log_viewer.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_log_viewer.png" alt="admin_log_viewer screenshot"><figcaption>screenshots/admin_log_viewer.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; log toolbar
+-&gt; scrollable monospace log text
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>fileName prop 来自 route。</li>
+<li>MediaServerClient.adminSystemApi.getLogFile/downloadLogFile。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_live_tv /admin/live-tv /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/livetv/admin_live_tv_screen.dart::adminlivetvscreen adminshellscreen child
+-&gt; live tv tuner/provider settings sections
+-&gt; list/action controls
+ mediaserverclient admin/live tv apis 提供 tuner/provider 数据。 form/list state 为页面本地 state。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_live_tv</h2></div><div class="badges">
+<span class="badge route">/admin/live-tv</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/livetv/admin_live_tv_screen.dart::AdminLiveTvScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_live_tv.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_live_tv.png" alt="admin_live_tv screenshot"><figcaption>screenshots/admin_live_tv.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; Live TV tuner/provider settings sections
+-&gt; list/action controls
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>MediaServerClient admin/live TV APIs 提供 tuner/provider 数据。</li>
+<li>form/list state 为页面本地 State。</li>
+</ul></section></div></article>
+<article class="page-card" data-category="admin" data-search="admin_metadata_edit /admin/metadata/:itemid /volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/metadata/admin_metadata_edit_screen.dart::adminmetadataeditscreen adminshellscreen child
+-&gt; loading/error
+-&gt; tabbed/form metadata editor
+-&gt; text fields/images/provider ids/actions
+ itemid prop 来自 route。 mediaserverclient.adminmetadataapi/itemsapi 加载和保存 metadata。">
+<div class="card-head"><div>
+<p class="eyebrow">管理</p><h2>admin_metadata_edit</h2></div><div class="badges">
+<span class="badge route">/admin/metadata/:itemId</span>
+<span class="badge captured">已截图</span>
+</div></div>
+<dl class="meta-grid">
+<div><dt>Component</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/lib/ui/screens/admin/metadata/admin_metadata_edit_screen.dart::AdminMetadataEditScreen</code></dd></div>
+<div><dt>Screenshot</dt><dd><code>/Volumes/mba2t/projects/moonfin-mobile-desktop/docs/ui/screenshots/admin_metadata_edit.png</code></dd></div>
+</dl>
+<figure class="screenshot"><img src="screenshots/admin_metadata_edit.png" alt="admin_metadata_edit screenshot"><figcaption>screenshots/admin_metadata_edit.png</figcaption></figure>
+<div class="detail-grid"><section><h3>UI Tree</h3>
+<pre>AdminShellScreen child
+-&gt; loading/error
+-&gt; Tabbed/form metadata editor
+-&gt; text fields/images/provider ids/actions
+</pre></section><section><h3>State Bindings</h3><ul class="bindings">
+<li>itemId prop 来自 route。</li>
+<li>MediaServerClient.adminMetadataApi/itemsApi 加载和保存 metadata。</li>
+</ul></section></div></article>
+</section>
+</main></div><script>const search = document.getElementById('search');
+const buttons = Array.from(document.querySelectorAll('.nav-filter'));
+const cards = Array.from(document.querySelectorAll('.page-card'));
+const empty = document.getElementById('empty');
+let active = 'all';
+function applyFilters(){
+  const q = search.value.trim().toLowerCase();
+  let shown = 0;
+  cards.forEach(card => {
+    const catOk = active === 'all' || card.dataset.category === active;
+    const qOk = !q || card.dataset.search.includes(q);
+    const visible = catOk && qOk;
+    card.classList.toggle('hidden', !visible);
+    if (visible) shown += 1;
+  });
+  empty.classList.toggle('visible', shown === 0);
+}
+buttons.forEach(btn => btn.addEventListener('click', () => {
+  active = btn.dataset.filter;
+  buttons.forEach(b => b.classList.toggle('active', b === btn));
+  applyFilters();
+}));
+search.addEventListener('input', applyFilters);
+</script></body></html>
